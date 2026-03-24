@@ -4,6 +4,7 @@ import { SiteConfig, SectionBlock, BLOCK_META } from "@/types/site";
 import NavBar from "./NavBar";
 import BlockRenderer from "./blocks/BlockRenderer";
 import ScrollReveal from "./ScrollReveal";
+import StickyContactBar from "./StickyContactBar";
 import { Plus, MousePointerClick, GripVertical, Trash2, ChevronUp, ChevronDown } from "lucide-react";
 
 import {
@@ -274,6 +275,7 @@ export default function SitePreview({ config, onConfigChange, onInsertRequest }:
             )}
           </DragOverlay>
         </DndContext>
+        <StickyContactBar primaryColor={config.primaryColor} />
       </div>
     </div>
   );

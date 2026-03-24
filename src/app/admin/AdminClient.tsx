@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { defaultConfig, SectionBlock, SiteConfig, SitePage, uid } from "@/types/site";
+import { defaultConfig, SectionBlock, SiteConfig, SitePage, uid, BLOCK_DEFAULTS } from "@/types/site";
 import Sidebar from "@/components/admin/Sidebar";
 import SitePreview from "@/components/preview/SitePreview";
 import BlockInsertModal from "@/components/admin/BlockInsertModal";
@@ -27,6 +27,8 @@ export default function AdminClient() {
   // Slug for Supabase publish
   const [siteSlug, setSiteSlug] = useState("");
   const [editingSlug, setEditingSlug] = useState(false);
+
+  const [showGoldenConfirm, setShowGoldenConfirm] = useState(false);
 
   // Publish state
   const [publishing, setPublishing] = useState(false);
@@ -116,6 +118,26 @@ export default function AdminClient() {
       ),
     });
     setRenamingPageId(null);
+  }
+
+  function applyGoldenTemplate() {
+    const goldenSections = [
+      BLOCK_DEFAULTS["hero-photo"](),
+      BLOCK_DEFAULTS.problem(),
+      BLOCK_DEFAULTS.solution(),
+      BLOCK_DEFAULTS.features(),
+      BLOCK_DEFAULTS.steps(),
+      BLOCK_DEFAULTS.testimonials(),
+      BLOCK_DEFAULTS.faq(),
+      BLOCK_DEFAULTS.cta(),
+      BLOCK_DEFAULTS.footer(),
+    ];
+    if (activePage.isHome) {
+      setConfig({ ...config, sections: goldenSections });
+    } else {
+      setConfig({ ...config, pages: config.pages.map((p) => p.id === activePageId ? { ...p, sections: goldenSections } : p) });
+    }
+    setShowGoldenConfirm(false);
   }
 
   async function handlePublish() {
@@ -223,6 +245,14 @@ export default function AdminClient() {
               )}
             </div>
 
+            <button
+              onClick={() => setShowGoldenConfirm(true)}
+              className="flex items-center gap-1.5 text-xs text-yellow-400 hover:text-yellow-300 px-3 py-1.5 rounded hover:bg-gray-700 transition-colors border border-yellow-400/30"
+              title="Hero→課題→解決策→特徴→ステップ→お客様の声→FAQ→CTAを自動配置"
+            >
+              ⚡ 黄金の型
+            </button>
+
             <button onClick={() => setConfig(defaultConfig)}
               className="flex items-center gap-1.5 text-xs text-gray-300 hover:text-white px-3 py-1.5 rounded hover:bg-gray-700 transition-colors">
               <RefreshCw size={12} /> リセット
@@ -289,6 +319,33 @@ export default function AdminClient() {
 
         {insertAt !== null && (
           <BlockInsertModal onInsert={handleInsert} onClose={() => setInsertAt(null)} />
+        )}
+
+        {showGoldenConfirm && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center">
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowGoldenConfirm(false)} />
+            <div className="relative bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4">
+              <h3 className="text-lg font-bold text-gray-900 mb-2">⚡ 黄金の型を適用</h3>
+              <p className="text-sm text-gray-600 mb-1">以下のセクション構成を自動配置します：</p>
+              <div className="bg-gray-50 rounded-xl p-4 mb-6 space-y-1">
+                {["① Hero（ファーストビュー）", "② Problem（課題提起）", "③ Solution（解決策）", "④ Features（特徴・強み）", "⑤ Steps（ご利用の流れ）", "⑥ Voice（お客様の声）", "⑦ FAQ（よくある質問）", "⑧ CTA（お問い合わせ）", "⑨ Footer"].map((s) => (
+                  <p key={s} className="text-xs text-gray-600">{s}</p>
+                ))}
+              </div>
+              <p className="text-xs text-red-500 mb-5">⚠️ 現在のセクションは置き換えられます</p>
+              <div className="flex gap-3">
+                <button onClick={applyGoldenTemplate}
+                  className="flex-1 py-3 text-sm font-bold text-white rounded-xl"
+                  style={{ backgroundColor: "#1a1a2e" }}>
+                  適用する
+                </button>
+                <button onClick={() => setShowGoldenConfirm(false)}
+                  className="flex-1 py-3 text-sm text-gray-600 border border-gray-200 rounded-xl hover:bg-gray-50">
+                  キャンセル
+                </button>
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </EditingContext.Provider>

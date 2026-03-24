@@ -11,6 +11,7 @@ interface Props {
   onChange: (url: string) => void;
   className?: string;
   alt?: string;
+  onAltChange?: (alt: string) => void;
   placeholderGradient?: string;
   primaryColor?: string;
   accentColor?: string;
@@ -21,6 +22,7 @@ export default function EditableImage({
   onChange,
   className = "",
   alt = "image",
+  onAltChange,
   placeholderGradient = "linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%)",
   primaryColor = "#1a1a2e",
   accentColor = "#F5C842",
@@ -28,12 +30,14 @@ export default function EditableImage({
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<Tab>("url");
   const [urlInput, setUrlInput] = useState(url);
+  const [altInput, setAltInput] = useState(alt);
   const [imgError, setImgError] = useState(false);
 
   const showPlaceholder = !url || imgError;
 
   const applyUrl = (u: string) => {
     onChange(u);
+    onAltChange?.(altInput);
     setImgError(false);
     setOpen(false);
   };
@@ -117,6 +121,15 @@ export default function EditableImage({
                     if (e.key === "Enter") applyUrl(urlInput);
                     if (e.key === "Escape") setOpen(false);
                   }}
+                />
+
+                <label className="block text-xs font-medium text-gray-500 mb-1.5 mt-3">alt テキスト（SEO・アクセシビリティ）<span className="text-red-400 ml-1">*</span></label>
+                <input
+                  type="text"
+                  value={altInput}
+                  onChange={(e) => setAltInput(e.target.value)}
+                  placeholder="画像の説明を入力（例：会社のオフィス外観）"
+                  className="w-full text-sm px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 mb-4"
                 />
 
                 {/* プレビュー */}

@@ -44,6 +44,8 @@ import HeroDarkBlockComponent from "./HeroDarkBlock";
 import HeroMosaicBlockComponent from "./HeroMosaicBlock";
 import HeroJapaneseBlockComponent from "./HeroJapaneseBlock";
 import HeroDiagonalBlockComponent from "./HeroDiagonalBlock";
+import ProblemBlockComponent from "./ProblemBlock";
+import SolutionBlockComponent from "./SolutionBlock";
 
 interface Props {
   block: SectionBlock;
@@ -139,6 +141,10 @@ export default function BlockRenderer({ block, config, onChange }: Props) {
       return <HeroJapaneseBlockComponent block={block} config={config} onChange={onChange} />;
     case "hero-diagonal":
       return <HeroDiagonalBlockComponent block={block} config={config} onChange={onChange} />;
+    case "problem":
+      return <ProblemBlockComponent block={block} config={config} onChange={onChange} />;
+    case "solution":
+      return <SolutionBlockComponent block={block} config={config} onChange={onChange} />;
     default:
       return null;
   }

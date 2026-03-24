@@ -701,6 +701,48 @@ const THUMBNAILS: Record<BlockType, React.ReactNode> = {
       </div>
     </div>
   ),
+  problem: (
+    <div className="w-full h-full flex flex-col py-2 px-2" style={{ backgroundColor: "#1a1a2e" }}>
+      <div className="text-center mb-1.5">
+        <div className="inline-block w-12 h-1.5 bg-yellow-400/60 rounded-full mb-1" />
+        <div className="w-20 h-2 bg-white mx-auto rounded mb-0.5" />
+        <div className="w-16 h-1 bg-white/30 mx-auto rounded" />
+      </div>
+      <div className="grid grid-cols-3 gap-1 flex-1">
+        {[0,1,2].map(i => (
+          <div key={i} className="bg-white rounded-lg p-1.5 flex flex-col gap-1">
+            <div className="text-[14px]">{["😰","😤","😓"][i]}</div>
+            <div className="w-full h-1.5 bg-gray-800 rounded" />
+            <div className="w-3/4 h-1 bg-gray-300 rounded" />
+            <div className="w-full h-1 bg-gray-200 rounded" />
+          </div>
+        ))}
+      </div>
+      <div className="text-center mt-1.5">
+        <div className="inline-block w-3 h-3 text-yellow-400 text-xs">↓</div>
+      </div>
+    </div>
+  ),
+  solution: (
+    <div className="w-full h-full flex overflow-hidden" style={{ backgroundColor: "#F9FAFB" }}>
+      <div className="flex-1 flex flex-col justify-center px-2 py-2 gap-1">
+        <div className="w-8 h-1.5 rounded-full bg-yellow-400/40 mb-0.5" />
+        <div className="w-14 h-2 bg-gray-900 rounded" />
+        <div className="w-10 h-2 bg-gray-900 rounded" />
+        <div className="w-12 h-1 bg-gray-400 rounded mt-0.5" />
+        {[0,1,2].map(i => (
+          <div key={i} className="flex items-center gap-1 mt-0.5">
+            <div className="w-3 h-3 rounded-full bg-yellow-400 flex-shrink-0" />
+            <div className="flex-1 h-1 bg-gray-200 rounded" />
+          </div>
+        ))}
+        <div className="w-10 h-2.5 rounded-full bg-gray-900 mt-1" />
+      </div>
+      <div className="w-16 m-1 rounded-xl overflow-hidden bg-gray-200 relative flex-shrink-0">
+        <img src="https://picsum.photos/seed/solution/100/120" className="absolute inset-0 w-full h-full object-cover" alt="" />
+      </div>
+    </div>
+  ),
   "hero-typo": (
     <div className="w-full h-full relative bg-white overflow-hidden flex items-center">
       {/* giant bg kanji */}
@@ -821,10 +863,11 @@ const THUMBNAILS: Record<BlockType, React.ReactNode> = {
 };
 
 export default function BlockInsertModal({ onInsert, onClose }: Props) {
-  const categories = ["コラム", "ヒーロー", "基本", "コンテンツ", "リッチ"];
+  const categories = ["黄金の型", "コラム", "ヒーロー", "基本", "コンテンツ", "リッチ"];
   const categoryDescs: Record<string, string> = {
+    "黄金の型": "LP必須2ブロック",
     コラム: "記事連携",
-    ヒーロー: "5パターン",
+    ヒーロー: "14パターン",
     基本: "6ブロック",
     コンテンツ: "17ブロック",
     リッチ: "7ブロック",

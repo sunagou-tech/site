@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { defaultConfig, SiteConfig } from "@/types/site";
 import BlockRenderer from "@/components/preview/blocks/BlockRenderer";
+import StickyContactBar from "./StickyContactBar";
 
 interface Props {
   slug?: string;
@@ -53,7 +54,7 @@ export default function PublicSiteView({ slug }: Props) {
   }
 
   return (
-    <div className={fontClass}>
+    <div className={`${fontClass} pb-16 md:pb-0`}>
       {/* Read-only public NavBar */}
       <nav className="sticky top-0 z-20 bg-white border-b border-gray-100 px-8 py-3 flex items-center justify-between shadow-sm">
         <div className="flex items-center gap-2">
@@ -117,6 +118,10 @@ export default function PublicSiteView({ slug }: Props) {
           />
         ))
       )}
+      <StickyContactBar
+        primaryColor={config.primaryColor}
+        contactUrl={config.navLinks.find((l) => l.url.includes("contact"))?.url ?? "/contact"}
+      />
     </div>
   );
 }

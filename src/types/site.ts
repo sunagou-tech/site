@@ -299,6 +299,28 @@ export interface ColumnBlock {
   layout: "grid" | "list";  // グリッドorリスト
 }
 
+/** 課題提起セクション（黄金の型 Step 2） */
+export interface ProblemItem { icon: string; title: string; desc: string; }
+export interface ProblemBlock {
+  id: string; type: "problem";
+  eyebrow: string;
+  heading: string;
+  subheading: string;
+  items: ProblemItem[];
+}
+
+/** 解決策セクション（黄金の型 Step 3） */
+export interface SolutionItem { text: string; }
+export interface SolutionBlock {
+  id: string; type: "solution";
+  eyebrow: string;
+  heading: string;
+  body: string;
+  items: SolutionItem[];
+  imageUrl: string;
+  buttonText: string; buttonUrl: string;
+}
+
 /** パターンH: 大文字装飾 + エディトリアルタイポグラフィ */
 export interface HeroTypoBlock {
   id: string; type: "hero-typo";
@@ -477,7 +499,9 @@ export type SectionBlock =
   | HeroDarkBlock
   | HeroMosaicBlock
   | HeroJapaneseBlock
-  | HeroDiagonalBlock;
+  | HeroDiagonalBlock
+  | ProblemBlock
+  | SolutionBlock;
 
 export type BlockType = SectionBlock["type"];
 
@@ -868,6 +892,30 @@ export const BLOCK_DEFAULTS: Record<BlockType, () => SectionBlock> = {
     text: "新サービス「エンタープライズプラン」の提供を開始しました。",
     linkText: "詳細を見る →",
   }),
+  problem: () => ({
+    id: uid(), type: "problem",
+    eyebrow: "PROBLEM",
+    heading: "こんなお悩みは\nありませんか？",
+    subheading: "多くの企業様からこのようなご相談をいただいています",
+    items: [
+      { icon: "😰", title: "集客できていない", desc: "Webサイトはあるのに問い合わせが来ない。何が悪いのかわからない。" },
+      { icon: "😤", title: "競合との差別化ができない", desc: "同業他社との違いをうまく伝えられず、価格競争に巻き込まれている。" },
+      { icon: "😓", title: "コストが見合わない", desc: "広告費をかけても効果が出ない。投資対効果が見えにくい。" },
+    ],
+  }),
+  solution: () => ({
+    id: uid(), type: "solution",
+    eyebrow: "SOLUTION",
+    heading: "私たちが\nすべて解決します。",
+    body: "10年以上の実績と500社以上の支援経験を持つ私たちが、\nお客様の課題を根本から解決するソリューションをご提供します。",
+    items: [
+      { text: "徹底したヒアリングで本質的な課題を特定" },
+      { text: "業界最適な戦略とコンテンツで差別化を実現" },
+      { text: "導入後も継続的なサポートで成果を保証" },
+    ],
+    imageUrl: "https://picsum.photos/seed/solution/800/600",
+    buttonText: "詳しく見る", buttonUrl: "/services",
+  }),
   "hero-typo": () => ({
     id: uid(), type: "hero-typo",
     kanjiDecor: "革新",
@@ -1017,6 +1065,8 @@ export const BLOCK_META: {
   { type: "hero-mosaic",    label: "HeroL：モザイク",       desc: "4枚のモザイク写真グリッド + テキスト",        category: "ヒーロー" },
   { type: "hero-japanese",  label: "HeroM：日本的ミニマル", desc: "漢字一文字 + 縦書き風 + 和の余白",            category: "ヒーロー" },
   { type: "hero-diagonal",  label: "HeroN：ダイアゴナル",   desc: "斜めカットの写真 + ダイナミックレイアウト",    category: "ヒーロー" },
+  { type: "problem",  label: "課題提起",  desc: "「こんなお悩みはありませんか？」3つのペインポイントカード", category: "黄金の型" },
+  { type: "solution", label: "解決策",    desc: "チェックリスト形式で解決策を提示する信頼構築セクション",   category: "黄金の型" },
 ];
 
 // ─── デフォルト設定 ────────────────────────────────────────────
