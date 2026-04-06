@@ -822,10 +822,12 @@ export async function POST(req: NextRequest) {
     .map(m => `${m.role === "user" ? "ユーザー" : "AI"}: ${m.content}`)
     .join("\n\n");
 
+  // ストリーミングで受け取り → 全文集積 → JSON解析
   const upstream = await anthropicFetch({
     model: MODEL_GEN, max_tokens: 4096,
     system: GENERATE_SYSTEM,
     messages: [{ role: "user", content: buildGeneratePrompt(conversationText, analysisResult) }],
+    stream: true,
   });
 
   if (!upstream.ok) {
@@ -833,15 +835,33 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: err }, { status: upstream.status });
   }
 
-  const data     = await upstream.json();
-  const raw: string = data.content?.[0]?.text ?? "";
-  const match    = raw.match(/```json\s*([\s\S]*?)\s*```/);
-  const jsonStr  = match ? match[1] : raw;
+  // ストリームを読み切ってテキストを集積
+  const reader = upstream.body!.getReader();
+  const decoder = new TextDecoder();
+  let raw = "";
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    const chunk = decoder.decode(value, { stream: true });
+    for (const line of chunk.split("\n")) {
+      if (!line.startsWith("data: ")) continue;
+      const payload = line.slice(6).trim();
+      if (payload === "[DONE]") break;
+      try {
+        const evt = JSON.parse(payload);
+        if (evt.type === "content_block_delta" && evt.delta?.type === "text_delta") {
+          raw += evt.delta.text;
+        }
+      } catch { /* ignore */ }
+    }
+  }
+
+  const match   = raw.match(/```json\s*([\s\S]*?)\s*```/);
+  const jsonStr = match ? match[1] : raw;
 
   try {
     const parsed = JSON.parse(jsonStr) as SectionData;
 
-    // ── Pollinations.ai でヒーロー画像を自動生成 ─────────────
     if (!parsed.hero.imageUrl && parsed.hero.heroImagePrompt) {
       const prompt = encodeURIComponent(
         parsed.hero.heroImagePrompt + ", photorealistic, 4k, no watermark"
