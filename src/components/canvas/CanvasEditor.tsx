@@ -356,7 +356,75 @@ const BLOCK_TEMPLATES: BlockTemplate[] = [
       return els;
     },
   },
-  // ── Footer ──
+  // ── スライドショー ──
+  {
+    id: "slideshow", name: "スライドショー", desc: "3枚スライド・矢印ナビ付き", category: "コンテンツ", emoji: "🎠",
+    thumb: { bg: "#1E293B", accent: "#38BDF8", layout: "center" },
+    create: (y, CW) => [
+      mkEl("rect", 0, y, CW, 520, { zIndex: 0, style: { backgroundColor: "#1E293B" } }),
+      mkEl("text", Math.round(CW/2-200), y+40, 400, 36, { html: "SLIDE 1", zIndex: 2, style: { fontSize: 12, color: "#38BDF8", textAlign: "center", fontWeight: "700", letterSpacing: "0.2em" } }),
+      mkEl("text", Math.round(CW/2-360), y+90, 720, 80, { html: "スライド1のキャッチコピー", zIndex: 2, style: { fontSize: 52, color: "#FFFFFF", textAlign: "center", fontWeight: "bold", lineHeight: 1.2 } }),
+      mkEl("text", Math.round(CW/2-280), y+190, 560, 60, { html: "ここにサブテキストを入力。スライドごとに違うメッセージを表示できます。", zIndex: 2, style: { fontSize: 16, color: "#CBD5E1", textAlign: "center", lineHeight: 1.8 } }),
+      mkEl("button", Math.round(CW/2-120), y+280, 240, 56, { html: "詳しく見る →", href: "#", zIndex: 2, style: { fontSize: 16, fontWeight: "bold", color: "#FFFFFF", backgroundColor: "#38BDF8", borderRadius: 8, textAlign: "center" } }),
+      // ドット（スライドインジケーター）
+      mkEl("rect", Math.round(CW/2-40), y+460, 20, 20, { zIndex: 2, style: { backgroundColor: "#38BDF8", borderRadius: 10 } }),
+      mkEl("rect", Math.round(CW/2-10), y+460, 20, 20, { zIndex: 2, style: { backgroundColor: "#475569", borderRadius: 10 } }),
+      mkEl("rect", Math.round(CW/2+20), y+460, 20, 20, { zIndex: 2, style: { backgroundColor: "#475569", borderRadius: 10 } }),
+      // 矢印ボタン
+      mkEl("button", 20, y+220, 56, 56, { html: "‹", zIndex: 2, style: { fontSize: 32, color: "#FFFFFF", backgroundColor: "#334155", borderRadius: 28, textAlign: "center" } }),
+      mkEl("button", CW-76, y+220, 56, 56, { html: "›", zIndex: 2, style: { fontSize: 32, color: "#FFFFFF", backgroundColor: "#334155", borderRadius: 28, textAlign: "center" } }),
+    ],
+  },
+  // ── お知らせ ──
+  {
+    id: "news", name: "お知らせ・新着情報", desc: "日付付きニュースリスト", category: "コンテンツ", emoji: "📰",
+    thumb: { bg: "#FFFFFF", accent: "#2563EB", layout: "minimal" },
+    create: (y, CW) => [
+      mkEl("rect", 0, y, CW, 500, { zIndex: 0, style: { backgroundColor: "#FFFFFF" } }),
+      mkEl("text", Math.round(CW/2-200), y+50, 400, 52, { html: "お知らせ", zIndex: 2, style: { fontSize: 36, color: "#111827", textAlign: "center", fontWeight: "bold" } }),
+      mkEl("text", Math.round(CW/2-60), y+108, 120, 24, { html: "NEWS", zIndex: 2, style: { fontSize: 12, color: "#2563EB", textAlign: "center", fontWeight: "700", letterSpacing: "0.2em" } }),
+      // 仕切り線
+      mkEl("rect", Math.round(CW/2-300), y+150, 600, 1, { zIndex: 1, style: { backgroundColor: "#E5E7EB" } }),
+      // ニュースアイテム×4
+      ...[
+        { date: "2024.12.01", tag: "新着", text: "新サービスの提供を開始しました" },
+        { date: "2024.11.15", tag: "お知らせ", text: "年末年始の営業時間についてのご案内" },
+        { date: "2024.11.01", tag: "イベント", text: "無料セミナーを開催します（定員20名）" },
+        { date: "2024.10.20", tag: "プレス", text: "〇〇メディアに取材記事が掲載されました" },
+      ].flatMap((item, i) => [
+        mkEl("text", Math.round(CW/2-300), y+165+i*64, 100, 32, { html: item.date, zIndex: 2, style: { fontSize: 13, color: "#6B7280" } }),
+        mkEl("rect", Math.round(CW/2-188), y+170+i*64, 56, 22, { zIndex: 2, style: { backgroundColor: "#DBEAFE", borderRadius: 4 } }),
+        mkEl("text", Math.round(CW/2-188), y+170+i*64, 56, 22, { html: item.tag, zIndex: 3, style: { fontSize: 11, color: "#2563EB", fontWeight: "700", textAlign: "center" } }),
+        mkEl("text", Math.round(CW/2-120), y+165+i*64, 420, 32, { html: item.text, zIndex: 2, style: { fontSize: 15, color: "#111827" } }),
+        mkEl("rect", Math.round(CW/2-300), y+220+i*64, 600, 1, { zIndex: 1, style: { backgroundColor: "#F3F4F6" } }),
+      ]),
+      mkEl("button", Math.round(CW/2-80), y+440, 160, 40, { html: "一覧を見る →", href: "#", zIndex: 2, style: { fontSize: 14, color: "#2563EB", backgroundColor: "transparent", borderRadius: 8, textAlign: "center" } }),
+    ],
+  },
+  // ── こんなお悩みありませんか ──
+  {
+    id: "problem", name: "こんなお悩み", desc: "悩み共感3列カード", category: "コンテンツ", emoji: "😟",
+    thumb: { bg: "#F8FAFC", accent: "#EF4444", layout: "cards" },
+    create: (y, CW) => [
+      mkEl("rect", 0, y, CW, 480, { zIndex: 0, style: { backgroundColor: "#F8FAFC" } }),
+      mkEl("text", Math.round(CW/2-300), y+50, 600, 52, { html: "こんなお悩みありませんか？", zIndex: 2, style: { fontSize: 36, color: "#111827", textAlign: "center", fontWeight: "bold" } }),
+      ...[
+        { emoji: "😰", text: "毎日忙しくて\n時間が全然足りない" },
+        { emoji: "💸", text: "コストは下げたいが\n品質は妥協したくない" },
+        { emoji: "😕", text: "何から始めれば\nいいか分からない" },
+      ].map((item, i) => {
+        const cardW = Math.round((CW - 160) / 3);
+        const cardX = 80 + i * (cardW + 40);
+        return [
+          mkEl("rect", cardX, y+130, cardW, 280, { zIndex: 1, style: { backgroundColor: "#FFFFFF", borderRadius: 16, boxShadow: "0 4px 24px rgba(0,0,0,0.08)" } }),
+          mkEl("text", cardX, y+165, cardW, 56, { html: item.emoji, zIndex: 2, style: { fontSize: 44, textAlign: "center" } }),
+          mkEl("text", cardX+20, y+235, cardW-40, 80, { html: item.text.replace("\n", "<br>"), zIndex: 2, style: { fontSize: 18, color: "#111827", textAlign: "center", fontWeight: "bold", lineHeight: 1.6 } }),
+          mkEl("rect", cardX+cardW/2-16, y+335, 32, 4, { zIndex: 2, style: { backgroundColor: "#EF4444", borderRadius: 2 } }),
+        ];
+      }).flat(),
+    ],
+  },
+  // ── フッター ──
   {
     id: "footer", name: "フッター", desc: "ダークフッター", category: "CTA・その他", emoji: "📌",
     thumb: { bg: "#0F172A", accent: "#6366F1", layout: "minimal" },
@@ -527,11 +595,17 @@ export default function CanvasEditor({ config, onChange }: Props) {
   // ── Add block template ───────────────────────────────────
   function addBlock(tpl: BlockTemplate) {
     const maxY = elements.length > 0 ? Math.max(...elements.map(e => e.y + e.height)) : 0;
-    const newEls = tpl.create(maxY + 20, CW);
+    const blockId = uid();
+    const newEls = tpl.create(maxY + 20, CW).map(el => ({ ...el, blockId }));
     onChange({ ...config, elements: [...elements, ...newEls] });
-    // Select the background rect of the new block
     if (newEls.length > 0) setSelectedId(newEls[0].id);
   }
+
+  // ── Delete entire block ───────────────────────────────────
+  const deleteBlock = useCallback((blockId: string) => {
+    onChange({ ...config, elements: (config.elements ?? []).filter(e => e.blockId !== blockId) });
+    setSelectedId(null); setEditingId(null);
+  }, [config, onChange]);
 
   // ── Keyboard ─────────────────────────────────────────────
   useEffect(() => {
@@ -707,6 +781,7 @@ export default function CanvasEditor({ config, onChange }: Props) {
             onUpdateStyle={patch => updateStyle(selectedEl.id, patch)}
             onUpdateEl={patch => updateEl(selectedEl.id, patch)}
             onDelete={() => deleteEl(selectedEl.id)}
+            onDeleteBlock={selectedEl.blockId ? () => deleteBlock(selectedEl.blockId!) : undefined}
             onBringForward={() => updateEl(selectedEl.id, { zIndex: (selectedEl.zIndex ?? 0) + 1 })}
             onSendBack={() => updateEl(selectedEl.id, { zIndex: Math.max(0, (selectedEl.zIndex ?? 0) - 1) })}
           />
@@ -778,6 +853,7 @@ interface RightPanelProps {
   onUpdateStyle: (patch: Partial<CanvasElement["style"]>) => void;
   onUpdateEl: (patch: Partial<CanvasElement>) => void;
   onDelete: () => void;
+  onDeleteBlock?: () => void;
   onBringForward: () => void;
   onSendBack: () => void;
 }
@@ -802,7 +878,7 @@ function NumberInput({ value, onChange, min, max, unit }: { value: number; onCha
   );
 }
 
-function RightPanel({ element: el, onUpdateStyle, onUpdateEl, onDelete, onBringForward, onSendBack }: RightPanelProps) {
+function RightPanel({ element: el, onUpdateStyle, onUpdateEl, onDelete, onDeleteBlock, onBringForward, onSendBack }: RightPanelProps) {
   const s = el.style;
   const TYPE_LABEL: Record<CanvasElementType, string> = { text: "テキスト", image: "画像", button: "ボタン", rect: "図形/背景" };
   const TYPE_COLOR: Record<CanvasElementType, string> = { text: "#EEF2FF", image: "#F0FDF4", button: "#FFF7ED", rect: "#FAF5FF" };
@@ -815,10 +891,18 @@ function RightPanel({ element: el, onUpdateStyle, onUpdateEl, onDelete, onBringF
         <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 8px", borderRadius: 999, background: TYPE_COLOR[el.type], color: TYPE_TEXT[el.type] }}>
           {TYPE_LABEL[el.type]}
         </span>
-        <button onClick={onDelete}
-          style={{ fontSize: 11, color: "#EF4444", background: "#FEF2F2", border: "1px solid #FCA5A5", borderRadius: 6, padding: "3px 8px", cursor: "pointer", fontWeight: 600 }}>
-          削除
-        </button>
+        <div style={{ display: "flex", gap: 4 }}>
+          {onDeleteBlock && (
+            <button onClick={onDeleteBlock}
+              style={{ fontSize: 11, color: "#DC2626", background: "#FEE2E2", border: "1px solid #FCA5A5", borderRadius: 6, padding: "3px 8px", cursor: "pointer", fontWeight: 700 }}>
+              ブロック削除
+            </button>
+          )}
+          <button onClick={onDelete}
+            style={{ fontSize: 11, color: "#EF4444", background: "#FEF2F2", border: "1px solid #FCA5A5", borderRadius: 6, padding: "3px 8px", cursor: "pointer", fontWeight: 600 }}>
+            要素削除
+          </button>
+        </div>
       </div>
 
       {/* Scrollable body */}

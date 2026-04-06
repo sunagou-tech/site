@@ -704,6 +704,7 @@ export interface CanvasElement {
   style: CanvasElementStyle;
   zIndex?: number;
   locked?: boolean;
+  blockId?: string; // ブロックグループID（同じblockIdの要素をまとめて削除）
 }
 
 export interface SiteConfig {
