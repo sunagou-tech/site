@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GlobalStyle } from "@/types/site";
 
-export const maxDuration = 10; // Vercel Pro: 最大60秒
+export const runtime = "edge";
+export const maxDuration = 30; // Vercel Pro: 最大60秒
 
 const API_KEY = process.env.ANTHROPIC_API_KEY ?? "";
 

@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GlobalStyle, CanvasElement, uid } from "@/types/site";
 
-export const maxDuration = 10;
+export const runtime = "edge";
+export const maxDuration = 30;
 
 const API_KEY      = process.env.ANTHROPIC_API_KEY ?? "";
 const MODEL_CHAT   = "claude-haiku-4-5-20251001"; // チャット用（軽量・高速）
