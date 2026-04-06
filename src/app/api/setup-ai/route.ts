@@ -720,7 +720,7 @@ export async function POST(req: NextRequest) {
 
   // ストリーミングで受け取り → 全文集積 → JSON解析
   const upstream = await anthropicFetch({
-    model: MODEL_GEN, max_tokens: 2048,
+    model: MODEL_GEN, max_tokens: 3072,
     system: GENERATE_SYSTEM,
     messages: [{ role: "user", content: buildGeneratePrompt(conversationText, analysisResult) }],
     stream: true,
@@ -731,18 +731,21 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: err }, { status: upstream.status });
   }
 
-  // ストリームを読み切ってテキストを集積
+  // ストリームを読み切ってテキストを集積（行バッファリング対応）
   const reader = upstream.body!.getReader();
   const decoder = new TextDecoder();
   let raw = "";
+  let lineBuffer = "";
   while (true) {
     const { done, value } = await reader.read();
     if (done) break;
-    const chunk = decoder.decode(value, { stream: true });
-    for (const line of chunk.split("\n")) {
+    lineBuffer += decoder.decode(value, { stream: true });
+    const lines = lineBuffer.split("\n");
+    lineBuffer = lines.pop() ?? ""; // 末尾の不完全な行をバッファに残す
+    for (const line of lines) {
       if (!line.startsWith("data: ")) continue;
       const payload = line.slice(6).trim();
-      if (payload === "[DONE]") break;
+      if (payload === "[DONE]") continue;
       try {
         const evt = JSON.parse(payload);
         if (evt.type === "content_block_delta" && evt.delta?.type === "text_delta") {
@@ -752,8 +755,9 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  const match   = raw.match(/```json\s*([\s\S]*?)\s*```/);
-  const jsonStr = match ? match[1] : raw;
+  // JSON抽出（```json...``` 形式 or 直接JSON）
+  const match   = raw.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+  const jsonStr = match ? match[1] : raw.trim();
 
   try {
     const parsed = JSON.parse(jsonStr) as SectionData;
