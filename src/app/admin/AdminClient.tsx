@@ -1,12 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { defaultConfig, SectionBlock, SiteConfig, SitePage, uid, BLOCK_DEFAULTS } from "@/types/site";
-import Sidebar from "@/components/admin/Sidebar";
-import SitePreview from "@/components/preview/SitePreview";
-import BlockInsertModal from "@/components/admin/BlockInsertModal";
-import ArticlePanel from "@/components/admin/ArticlePanel";
-import { RefreshCw, ExternalLink, FileText, Plus, Layout, Globe, Check, AlertCircle } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { defaultConfig, SiteConfig, SitePage, uid } from "@/types/site";
+import CanvasEditor from "@/components/canvas/CanvasEditor";
+import { RefreshCw, ExternalLink, Plus, Layout, Globe, Check, AlertCircle } from "lucide-react";
 import { EditingContext } from "@/contexts/EditingContext";
 import { publishSite, isSupabaseConfigured } from "@/lib/supabase";
 
@@ -19,16 +16,12 @@ function toSlug(title: string) {
 export default function AdminClient() {
   const [config, setConfig] = useState<SiteConfig>(defaultConfig);
   const [activePageId, setActivePageId] = useState<string>("home");
-  const [activeTab, setActiveTab] = useState<"edit" | "articles">("edit");
-  const [insertAt, setInsertAt] = useState<number | null>(null);
   const [renamingPageId, setRenamingPageId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState("");
 
   // Slug for Supabase publish
   const [siteSlug, setSiteSlug] = useState("");
   const [editingSlug, setEditingSlug] = useState(false);
-
-  const [showGoldenConfirm, setShowGoldenConfirm] = useState(false);
 
   // Publish state
   const [publishing, setPublishing] = useState(false);
@@ -38,16 +31,24 @@ export default function AdminClient() {
   // Load from localStorage on mount
   useEffect(() => {
     const saved = localStorage.getItem("site-config");
-    if (saved) try { setConfig(JSON.parse(saved)); } catch {}
+    if (saved) try {
+      const sanitized = saved.replace(/https:\/\/picsum\.photos[^"]*/g, "");
+      setConfig(JSON.parse(sanitized));
+    } catch {}
     const savedSlug = localStorage.getItem("site-slug");
     if (savedSlug) setSiteSlug(savedSlug);
   }, []);
 
-  // Auto-save config to localStorage
+  // Debounced auto-save — 800ms after last change
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
-    localStorage.setItem("site-config", JSON.stringify(config));
     if (!siteSlug) setSiteSlug(toSlug(config.title));
-  }, [config]);
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(() => {
+      localStorage.setItem("site-config", JSON.stringify(config));
+    }, 800);
+    return () => { if (saveTimerRef.current) clearTimeout(saveTimerRef.current); };
+  }, [config]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (siteSlug) localStorage.setItem("site-slug", siteSlug);
@@ -57,41 +58,6 @@ export default function AdminClient() {
     { id: "home", slug: "", title: "ホーム", isHome: true },
     ...config.pages.map((p) => ({ id: p.id, slug: p.slug, title: p.title, isHome: false })),
   ];
-  const activePage = allPageTabs.find((p) => p.id === activePageId) ?? allPageTabs[0];
-
-  function getActiveSections(): SectionBlock[] {
-    if (activePage.isHome) return config.sections;
-    return config.pages.find((p) => p.id === activePageId)?.sections ?? [];
-  }
-
-  function updateActiveSections(newConfig: SiteConfig) {
-    if (activePage.isHome) {
-      setConfig(newConfig);
-    } else {
-      setConfig({
-        ...config,
-        title: newConfig.title, primaryColor: newConfig.primaryColor,
-        accentColor: newConfig.accentColor, fontFamily: newConfig.fontFamily,
-        catchCopy: newConfig.catchCopy, navLinks: newConfig.navLinks,
-        pages: config.pages.map((p) =>
-          p.id === activePageId ? { ...p, sections: newConfig.sections } : p
-        ),
-        articles: config.articles,
-      });
-    }
-  }
-
-  function handleInsert(block: SectionBlock) {
-    if (insertAt === null) return;
-    const next = [...getActiveSections()];
-    next.splice(insertAt, 0, block);
-    if (activePage.isHome) {
-      setConfig({ ...config, sections: next });
-    } else {
-      setConfig({ ...config, pages: config.pages.map((p) => p.id === activePageId ? { ...p, sections: next } : p) });
-    }
-    setInsertAt(null);
-  }
 
   function addPage() {
     const newPage: SitePage = {
@@ -99,7 +65,7 @@ export default function AdminClient() {
       title: `新しいページ ${config.pages.length + 1}`, sections: [],
     };
     setConfig({ ...config, pages: [...config.pages, newPage] });
-    setActivePageId(newPage.id); setActiveTab("edit");
+    setActivePageId(newPage.id);
   }
 
   function deletePage(pageId: string) {
@@ -120,26 +86,6 @@ export default function AdminClient() {
     setRenamingPageId(null);
   }
 
-  function applyGoldenTemplate() {
-    const goldenSections = [
-      BLOCK_DEFAULTS["hero-photo"](),
-      BLOCK_DEFAULTS.problem(),
-      BLOCK_DEFAULTS.solution(),
-      BLOCK_DEFAULTS.features(),
-      BLOCK_DEFAULTS.steps(),
-      BLOCK_DEFAULTS.testimonials(),
-      BLOCK_DEFAULTS.faq(),
-      BLOCK_DEFAULTS.cta(),
-      BLOCK_DEFAULTS.footer(),
-    ];
-    if (activePage.isHome) {
-      setConfig({ ...config, sections: goldenSections });
-    } else {
-      setConfig({ ...config, pages: config.pages.map((p) => p.id === activePageId ? { ...p, sections: goldenSections } : p) });
-    }
-    setShowGoldenConfirm(false);
-  }
-
   async function handlePublish() {
     if (!siteSlug) return;
     setPublishing(true);
@@ -158,21 +104,20 @@ export default function AdminClient() {
     }
   }
 
-  const previewConfig: SiteConfig = { ...config, sections: getActiveSections() };
   const publishUrl = typeof window !== "undefined" ? `${window.location.origin}/sites/${siteSlug}` : `/sites/${siteSlug}`;
 
   return (
     <EditingContext.Provider value={true}>
-      <div className="flex flex-col h-screen bg-gray-50">
+      <div style={{ display: "flex", flexDirection: "column", height: "100vh", overflow: "hidden" }}>
         {/* ─── Top bar ─────────────────────────────────── */}
-        <header className="h-12 bg-gray-900 text-white flex items-center gap-3 px-4 shrink-0">
+        <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "0 16px", background: "#111827", color: "#fff", height: 48, flexShrink: 0, minWidth: 0, overflow: "hidden" }}>
           <div className="flex items-center gap-2 flex-shrink-0">
             <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
             <span className="text-sm font-semibold">Site Builder</span>
           </div>
 
           {/* Page tabs */}
-          <div className="flex items-center gap-1 flex-1 overflow-x-auto min-w-0">
+          <div style={{ display: "flex", alignItems: "center", gap: 4, flex: 1, overflowX: "auto", minWidth: 0 }}>
             {allPageTabs.map((page) => (
               <div key={page.id} className="relative group/tab flex-shrink-0">
                 {renamingPageId === page.id ? (
@@ -183,10 +128,10 @@ export default function AdminClient() {
                     className="text-xs bg-white/20 text-white rounded px-2 py-1 outline-none border border-white/40 w-28" />
                 ) : (
                   <button
-                    onClick={() => { setActivePageId(page.id); setActiveTab("edit"); }}
+                    onClick={() => setActivePageId(page.id)}
                     onDoubleClick={() => !page.isHome && (setRenamingPageId(page.id), setRenameValue(page.title))}
                     className={`text-xs px-3 py-1.5 rounded-md flex items-center gap-1.5 transition-colors whitespace-nowrap ${
-                      activePageId === page.id && activeTab === "edit"
+                      activePageId === page.id
                         ? "bg-white/20 text-white" : "text-gray-400 hover:text-white hover:bg-white/10"
                     }`}
                   >
@@ -196,7 +141,7 @@ export default function AdminClient() {
                 {!page.isHome && renamingPageId !== page.id && (
                   <button onClick={() => deletePage(page.id)}
                     className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-red-500 text-white hidden group-hover/tab:flex items-center justify-center text-[8px] z-10">
-                    ✕
+                    x
                   </button>
                 )}
               </div>
@@ -205,22 +150,10 @@ export default function AdminClient() {
               className="text-xs text-gray-500 hover:text-white px-2 py-1.5 rounded-md hover:bg-white/10 flex items-center gap-1 flex-shrink-0 transition-colors">
               <Plus size={10} /> 追加
             </button>
-
-            <div className="w-px h-4 bg-gray-700 mx-1 flex-shrink-0" />
-
-            <button onClick={() => setActiveTab(activeTab === "articles" ? "edit" : "articles")}
-              className={`text-xs px-3 py-1.5 rounded-md flex items-center gap-1.5 flex-shrink-0 transition-colors whitespace-nowrap ${
-                activeTab === "articles" ? "bg-indigo-600 text-white" : "text-gray-400 hover:text-white hover:bg-white/10"
-              }`}>
-              <FileText size={10} /> 記事管理
-              {config.articles.length > 0 && (
-                <span className="text-[9px] bg-white/20 px-1.5 py-0.5 rounded-full">{config.articles.length}</span>
-              )}
-            </button>
           </div>
 
           {/* Right side: slug + publish */}
-          <div className="flex items-center gap-2 flex-shrink-0">
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
             {/* Site slug editor */}
             <div className="flex items-center gap-1.5 bg-gray-800 rounded-lg px-2.5 py-1.5">
               <Globe size={10} className="text-gray-400 flex-shrink-0" />
@@ -245,13 +178,21 @@ export default function AdminClient() {
               )}
             </div>
 
-            <button
-              onClick={() => setShowGoldenConfirm(true)}
-              className="flex items-center gap-1.5 text-xs text-yellow-400 hover:text-yellow-300 px-3 py-1.5 rounded hover:bg-gray-700 transition-colors border border-yellow-400/30"
-              title="Hero→課題→解決策→特徴→ステップ→お客様の声→FAQ→CTAを自動配置"
+            <a
+              href="/admin/column"
+              className="flex items-center gap-1.5 text-xs text-emerald-300 hover:text-emerald-200 px-3 py-1.5 rounded hover:bg-gray-700 transition-colors border border-emerald-400/30"
+              title="コラム記事の作成・SEO管理"
             >
-              ⚡ 黄金の型
-            </button>
+              📝 コラム
+            </a>
+
+            <a
+              href="/admin/setup"
+              className="flex items-center gap-1.5 text-xs text-violet-300 hover:text-violet-200 px-3 py-1.5 rounded hover:bg-gray-700 transition-colors border border-violet-400/30"
+              title="AIヒアリングでサイトを自動生成"
+            >
+              AI生成
+            </a>
 
             <button onClick={() => setConfig(defaultConfig)}
               className="flex items-center gap-1.5 text-xs text-gray-300 hover:text-white px-3 py-1.5 rounded hover:bg-gray-700 transition-colors">
@@ -280,7 +221,7 @@ export default function AdminClient() {
               )}
             </button>
           </div>
-        </header>
+        </div>
 
         {/* ─── Publish success banner ──────────────────── */}
         {publishStatus === "success" && (
@@ -306,47 +247,9 @@ export default function AdminClient() {
         )}
 
         {/* ─── Main layout ─────────────────────────────── */}
-        <div className="flex flex-1 overflow-hidden">
-          {activeTab === "articles" ? (
-            <ArticlePanel config={config} onConfigChange={setConfig} />
-          ) : (
-            <>
-              <Sidebar config={previewConfig} onChange={updateActiveSections} onInsertRequest={setInsertAt} />
-              <SitePreview config={previewConfig} onConfigChange={updateActiveSections} onInsertRequest={setInsertAt} />
-            </>
-          )}
+        <div style={{ display: "flex", flex: 1, overflow: "hidden", minHeight: 0 }}>
+          <CanvasEditor config={config} onChange={setConfig} />
         </div>
-
-        {insertAt !== null && (
-          <BlockInsertModal onInsert={handleInsert} onClose={() => setInsertAt(null)} />
-        )}
-
-        {showGoldenConfirm && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center">
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowGoldenConfirm(false)} />
-            <div className="relative bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4">
-              <h3 className="text-lg font-bold text-gray-900 mb-2">⚡ 黄金の型を適用</h3>
-              <p className="text-sm text-gray-600 mb-1">以下のセクション構成を自動配置します：</p>
-              <div className="bg-gray-50 rounded-xl p-4 mb-6 space-y-1">
-                {["① Hero（ファーストビュー）", "② Problem（課題提起）", "③ Solution（解決策）", "④ Features（特徴・強み）", "⑤ Steps（ご利用の流れ）", "⑥ Voice（お客様の声）", "⑦ FAQ（よくある質問）", "⑧ CTA（お問い合わせ）", "⑨ Footer"].map((s) => (
-                  <p key={s} className="text-xs text-gray-600">{s}</p>
-                ))}
-              </div>
-              <p className="text-xs text-red-500 mb-5">⚠️ 現在のセクションは置き換えられます</p>
-              <div className="flex gap-3">
-                <button onClick={applyGoldenTemplate}
-                  className="flex-1 py-3 text-sm font-bold text-white rounded-xl"
-                  style={{ backgroundColor: "#1a1a2e" }}>
-                  適用する
-                </button>
-                <button onClick={() => setShowGoldenConfirm(false)}
-                  className="flex-1 py-3 text-sm text-gray-600 border border-gray-200 rounded-xl hover:bg-gray-50">
-                  キャンセル
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </EditingContext.Provider>
   );

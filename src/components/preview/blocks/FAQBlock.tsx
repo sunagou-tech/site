@@ -61,7 +61,7 @@ export default function FAQBlockComponent({ block, config, onChange }: Props) {
     config.fontFamily === "serif" ? "font-serif" : config.fontFamily === "mono" ? "font-mono" : "font-sans";
 
   return (
-    <section className="bg-[#fafafa] py-20 px-8">
+    <section className="bg-[#fafafa] py-28 px-8">
       <div className="max-w-3xl mx-auto">
         {/* Header */}
         <div className="mb-12">

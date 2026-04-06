@@ -1,5 +1,13 @@
 export type FontFamily = "sans" | "serif" | "mono";
 
+/** アイコン値（絵文字 / Lucideアイコン / 画像URL のいずれか） */
+export interface IconValue {
+  kind: "emoji" | "lucide" | "image";
+  value: string;
+  /** 表示サイズ（px）。絵文字・Lucide はフォント/アイコンサイズ、画像は幅 */
+  size?: number;
+}
+
 // ─── ユーティリティ ────────────────────────────────────────────
 export function uid(): string {
   return Math.random().toString(36).slice(2, 9);
@@ -120,7 +128,7 @@ export interface StatsBlock {
   items: [StatItem, StatItem, StatItem, StatItem];
 }
 
-export interface FeatureItem { emoji: string; title: string; desc: string; }
+export interface FeatureItem { icon: IconValue; title: string; desc: string; }
 export interface FeaturesBlock {
   id: string;
   type: "features";
@@ -234,13 +242,16 @@ export interface TimelineBlock {
 /** 2列CTA（法人向け/個人向けなど） */
 export interface TwoColCtaBlock {
   id: string; type: "two-col-cta";
+  leftIcon: IconValue;
   leftHeading: string; leftBody: string; leftButtonText: string; leftButtonUrl: string;
+  rightIcon: IconValue;
   rightHeading: string; rightBody: string; rightButtonText: string; rightButtonUrl: string;
 }
 
 /** メルマガ・リード獲得 */
 export interface NewsletterBlock {
   id: string; type: "newsletter";
+  icon: IconValue;
   heading: string; body: string;
   placeholder: string; buttonText: string;
 }
@@ -300,7 +311,7 @@ export interface ColumnBlock {
 }
 
 /** 課題提起セクション（黄金の型 Step 2） */
-export interface ProblemItem { icon: string; title: string; desc: string; }
+export interface ProblemItem { icon: IconValue; title: string; desc: string; }
 export interface ProblemBlock {
   id: string; type: "problem";
   eyebrow: string;
@@ -319,6 +330,65 @@ export interface SolutionBlock {
   items: SolutionItem[];
   imageUrl: string;
   buttonText: string; buttonUrl: string;
+}
+
+// ─── 自由ブロック（Free Block）要素定義 ───────────────────────────
+
+export interface FreeTextElement {
+  id: string; kind: "text";
+  tag: "h2" | "h3" | "h4" | "p" | "lead";
+  content: string;
+  align: "left" | "center" | "right";
+  fontSize: string; // e.g. "text-base", "text-2xl"
+  fontWeight: "normal" | "medium" | "semibold" | "bold" | "black";
+  color: string;    // "" = inherit, or hex
+  fontSizePx?: number; // フローティングツールバーで設定したピクセルサイズ（設定時は fontSize より優先）
+}
+
+export interface FreeImageElement {
+  id: string; kind: "image";
+  url: string; alt: string;
+  widthPct: number;  // 25 | 33 | 50 | 67 | 75 | 100
+  align: "left" | "center" | "right";
+  rounded: boolean; shadow: boolean;
+}
+
+export interface FreeHtmlElement {
+  id: string; kind: "html";
+  code: string;
+}
+
+export interface ChartRow { name: string; [key: string]: string | number; }
+export interface ChartKey { key: string; color: string; label: string; }
+
+export interface FreeChartElement {
+  id: string; kind: "chart";
+  chartType: "bar" | "line" | "area" | "pie";
+  title: string;
+  height: number;
+  data: ChartRow[];
+  dataKeys: ChartKey[];
+}
+
+export interface FreeSpacerElement {
+  id: string; kind: "spacer";
+  height: number; // px: 16,32,48,64,80,96,128
+}
+
+export type FreeElement =
+  | FreeTextElement
+  | FreeImageElement
+  | FreeHtmlElement
+  | FreeChartElement
+  | FreeSpacerElement;
+
+export interface FreeBlock {
+  id: string; type: "free";
+  label: string;
+  background: string;   // hex or "" (white)
+  paddingY: string;     // "py-12" | "py-20" | "py-28" | "py-36"
+  maxWidth: string;     // "max-w-3xl" | "max-w-4xl" | "max-w-5xl" | "max-w-6xl" | "max-w-full"
+  elements: FreeElement[];
 }
 
 /** パターンH: 大文字装飾 + エディトリアルタイポグラフィ */
@@ -501,7 +571,8 @@ export type SectionBlock =
   | HeroJapaneseBlock
   | HeroDiagonalBlock
   | ProblemBlock
-  | SolutionBlock;
+  | SolutionBlock
+  | FreeBlock;
 
 export type BlockType = SectionBlock["type"];
 
@@ -532,9 +603,109 @@ export interface Article {
   imageUrl: string;
   author: string;
   published: boolean;
+  // SEO
+  metaTitle?: string;         // titleタグ（未設定時はtitleを使用）
+  metaDescription?: string;   // meta description（未設定時はexcerptを使用）
+  keywords?: string;          // カンマ区切りキーワード
+  ogImage?: string;           // OGP画像URL（未設定時はimageUrlを使用）
+  canonicalUrl?: string;      // canonical URL（未設定時は自動生成）
+  noindex?: boolean;          // 検索エンジンにインデックスさせない
 }
 
 // ─── グローバル設定 ────────────────────────────────────────────
+export interface BlockStyle {
+  bgColor?: string;   // 背景色 (hex)
+  bgImage?: string;   // 背景画像 URL
+  bgSize?: "cover" | "contain" | "auto";
+  bgOpacity?: number; // 0–100
+}
+
+/**
+ * 参考サイト解析 / AI が抽出したグローバルデザインルール
+ * SiteConfig.globalStyle に保存し、GlobalStyleInjector が <style> タグで適用する
+ */
+export interface GlobalStyle {
+  // ── フォント ─────────────────────────────────────────
+  headingFont?: string;          // 例: "Noto Serif JP"
+  bodyFont?: string;             // 例: "Noto Sans JP"
+  googleFontsUrl?: string;       // 自動生成または参考サイトから抽出した URL
+
+  // ── タイポグラフィスケール ────────────────────────────
+  h1Size?: string;               // 例: "56px"
+  h2Size?: string;               // 例: "36px"
+  h3Size?: string;               // 例: "24px"
+  bodySize?: string;             // 例: "16px"
+  headingLineHeight?: number;    // 例: 1.15
+  bodyLineHeight?: number;       // 例: 1.85
+  headingLetterSpacing?: string; // 例: "-0.03em"
+  bodyLetterSpacing?: string;    // 例: "0.015em"
+  headingWeight?: number;        // 例: 700
+
+  // ── スペーシング ─────────────────────────────────────
+  sectionPaddingY?: string;      // 例: "128px"
+  containerMaxWidth?: string;    // 例: "1200px"
+
+  // ── ビジュアル ───────────────────────────────────────
+  cardBorderRadius?: string;     // 例: "16px"
+
+  // ── カラーDNA（参考サイトから抽出）─────────────────
+  primaryColor?: string;         // ブランド/CTAカラー  例: "#1E40AF"
+  accentColor?: string;          // アクセントカラー    例: "#EA580C"
+  heroBgColor?: string;          // ヒーロー背景色      例: "#0F172A"
+  bgColor?: string;              // ページ背景色        例: "#F8FAFC"
+  cardBgColor?: string;          // カード背景色        例: "#FFFFFF"
+  textColor?: string;            // メインテキスト色    例: "#111827"
+  buttonBgColor?: string;        // ボタン背景色
+  buttonTextColor?: string;      // ボタンテキスト色
+  buttonRadius?: string;         // ボタン角丸          例: "8px"
+  designStyle?: string;          // スタイル識別        例: "minimal"
+
+  // ── メタ ─────────────────────────────────────────────
+  referenceUrl?: string;
+  designNotes?: string;
+}
+
+// ─── キャンバス要素型（ペライチ型エディタ）──────────────────
+export interface CanvasElementStyle {
+  fontSize?: number;
+  fontWeight?: string | number;
+  color?: string;
+  textAlign?: "left" | "center" | "right";
+  lineHeight?: number;
+  letterSpacing?: string;
+  fontFamily?: string;
+  backgroundColor?: string;
+  backgroundImage?: string;
+  backgroundSize?: string;
+  backgroundPosition?: string;
+  backgroundRepeat?: string;
+  borderRadius?: number;
+  paddingX?: number;
+  paddingY?: number;
+  border?: string;
+  boxShadow?: string;
+  opacity?: number;
+  objectFit?: "cover" | "contain" | "fill";
+}
+
+export type CanvasElementType = "text" | "image" | "button" | "rect";
+
+export interface CanvasElement {
+  id: string;
+  type: CanvasElementType;
+  x: number;       // px from canvas left
+  y: number;       // px from canvas top
+  width: number;   // px
+  height: number;  // px
+  html?: string;   // innerHTML for text/button
+  src?: string;    // image URL
+  alt?: string;
+  href?: string;   // button link
+  style: CanvasElementStyle;
+  zIndex?: number;
+  locked?: boolean;
+}
+
 export interface SiteConfig {
   title: string;
   primaryColor: string;
@@ -545,6 +716,11 @@ export interface SiteConfig {
   pages: SitePage[];          // 追加ページ
   articles: Article[];        // コラム記事
   navLinks: NavLink[];        // ナビゲーション
+  blockStyles?: Record<string, BlockStyle>; // blockId → スタイルオーバーライド
+  globalStyle?: GlobalStyle;  // 参考サイト解析 / AI 抽出デザインルール
+  // キャンバスエディタ用（ペライチ型）
+  elements: CanvasElement[];
+  canvasWidth: number;
 }
 
 // ─── ブロックのデフォルトファクトリ ────────────────────────────
@@ -671,7 +847,7 @@ export const BLOCK_DEFAULTS: Record<BlockType, () => SectionBlock> = {
     body: "プロジェクトの成功に向けて、最適なチームとプロセスを設計します。ビジョンを現実に変えるパートナーとして、伴走します。",
     buttonText: "はじめる",
     buttonUrl: "",
-    imageUrl: "https://picsum.photos/seed/hero-split/800/900",
+    imageUrl: "",
   }),
   "hero-video": () => ({
     id: uid(),
@@ -707,12 +883,12 @@ export const BLOCK_DEFAULTS: Record<BlockType, () => SectionBlock> = {
     heading: "私たちが選ばれる理由",
     subheading: "Our Features",
     items: [
-      { emoji: "🚀", title: "スピード対応", desc: "ご連絡から24時間以内にご提案。スピーディーな対応で機会損失を防ぎます。" },
-      { emoji: "🎯", title: "成果にコミット", desc: "納品して終わりではなく、目標達成まで伴走します。" },
-      { emoji: "🛡️", title: "安心のサポート", desc: "専任担当者が最初から最後までサポート。いつでも相談できる体制です。" },
-      { emoji: "💡", title: "柔軟な提案", desc: "画一的なプランではなく、貴社の課題に合わせたオーダーメイドの解決策を提供。" },
-      { emoji: "🤝", title: "長期的パートナー", desc: "単発の取引ではなく、継続的な関係を大切にしています。" },
-      { emoji: "📊", title: "データドリブン", desc: "感覚ではなくデータに基づいた意思決定で、確実な成果を追求します。" },
+      { icon: { kind: "lucide", value: "Rocket", size: 28 }, title: "スピード対応", desc: "ご連絡から24時間以内にご提案。スピーディーな対応で機会損失を防ぎます。" },
+      { icon: { kind: "lucide", value: "Target", size: 28 }, title: "成果にコミット", desc: "納品して終わりではなく、目標達成まで伴走します。" },
+      { icon: { kind: "lucide", value: "Shield", size: 28 }, title: "安心のサポート", desc: "専任担当者が最初から最後までサポート。いつでも相談できる体制です。" },
+      { icon: { kind: "lucide", value: "LightbulbIcon", size: 28 }, title: "柔軟な提案", desc: "画一的なプランではなく、貴社の課題に合わせたオーダーメイドの解決策を提供。" },
+      { icon: { kind: "lucide", value: "Handshake", size: 28 }, title: "長期的パートナー", desc: "単発の取引ではなく、継続的な関係を大切にしています。" },
+      { icon: { kind: "lucide", value: "BarChart2", size: 28 }, title: "データドリブン", desc: "感覚ではなくデータに基づいた意思決定で、確実な成果を追求します。" },
     ],
   }),
   faq: () => ({
@@ -764,7 +940,7 @@ export const BLOCK_DEFAULTS: Record<BlockType, () => SectionBlock> = {
     body: "私たちは、あなたのプロジェクトを成功に導くために存在しています。一緒に新しい未来を切り開きましょう。",
     buttonText: "無料で始める", buttonUrl: "/contact",
     buttonText2: "事例を見る", buttonUrl2: "/column",
-    imageUrl: "https://picsum.photos/seed/hero-centered/1600/900",
+    imageUrl: "",
   }),
   "hero-minimal": () => ({
     id: uid(), type: "hero-minimal",
@@ -835,11 +1011,14 @@ export const BLOCK_DEFAULTS: Record<BlockType, () => SectionBlock> = {
   }),
   "two-col-cta": () => ({
     id: uid(), type: "two-col-cta",
+    leftIcon: { kind: "lucide", value: "Building2", size: 22 },
     leftHeading: "法人のお客様へ", leftBody: "企業のプロジェクト立ち上げから採用・業務改善まで、幅広くサポートします。まずはお気軽にご相談ください。", leftButtonText: "法人向けサービスを見る", leftButtonUrl: "/services",
+    rightIcon: { kind: "lucide", value: "User", size: 22 },
     rightHeading: "個人のお客様へ", rightBody: "フリーランスや個人事業主の方も歓迎。スキルを活かせる案件をご紹介します。", rightButtonText: "個人向けサービスを見る", rightButtonUrl: "/column",
   }),
   newsletter: () => ({
     id: uid(), type: "newsletter",
+    icon: { kind: "lucide", value: "Mail", size: 22 },
     heading: "最新情報をお届けします",
     body: "業界トレンド、成功事例、お役立ち情報を定期的にお送りします。いつでも解除可能です。",
     placeholder: "メールアドレスを入力", buttonText: "無料で登録する",
@@ -898,9 +1077,9 @@ export const BLOCK_DEFAULTS: Record<BlockType, () => SectionBlock> = {
     heading: "こんなお悩みは\nありませんか？",
     subheading: "多くの企業様からこのようなご相談をいただいています",
     items: [
-      { icon: "😰", title: "集客できていない", desc: "Webサイトはあるのに問い合わせが来ない。何が悪いのかわからない。" },
-      { icon: "😤", title: "競合との差別化ができない", desc: "同業他社との違いをうまく伝えられず、価格競争に巻き込まれている。" },
-      { icon: "😓", title: "コストが見合わない", desc: "広告費をかけても効果が出ない。投資対効果が見えにくい。" },
+      { icon: { kind: "lucide", value: "AlertCircle", size: 36 }, title: "集客できていない", desc: "Webサイトはあるのに問い合わせが来ない。何が悪いのかわからない。" },
+      { icon: { kind: "lucide", value: "HelpCircle", size: 36 }, title: "競合との差別化ができない", desc: "同業他社との違いをうまく伝えられず、価格競争に巻き込まれている。" },
+      { icon: { kind: "lucide", value: "TrendingUp", size: 36 }, title: "コストが見合わない", desc: "広告費をかけても効果が出ない。投資対効果が見えにくい。" },
     ],
   }),
   solution: () => ({
@@ -913,7 +1092,7 @@ export const BLOCK_DEFAULTS: Record<BlockType, () => SectionBlock> = {
       { text: "業界最適な戦略とコンテンツで差別化を実現" },
       { text: "導入後も継続的なサポートで成果を保証" },
     ],
-    imageUrl: "https://picsum.photos/seed/solution/800/600",
+    imageUrl: "",
     buttonText: "詳しく見る", buttonUrl: "/services",
   }),
   "hero-typo": () => ({
@@ -936,7 +1115,7 @@ export const BLOCK_DEFAULTS: Record<BlockType, () => SectionBlock> = {
   }),
   "hero-photo": () => ({
     id: uid(), type: "hero-photo",
-    imageUrl: "https://picsum.photos/seed/hero-photo/1600/900",
+    imageUrl: "",
     eyebrow: "VISUAL FIRST IMPRESSION",
     tagline: "一瞬で、心を\n動かすデザイン。",
     body: "写真の力と言葉が交わる場所で\n新しいブランドストーリーが始まります。",
@@ -945,7 +1124,7 @@ export const BLOCK_DEFAULTS: Record<BlockType, () => SectionBlock> = {
   }),
   "hero-dark": () => ({
     id: uid(), type: "hero-dark",
-    imageUrl: "https://picsum.photos/seed/hero-dark/1600/900",
+    imageUrl: "",
     eyebrow: "PREMIUM QUALITY",
     tagline: "最高品質を、\nあなたの手に。",
     body: "業界トップクラスのクオリティで\nお客様のビジネスを加速させます。",
@@ -959,14 +1138,14 @@ export const BLOCK_DEFAULTS: Record<BlockType, () => SectionBlock> = {
     tagline: "アイデアを\n形にする\n専門集団。",
     body: "デザイン・開発・マーケティングを\nワンストップで提供します。",
     buttonText: "実績を見る", buttonUrl: "/works",
-    image1: "https://picsum.photos/seed/mosaic1/800/600",
-    image2: "https://picsum.photos/seed/mosaic2/800/600",
-    image3: "https://picsum.photos/seed/mosaic3/800/600",
-    image4: "https://picsum.photos/seed/mosaic4/800/600",
+    image1: "",
+    image2: "",
+    image3: "",
+    image4: "",
   }),
   "hero-japanese": () => ({
     id: uid(), type: "hero-japanese",
-    imageUrl: "https://picsum.photos/seed/hero-jp/1200/900",
+    imageUrl: "",
     kanjiLarge: "美",
     taglineJp: "本物の美しさは\n細部に宿る。",
     taglineEn: "TRUE BEAUTY LIES IN THE DETAILS",
@@ -975,7 +1154,7 @@ export const BLOCK_DEFAULTS: Record<BlockType, () => SectionBlock> = {
   }),
   "hero-diagonal": () => ({
     id: uid(), type: "hero-diagonal",
-    imageUrl: "https://picsum.photos/seed/hero-diag/1600/900",
+    imageUrl: "",
     eyebrow: "INNOVATION FORWARD",
     tagline: "変化を恐れず、\n未来を切り拓く。",
     body: "テクノロジーと人間の感性が\n融合するとき、革新が生まれます。",
@@ -997,7 +1176,7 @@ export const BLOCK_DEFAULTS: Record<BlockType, () => SectionBlock> = {
   }),
   "hero-glass": () => ({
     id: uid(), type: "hero-glass",
-    imageUrl: "https://picsum.photos/seed/hero-glass/1600/900",
+    imageUrl: "",
     eyebrow: "CRAFTING TOMORROW",
     tagline: "未来を\nともに\nつくる。",
     body: "革新的なソリューションで、あなたのビジネスに\n新たな価値をお届けします。",
@@ -1012,6 +1191,37 @@ export const BLOCK_DEFAULTS: Record<BlockType, () => SectionBlock> = {
     viewAllUrl: "/column",
     viewAllText: "すべての記事を見る",
     layout: "grid",
+  }),
+  free: () => ({
+    id: uid(), type: "free",
+    label: "自由ブロック",
+    background: "",
+    paddingY: "py-28",
+    maxWidth: "max-w-5xl",
+    elements: [
+      {
+        id: uid(), kind: "text",
+        tag: "h2", content: "セクションタイトル",
+        align: "center", fontSize: "text-4xl",
+        fontWeight: "bold", color: "",
+      },
+      {
+        id: uid(), kind: "text",
+        tag: "p", content: "ここに説明文を入力してください。画像やグラフ、HTMLコードを自由に組み合わせることができます。",
+        align: "center", fontSize: "text-base",
+        fontWeight: "normal", color: "",
+      },
+      {
+        id: uid(), kind: "spacer",
+        height: 32,
+      },
+      {
+        id: uid(), kind: "image",
+        url: "", alt: "画像を追加",
+        widthPct: 100, align: "center",
+        rounded: true, shadow: true,
+      },
+    ],
   }),
 };
 
@@ -1067,6 +1277,7 @@ export const BLOCK_META: {
   { type: "hero-diagonal",  label: "HeroN：ダイアゴナル",   desc: "斜めカットの写真 + ダイナミックレイアウト",    category: "ヒーロー" },
   { type: "problem",  label: "課題提起",  desc: "「こんなお悩みはありませんか？」3つのペインポイントカード", category: "黄金の型" },
   { type: "solution", label: "解決策",    desc: "チェックリスト形式で解決策を提示する信頼構築セクション",   category: "黄金の型" },
+  { type: "free",     label: "🆓 自由ブロック", desc: "テキスト・画像・HTML・グラフを自由に組み合わせ、D&Dで並び替え", category: "自由" },
 ];
 
 // ─── デフォルト設定 ────────────────────────────────────────────
@@ -1122,4 +1333,6 @@ export const defaultConfig: SiteConfig = {
     { id: uid(), label: "コラム", url: "/column" },
     { id: uid(), label: "お問い合わせ", url: "/contact" },
   ],
+  elements: [],
+  canvasWidth: 1200,
 };

@@ -14,7 +14,7 @@ export default function StepsBlockComponent({ block, config, onChange }: Props) 
   const fontClass = config.fontFamily === "serif" ? "font-serif" : config.fontFamily === "mono" ? "font-mono" : "font-sans";
 
   return (
-    <section className="bg-white py-20 px-8">
+    <section className="bg-white py-28 px-8">
       <div className="max-w-5xl mx-auto">
         {/* Header */}
         <div className="text-center mb-16">

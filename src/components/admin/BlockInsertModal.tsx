@@ -612,8 +612,7 @@ const THUMBNAILS: Record<BlockType, React.ReactNode> = {
     </div>
   ),
   "hero-photo": (
-    <div className="w-full h-full relative overflow-hidden">
-      <img src="https://picsum.photos/seed/hero-photo/400/300" className="absolute inset-0 w-full h-full object-cover" alt="" />
+    <div className="w-full h-full relative overflow-hidden" style={{background:"linear-gradient(135deg,#4a5568 0%,#2d3748 100%)"}}>
       <div className="absolute inset-0" style={{background: "linear-gradient(90deg, rgba(0,0,0,0.75) 40%, transparent)"}} />
       <div className="absolute left-2 top-2 bottom-2 flex flex-col justify-center gap-1">
         <div className="flex items-center gap-1"><div className="w-2 h-px bg-yellow-400"/><div className="w-8 h-0.5 bg-white/50 rounded"/></div>
@@ -626,7 +625,7 @@ const THUMBNAILS: Record<BlockType, React.ReactNode> = {
   ),
   "hero-dark": (
     <div className="w-full h-full relative overflow-hidden bg-black">
-      <img src="https://picsum.photos/seed/hero-dark/400/300" className="absolute inset-0 w-full h-full object-cover opacity-30" alt="" />
+      <div className="absolute inset-0 opacity-30" style={{background:"linear-gradient(135deg,#374151,#1f2937)"}} />
       <div className="absolute inset-0" style={{backgroundImage:"radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px)", backgroundSize:"12px 12px"}}/>
       <div className="absolute inset-2 flex gap-2">
         <div className="flex-1 flex flex-col justify-center gap-1">
@@ -660,10 +659,10 @@ const THUMBNAILS: Record<BlockType, React.ReactNode> = {
         <div className="w-9 h-2.5 rounded mt-1 bg-gray-900"/>
       </div>
       <div className="flex-1 grid grid-cols-2 gap-1 p-1">
-        <img src="https://picsum.photos/seed/mosaic1/200/150" className="rounded-lg object-cover w-full h-full" alt=""/>
-        <img src="https://picsum.photos/seed/mosaic2/200/150" className="rounded-lg object-cover w-full h-full" alt=""/>
-        <img src="https://picsum.photos/seed/mosaic3/200/150" className="rounded-lg object-cover w-full h-full" alt=""/>
-        <img src="https://picsum.photos/seed/mosaic4/200/150" className="rounded-lg object-cover w-full h-full" alt=""/>
+        <div className="rounded-lg w-full h-full" style={{background:"linear-gradient(135deg,#6366f1,#8b5cf6)"}}/>
+        <div className="rounded-lg w-full h-full" style={{background:"linear-gradient(135deg,#0ea5e9,#06b6d4)"}}/>
+        <div className="rounded-lg w-full h-full" style={{background:"linear-gradient(135deg,#10b981,#34d399)"}}/>
+        <div className="rounded-lg w-full h-full" style={{background:"linear-gradient(135deg,#f59e0b,#fbbf24)"}}/>
       </div>
     </div>
   ),
@@ -678,15 +677,15 @@ const THUMBNAILS: Record<BlockType, React.ReactNode> = {
         <div className="w-11 h-1 bg-gray-200 rounded mb-2"/>
         <div className="w-10 h-2.5 border-2 border-gray-900 rounded"/>
       </div>
-      <div className="flex-1 relative">
-        <img src="https://picsum.photos/seed/hero-jp/300/250" className="absolute inset-0 w-full h-full object-cover" alt=""/>
+      <div className="flex-1 relative overflow-hidden">
+        <div className="absolute inset-0" style={{background:"linear-gradient(160deg,#e5e7eb,#d1d5db)"}}/>
         <div className="absolute right-0 top-0 bottom-0 w-1 bg-red-500"/>
       </div>
     </div>
   ),
   "hero-diagonal": (
     <div className="w-full h-full relative overflow-hidden">
-      <img src="https://picsum.photos/seed/hero-diag/400/300" className="absolute inset-0 w-full h-full object-cover" alt=""/>
+      <div className="absolute inset-0" style={{background:"linear-gradient(135deg,#475569,#334155)"}}/>
       <div className="absolute inset-0 bg-black/50"/>
       <div className="absolute left-0 top-0 bottom-0 w-[48%] flex flex-col justify-center pl-2 pr-6 gap-1"
         style={{clipPath:"polygon(0 0, 100% 0, 75% 100%, 0 100%)", backgroundColor:"rgba(26,26,46,0.93)"}}>
@@ -738,8 +737,22 @@ const THUMBNAILS: Record<BlockType, React.ReactNode> = {
         ))}
         <div className="w-10 h-2.5 rounded-full bg-gray-900 mt-1" />
       </div>
-      <div className="w-16 m-1 rounded-xl overflow-hidden bg-gray-200 relative flex-shrink-0">
-        <img src="https://picsum.photos/seed/solution/100/120" className="absolute inset-0 w-full h-full object-cover" alt="" />
+      <div className="w-16 m-1 rounded-xl overflow-hidden relative flex-shrink-0" style={{background:"linear-gradient(160deg,#c7d2fe,#a5b4fc)"}}/>
+    </div>
+  ),
+  free: (
+    <div className="w-full h-full bg-white flex flex-col items-center justify-center gap-1.5 px-3 py-2">
+      <div className="w-20 h-2 bg-gray-800 rounded" />
+      <div className="w-14 h-1 bg-gray-300 rounded" />
+      <div className="w-full h-8 mt-1 rounded-lg bg-gradient-to-r from-indigo-100 via-purple-100 to-pink-100 flex items-end px-1 gap-0.5 pb-1">
+        {[40, 65, 55, 80, 70, 90].map((h, i) => (
+          <div key={i} className="flex-1 rounded-t" style={{ height: `${h}%`, backgroundColor: "#6366f160" }} />
+        ))}
+      </div>
+      <div className="flex gap-1 mt-0.5">
+        <div className="w-5 h-1 bg-indigo-300 rounded" />
+        <div className="w-4 h-1 bg-purple-300 rounded" />
+        <div className="w-6 h-1 bg-pink-300 rounded" />
       </div>
     </div>
   ),
@@ -863,8 +876,9 @@ const THUMBNAILS: Record<BlockType, React.ReactNode> = {
 };
 
 export default function BlockInsertModal({ onInsert, onClose }: Props) {
-  const categories = ["黄金の型", "コラム", "ヒーロー", "基本", "コンテンツ", "リッチ"];
+  const categories = ["自由", "黄金の型", "コラム", "ヒーロー", "基本", "コンテンツ", "リッチ"];
   const categoryDescs: Record<string, string> = {
+    自由: "テキスト・画像・グラフを自由配置",
     "黄金の型": "LP必須2ブロック",
     コラム: "記事連携",
     ヒーロー: "14パターン",

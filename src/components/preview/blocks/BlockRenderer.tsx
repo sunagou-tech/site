@@ -46,6 +46,7 @@ import HeroJapaneseBlockComponent from "./HeroJapaneseBlock";
 import HeroDiagonalBlockComponent from "./HeroDiagonalBlock";
 import ProblemBlockComponent from "./ProblemBlock";
 import SolutionBlockComponent from "./SolutionBlock";
+import FreeBlockComponent from "./FreeBlock";
 
 interface Props {
   block: SectionBlock;
@@ -145,6 +146,8 @@ export default function BlockRenderer({ block, config, onChange }: Props) {
       return <ProblemBlockComponent block={block} config={config} onChange={onChange} />;
     case "solution":
       return <SolutionBlockComponent block={block} config={config} onChange={onChange} />;
+    case "free":
+      return <FreeBlockComponent block={block} config={config} onChange={onChange} />;
     default:
       return null;
   }

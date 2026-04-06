@@ -20,7 +20,7 @@ export default function TestimonialsBlockComponent({ block, config, onChange }: 
     config.fontFamily === "serif" ? "font-serif" : config.fontFamily === "mono" ? "font-mono" : "font-sans";
 
   return (
-    <section className="py-20 px-8" style={{ backgroundColor: `${config.primaryColor}06` }}>
+    <section className="py-28 px-8" style={{ backgroundColor: `${config.primaryColor}06` }}>
       <div className="max-w-5xl mx-auto">
         {/* Header */}
         <div className="text-center mb-12">

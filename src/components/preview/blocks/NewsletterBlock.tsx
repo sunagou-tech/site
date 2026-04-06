@@ -1,19 +1,28 @@
 "use client";
-import { NewsletterBlock, SiteConfig } from "@/types/site";
+import { NewsletterBlock, SiteConfig, IconValue } from "@/types/site";
 import EditableText from "../EditableText";
+import IconDisplay from "../IconDisplay";
 
 interface Props { block: NewsletterBlock; config: SiteConfig; onChange: (b: NewsletterBlock) => void; }
+
+const DEFAULT_ICON: IconValue = { kind: "lucide", value: "Mail", size: 22 };
 
 export default function NewsletterBlockComponent({ block, config, onChange }: Props) {
   const u = (patch: Partial<NewsletterBlock>) => onChange({ ...block, ...patch });
   const fontClass = config.fontFamily === "serif" ? "font-serif" : config.fontFamily === "mono" ? "font-mono" : "font-sans";
+
+  const icon: IconValue = block.icon ?? DEFAULT_ICON;
 
   return (
     <section className="py-20 px-8" style={{ backgroundColor: `${config.primaryColor}06` }}>
       <div className="max-w-2xl mx-auto text-center">
         <div className="w-12 h-12 rounded-2xl mx-auto mb-6 flex items-center justify-center shadow-md"
           style={{ backgroundColor: config.primaryColor }}>
-          <span className="text-xl">✉</span>
+          <IconDisplay
+            icon={icon}
+            onChange={(v) => u({ icon: v })}
+            iconColor="#ffffff"
+          />
         </div>
         <EditableText tag="h2" value={block.heading} onChange={(v) => u({ heading: v })}
           className={`text-2xl font-bold text-gray-900 mb-3 block ${fontClass}`} />

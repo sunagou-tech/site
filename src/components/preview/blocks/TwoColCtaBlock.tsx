@@ -1,13 +1,20 @@
 "use client";
-import { TwoColCtaBlock, SiteConfig } from "@/types/site";
+import { TwoColCtaBlock, SiteConfig, IconValue } from "@/types/site";
 import EditableText from "../EditableText";
 import LinkableButton from "../LinkableButton";
+import IconDisplay from "../IconDisplay";
 
 interface Props { block: TwoColCtaBlock; config: SiteConfig; onChange: (b: TwoColCtaBlock) => void; }
+
+const DEFAULT_LEFT_ICON: IconValue = { kind: "lucide", value: "Building2", size: 22 };
+const DEFAULT_RIGHT_ICON: IconValue = { kind: "lucide", value: "User", size: 22 };
 
 export default function TwoColCtaBlockComponent({ block, config, onChange }: Props) {
   const u = (patch: Partial<TwoColCtaBlock>) => onChange({ ...block, ...patch });
   const fontClass = config.fontFamily === "serif" ? "font-serif" : config.fontFamily === "mono" ? "font-mono" : "font-sans";
+
+  const leftIcon: IconValue = block.leftIcon ?? DEFAULT_LEFT_ICON;
+  const rightIcon: IconValue = block.rightIcon ?? DEFAULT_RIGHT_ICON;
 
   return (
     <section className="py-16 px-8 bg-white">
@@ -20,7 +27,11 @@ export default function TwoColCtaBlockComponent({ block, config, onChange }: Pro
           <div className="relative z-10">
             <div className="w-10 h-10 rounded-xl mb-5 flex items-center justify-center"
               style={{ backgroundColor: config.accentColor }}>
-              <span className="text-lg">🏢</span>
+              <IconDisplay
+                icon={leftIcon}
+                onChange={(v) => u({ leftIcon: v })}
+                iconColor={config.primaryColor}
+              />
             </div>
             <EditableText tag="h3" value={block.leftHeading} onChange={(v) => u({ leftHeading: v })}
               className={`text-xl font-bold text-white mb-3 block ${fontClass}`} />
@@ -45,7 +56,11 @@ export default function TwoColCtaBlockComponent({ block, config, onChange }: Pro
           <div className="relative z-10">
             <div className="w-10 h-10 rounded-xl mb-5 flex items-center justify-center border-2"
               style={{ borderColor: `${config.primaryColor}30`, backgroundColor: `${config.primaryColor}08` }}>
-              <span className="text-lg">👤</span>
+              <IconDisplay
+                icon={rightIcon}
+                onChange={(v) => u({ rightIcon: v })}
+                iconColor={config.primaryColor}
+              />
             </div>
             <EditableText tag="h3" value={block.rightHeading} onChange={(v) => u({ rightHeading: v })}
               className={`text-xl font-bold text-gray-900 mb-3 block ${fontClass}`} />

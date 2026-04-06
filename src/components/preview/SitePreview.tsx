@@ -1,11 +1,13 @@
 "use client";
 
-import { SiteConfig, SectionBlock, BLOCK_META } from "@/types/site";
+import { SiteConfig, SectionBlock, BLOCK_META, BlockStyle } from "@/types/site";
 import NavBar from "./NavBar";
 import BlockRenderer from "./blocks/BlockRenderer";
-import ScrollReveal from "./ScrollReveal";
 import StickyContactBar from "./StickyContactBar";
-import { Plus, MousePointerClick, GripVertical, Trash2, ChevronUp, ChevronDown } from "lucide-react";
+import {
+  Plus, MousePointerClick, GripVertical, Trash2,
+  ChevronUp, ChevronDown, Palette, X, ImageIcon,
+} from "lucide-react";
 
 import {
   DndContext,
@@ -24,7 +26,9 @@ import {
   arrayMove,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { useState } from "react";
+import { useState, useCallback, memo, useRef } from "react";
+import GlobalFormatBar from "./GlobalFormatBar";
+import GlobalStyleInjector from "./GlobalStyleInjector";
 
 interface Props {
   config: SiteConfig;
@@ -32,12 +36,11 @@ interface Props {
   onInsertRequest: (position: number) => void;
 }
 
-// ─── ブロックラベルを取得 ──────────────────────────────────────
 function blockLabel(block: SectionBlock) {
   return BLOCK_META.find((m) => m.type === block.type)?.label ?? block.type;
 }
 
-// ─── ＋挿入ボタン ────────────────────────────────────────────
+// ─── ＋挿入ボタン ─────────────────────────────────────────────
 function InsertButton({ onClick }: { onClick: () => void }) {
   return (
     <div className="relative flex items-center justify-center h-8 group/ins">
@@ -59,8 +62,116 @@ function InsertButton({ onClick }: { onClick: () => void }) {
   );
 }
 
+// ─── 背景パネル ────────────────────────────────────────────────
+function BgPanel({
+  style,
+  onChange,
+  onClose,
+}: {
+  style: BlockStyle;
+  onChange: (s: BlockStyle) => void;
+  onClose: () => void;
+}) {
+  const [imgInput, setImgInput] = useState(style.bgImage ?? "");
+
+  return (
+    <div
+      className="absolute top-full left-0 mt-1 z-50 bg-white rounded-2xl shadow-2xl border border-gray-200 p-4 w-72"
+      onMouseDown={(e) => e.stopPropagation()}
+    >
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-xs font-semibold text-gray-700">セクション背景</span>
+        <button onClick={onClose} className="text-gray-400 hover:text-gray-700">
+          <X size={14} />
+        </button>
+      </div>
+
+      {/* 背景色 */}
+      <div className="mb-4">
+        <label className="block text-[11px] text-gray-500 mb-1.5">背景色</label>
+        <div className="flex items-center gap-2">
+          <input
+            type="color"
+            value={style.bgColor || "#ffffff"}
+            onChange={(e) => onChange({ ...style, bgColor: e.target.value })}
+            className="w-9 h-9 rounded-lg cursor-pointer border border-gray-200 p-0.5"
+          />
+          <div className="flex flex-wrap gap-1">
+            {["#ffffff", "#f8f9fa", "#f1f5f9", "#1a1a2e", "#111827", "#0f172a", "#fefce8", "#f0fdf4"].map((c) => (
+              <button
+                key={c}
+                onClick={() => onChange({ ...style, bgColor: c })}
+                className={`w-5 h-5 rounded-full border-2 hover:scale-110 transition-transform ${style.bgColor === c ? "border-indigo-500" : "border-gray-200"}`}
+                style={{ backgroundColor: c, boxShadow: c === "#ffffff" ? "inset 0 0 0 1px #d1d5db" : undefined }}
+                title={c}
+              />
+            ))}
+          </div>
+          {style.bgColor && (
+            <button
+              onClick={() => onChange({ ...style, bgColor: undefined })}
+              className="text-[10px] text-gray-400 hover:text-red-500 transition-colors"
+            >
+              reset
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* 背景画像 */}
+      <div className="mb-3">
+        <label className="block text-[11px] text-gray-500 mb-1.5">背景画像 URL</label>
+        <div className="flex gap-2">
+          <input
+            type="url"
+            value={imgInput}
+            onChange={(e) => setImgInput(e.target.value)}
+            placeholder="https://..."
+            className="flex-1 text-xs border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+          />
+          <button
+            onClick={() => onChange({ ...style, bgImage: imgInput || undefined })}
+            className="text-xs px-3 py-2 rounded-xl bg-indigo-600 text-white font-medium hover:bg-indigo-700"
+          >
+            セット
+          </button>
+        </div>
+        {style.bgImage && (
+          <div className="mt-2 flex items-center gap-2">
+            <img src={style.bgImage} alt="" className="w-16 h-10 object-cover rounded-lg border border-gray-200" />
+            <button
+              onClick={() => { onChange({ ...style, bgImage: undefined }); setImgInput(""); }}
+              className="text-[10px] text-red-400 hover:text-red-600 flex items-center gap-0.5"
+            >
+              <X size={10} /> 削除
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* 表示サイズ */}
+      {style.bgImage && (
+        <div>
+          <label className="block text-[11px] text-gray-500 mb-1.5">表示サイズ</label>
+          <div className="flex gap-1.5">
+            {(["cover", "contain", "auto"] as const).map((s) => (
+              <button
+                key={s}
+                onClick={() => onChange({ ...style, bgSize: s })}
+                className={`text-xs px-3 py-1 rounded-lg border transition-colors ${(style.bgSize ?? "cover") === s ? "bg-indigo-100 border-indigo-400 text-indigo-700" : "border-gray-200 text-gray-500 hover:bg-gray-50"}`}
+              >
+                {s}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── ドラッグ可能なブロックラッパー ──────────────────────────
-function SortableBlock({
+const SortableBlock = memo(function SortableBlock({
   block,
   index,
   total,
@@ -68,6 +179,7 @@ function SortableBlock({
   onChangeBlock,
   onDelete,
   onMove,
+  onBgChange,
 }: {
   block: SectionBlock;
   index: number;
@@ -76,6 +188,7 @@ function SortableBlock({
   onChangeBlock: (b: SectionBlock) => void;
   onDelete: () => void;
   onMove: (dir: -1 | 1) => void;
+  onBgChange: (style: BlockStyle | null) => void;
 }) {
   const {
     attributes,
@@ -86,6 +199,21 @@ function SortableBlock({
     transition,
     isDragging,
   } = useSortable({ id: block.id });
+
+  const [showBgPanel, setShowBgPanel] = useState(false);
+  const blockStyle = config.blockStyles?.[block.id] ?? {};
+
+  // inline styleで背景を直接ラッパーに適用（CSS変数より確実）
+  const hasBg = !!(blockStyle.bgColor || blockStyle.bgImage);
+  const bgInlineStyle: React.CSSProperties = hasBg ? {
+    backgroundColor: blockStyle.bgColor ?? "transparent",
+    ...(blockStyle.bgImage ? {
+      backgroundImage: `url(${blockStyle.bgImage})`,
+      backgroundSize: blockStyle.bgSize ?? "cover",
+      backgroundPosition: "center",
+      backgroundRepeat: "no-repeat",
+    } : {}),
+  } : {};
 
   return (
     <div
@@ -98,6 +226,9 @@ function SortableBlock({
       }}
       className="relative group/block"
     >
+      {/* 常時表示: ブロック左端のインジケーター */}
+      <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-indigo-300 opacity-0 group-hover/block:opacity-100 transition-opacity z-20" />
+
       {/* ホバーツールバー */}
       <div
         className="
@@ -124,8 +255,21 @@ function SortableBlock({
           <span className="font-medium text-white/80 text-[11px]">{blockLabel(block)}</span>
         </div>
 
-        {/* 右：並び替えボタン + 削除 */}
-        <div className="flex items-center gap-1">
+        {/* 右：背景 + 並び替え + 削除 */}
+        <div className="relative flex items-center gap-1">
+          {/* 背景ボタン */}
+          <button
+            onClick={() => setShowBgPanel((p) => !p)}
+            className={`flex items-center gap-1 px-2 py-1 rounded text-[11px] transition-colors ${showBgPanel || hasBg ? "bg-white/20 text-white" : "text-white/60 hover:bg-white/10 hover:text-white"}`}
+            title="背景色・背景画像"
+          >
+            {hasBg ? <ImageIcon size={11} /> : <Palette size={11} />}
+            <span>背景</span>
+            {hasBg && <span className="w-2 h-2 rounded-full border border-white/40" style={{ backgroundColor: blockStyle.bgColor }} />}
+          </button>
+
+          <div className="w-px h-4 bg-white/20" />
+
           <button
             onClick={() => onMove(-1)}
             disabled={index === 0}
@@ -149,16 +293,31 @@ function SortableBlock({
           >
             <Trash2 size={12} />
           </button>
+
+          {/* 背景パネル */}
+          {showBgPanel && (
+            <BgPanel
+              style={blockStyle}
+              onChange={(s) => {
+                onBgChange(s.bgColor || s.bgImage ? s : null);
+              }}
+              onClose={() => setShowBgPanel(false)}
+            />
+          )}
         </div>
       </div>
 
-      {/* ブロック本体 */}
-      <ScrollReveal>
+      {/* ブロック本体 + 背景オーバーライドラッパー */}
+      <div
+        className="blk-bg-ov"
+        data-bg={hasBg ? "1" : undefined}
+        style={bgInlineStyle}
+      >
         <BlockRenderer block={block} config={config} onChange={onChangeBlock} />
-      </ScrollReveal>
+      </div>
     </div>
   );
-}
+});
 
 // ─── メイン ──────────────────────────────────────────────────
 export default function SitePreview({ config, onConfigChange, onInsertRequest }: Props) {
@@ -168,24 +327,34 @@ export default function SitePreview({ config, onConfigChange, onInsertRequest }:
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } })
   );
 
-  function updateBlock(id: string, newBlock: SectionBlock) {
+  const updateBlock = useCallback((id: string, newBlock: SectionBlock) => {
     onConfigChange({
       ...config,
       sections: config.sections.map((b) => (b.id === id ? newBlock : b)),
     });
-  }
+  }, [config, onConfigChange]);
 
-  function deleteBlock(id: string) {
+  const deleteBlock = useCallback((id: string) => {
     onConfigChange({ ...config, sections: config.sections.filter((b) => b.id !== id) });
-  }
+  }, [config, onConfigChange]);
 
-  function moveBlock(idx: number, dir: -1 | 1) {
+  const moveBlock = useCallback((idx: number, dir: -1 | 1) => {
     const next = [...config.sections];
     const target = idx + dir;
     if (target < 0 || target >= next.length) return;
     [next[idx], next[target]] = [next[target], next[idx]];
     onConfigChange({ ...config, sections: next });
-  }
+  }, [config, onConfigChange]);
+
+  const updateBlockStyle = useCallback((id: string, style: BlockStyle | null) => {
+    const next = { ...(config.blockStyles ?? {}) };
+    if (style) {
+      next[id] = style;
+    } else {
+      delete next[id];
+    }
+    onConfigChange({ ...config, blockStyles: next });
+  }, [config, onConfigChange]);
 
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
@@ -200,6 +369,16 @@ export default function SitePreview({ config, onConfigChange, onInsertRequest }:
 
   return (
     <div className="flex-1 bg-gray-200 overflow-y-auto">
+      <GlobalFormatBar />
+
+      {/* 編集ガイドバー */}
+      <div className="sticky top-0 z-40 bg-gradient-to-r from-indigo-600 to-violet-600 text-white text-[11px] px-4 py-1.5 flex items-center gap-4">
+        <span className="font-semibold">✏️ 編集モード</span>
+        <span className="opacity-80">テキストをクリックして編集</span>
+        <span className="opacity-80">テキストを選択してフォーマット（太字・色・サイズ）</span>
+        <span className="opacity-80">ブロックをホバーして移動・削除・背景変更</span>
+      </div>
+
       {/* ブラウザChrome */}
       <div className="sticky top-0 z-30 bg-gray-300 border-b border-gray-400 px-4 py-2 flex items-center gap-2">
         <div className="flex gap-1.5">
@@ -212,12 +391,13 @@ export default function SitePreview({ config, onConfigChange, onInsertRequest }:
         </div>
         <div className="flex items-center gap-1 text-[10px] text-gray-500 bg-white/60 px-2 py-1 rounded">
           <MousePointerClick size={10} />
-          ホバーでブロックツールバー · テキストをクリックして編集
+          テキストを選択してフォーマット · ホバーでツールバー（移動・削除・背景）
         </div>
       </div>
 
       {/* サイト本体 */}
-      <div className="mx-4 my-4 bg-white shadow-xl rounded-b-lg overflow-hidden">
+      <div className="gs-root mx-4 my-4 bg-white shadow-xl rounded-b-lg overflow-hidden border-t-2 border-green-400">
+        <GlobalStyleInjector style={config.globalStyle} />
         {config.sections.length === 0 && (
           <div className="flex flex-col items-center justify-center h-64 text-gray-400 gap-3">
             <p className="text-sm">ブロックがありません</p>
@@ -254,13 +434,13 @@ export default function SitePreview({ config, onConfigChange, onInsertRequest }:
                   onChangeBlock={(nb) => updateBlock(block.id, nb)}
                   onDelete={() => deleteBlock(block.id)}
                   onMove={(dir) => moveBlock(idx, dir)}
+                  onBgChange={(s) => updateBlockStyle(block.id, s)}
                 />
                 <InsertButton onClick={() => onInsertRequest(idx + 1)} />
               </div>
             ))}
           </SortableContext>
 
-          {/* ドラッグ中のゴースト */}
           <DragOverlay>
             {activeBlock && (
               <div className="opacity-90 shadow-2xl ring-2 ring-indigo-500 rounded pointer-events-none bg-white">

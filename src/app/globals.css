@@ -2,6 +2,20 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ─── システムフォント（外部フォント読み込みなし・即時表示）────
+   macOS/iOS : Hiragino Sans（美しい日本語）
+   Windows   : Yu Gothic / Meiryo
+   Linux     : Noto Sans CJK（ディストリビューション標準）
+   ────────────────────────────────────────────────────────── */
+body {
+  font-family:
+    -apple-system, BlinkMacSystemFont,
+    "Hiragino Sans", "Hiragino Kaku Gothic ProN",
+    "Yu Gothic", "Yu Gothic UI", "Meiryo",
+    "Noto Sans CJK JP",
+    sans-serif;
+}
+
 /* ─── プロっぽいタイポグラフィ基底 ─────────────────────────────
    AIっぽい「uniform spacing」を解消する:
    - 見出し: letter-spacing をマイナスに（詰めて力強く）
@@ -54,6 +68,17 @@ html {
 /* ─── contentEditable フォーカスリング補正 ──────────────────── */
 [contenteditable]:focus {
   outline: none;
+}
+
+/* ─── セクション背景オーバーライド ─────────────────────────────
+   戦略: ラッパー (.blk-bg-ov) に背景をinline styleで直接適用し、
+   子の section / div の独自背景を transparent で消す。
+   CSS変数継承の不確実性を排除した確実な方式。
+   ──────────────────────────────────────────────────────────── */
+.blk-bg-ov[data-bg] > section,
+.blk-bg-ov[data-bg] > div {
+  background-color: transparent !important;
+  background-image: none !important;
 }
 
 /* ─── マーキーアニメーション ─────────────────────────────────── */
