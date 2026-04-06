@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GlobalStyle } from "@/types/site";
 
+export const maxDuration = 60; // Vercel Pro: 最大60秒
+
 const API_KEY = process.env.ANTHROPIC_API_KEY ?? "";
 
 const FONT_URL_MAP: Record<string, string> = {
@@ -47,7 +49,7 @@ export async function POST(req: NextRequest) {
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/120 Safari/537.36",
         Accept: "text/html,application/xhtml+xml",
       },
-      signal: AbortSignal.timeout(12000),
+      signal: AbortSignal.timeout(7000),
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     html = await res.text();
@@ -70,7 +72,7 @@ export async function POST(req: NextRequest) {
   const styleBlocks = [...html.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/gi)].map(m => m[1]);
   // インラインスタイルも一部含める
   const inlineStyles = [...html.matchAll(/style="([^"]{10,200})"/gi)].map(m => m[1]).slice(0, 100).join(" ");
-  const cssText = (styleBlocks.join("\n") + "\n" + inlineStyles).slice(0, 20000);
+  const cssText = (styleBlocks.join("\n") + "\n" + inlineStyles).slice(0, 8000);
 
   // ページ本文（色・構造把握用）
   const bodyMatch = html.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
@@ -79,7 +81,7 @@ export async function POST(req: NextRequest) {
     .replace(/<svg[\s\S]*?<\/svg>/gi, "")
     .replace(/<[^>]+>/g, " ")
     .replace(/\s{2,}/g, " ")
-    .slice(0, 4000) ?? "";
+    .slice(0, 2000) ?? "";
 
   // ─── 3. Claude でデザインDNA解析 ─────────────────────────
   const prompt = `あなたはウェブデザイン解析の専門家です。

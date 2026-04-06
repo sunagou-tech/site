@@ -607,6 +607,40 @@ export default function CanvasEditor({ config, onChange }: Props) {
     setSelectedId(null); setEditingId(null);
   }, [config, onChange]);
 
+  // ── Compact: ブロック間の空白を詰める ─────────────────────
+  const compactBlocks = useCallback(() => {
+    const els = config.elements ?? [];
+    if (els.length === 0) return;
+    // blockIdごとにグループ化して上から詰める
+    const groups = new Map<string, CanvasElement[]>();
+    const noBlock: CanvasElement[] = [];
+    for (const el of els) {
+      if (el.blockId) {
+        if (!groups.has(el.blockId)) groups.set(el.blockId, []);
+        groups.get(el.blockId)!.push(el);
+      } else {
+        noBlock.push(el);
+      }
+    }
+    // 各グループのminYでソート
+    const sorted = [...groups.entries()].sort((a, b) => {
+      const minA = Math.min(...a[1].map(e => e.y));
+      const minB = Math.min(...b[1].map(e => e.y));
+      return minA - minB;
+    });
+    let currentY = 0;
+    const moved: CanvasElement[] = [];
+    for (const [, groupEls] of sorted) {
+      const minY = Math.min(...groupEls.map(e => e.y));
+      const shift = currentY - minY;
+      const maxY = Math.max(...groupEls.map(e => e.y + e.height));
+      moved.push(...groupEls.map(e => ({ ...e, y: e.y + shift })));
+      currentY = maxY + shift;
+    }
+    // blockIdなし要素はそのまま
+    onChange({ ...config, elements: [...moved, ...noBlock] });
+  }, [config, onChange]);
+
   // ── Keyboard ─────────────────────────────────────────────
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -738,7 +772,16 @@ export default function CanvasEditor({ config, onChange }: Props) {
           <span style={{ fontSize: 11, color: "#94A3B8" }}>
             クリック選択 &nbsp;·&nbsp; ドラッグ移動 &nbsp;·&nbsp; ハンドルでリサイズ &nbsp;·&nbsp; ダブルクリックで編集 &nbsp;·&nbsp; Del で削除
           </span>
-          <span style={{ fontSize: 11, color: "#CBD5E1", fontFamily: "monospace" }}>{CW}px</span>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <button
+              onClick={compactBlocks}
+              style={{ fontSize: 11, color: "#6366F1", background: "#EEF2FF", border: "1px solid #C7D2FE", borderRadius: 6, padding: "3px 10px", cursor: "pointer", fontWeight: 600 }}
+              title="ブロック間の余白を詰める"
+            >
+              ↑ 空白を詰める
+            </button>
+            <span style={{ fontSize: 11, color: "#CBD5E1", fontFamily: "monospace" }}>{CW}px</span>
+          </div>
         </div>
 
         {/* Canvas scroll */}
