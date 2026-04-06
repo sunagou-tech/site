@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GlobalStyle, CanvasElement, uid } from "@/types/site";
 
-export const maxDuration = 60;
+export const maxDuration = 10;
 
 const API_KEY      = process.env.ANTHROPIC_API_KEY ?? "";
 const MODEL_CHAT   = "claude-haiku-4-5-20251001"; // チャット用（軽量・高速）
-const MODEL_GEN    = "claude-sonnet-4-6";         // 生成用（高品質・安定）
+const MODEL_GEN    = "claude-haiku-4-5-20251001"; // Vercel Hobby 10s制限のためHaikuに統一
 
 // ── Chat system prompt ───────────────────────────────────────
 const CHAT_SYSTEM = `あなたは日本市場向けウェブサイト制作の専門コンサルタントです。
@@ -822,7 +822,7 @@ export async function POST(req: NextRequest) {
     .join("\n\n");
 
   const upstream = await anthropicFetch({
-    model: MODEL_GEN, max_tokens: 8192,
+    model: MODEL_GEN, max_tokens: 4096,
     system: GENERATE_SYSTEM,
     messages: [{ role: "user", content: buildGeneratePrompt(conversationText, analysisResult) }],
   });

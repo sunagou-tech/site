@@ -230,7 +230,9 @@ export default function SetupClient() {
           analysisResult: analysisResultRef.current ?? undefined,
         }),
       });
-      const data = await res.json();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let data: { error?: string; config?: any };
+      try { data = await res.json(); } catch { throw new Error("サーバーエラーが発生しました。もう一度お試しください。"); }
       if (!res.ok || data.error) throw new Error(data.error ?? "生成に失敗しました");
 
       setGenPct(100);
@@ -266,9 +268,10 @@ export default function SetupClient() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url }),
       });
-      const data = await res.json();
+      let data: { error?: string; style?: unknown };
+      try { data = await res.json(); } catch { throw new Error("URL解析がタイムアウトしました。別のURLをお試しください。"); }
       if (!res.ok || data.error) throw new Error(data.error ?? "解析に失敗しました");
-      setAnalysisResult(data.style);
+      setAnalysisResult(data.style as Parameters<typeof setAnalysisResult>[0]);
     } catch (e) {
       setError(e instanceof Error ? e.message : "URL解析に失敗しました");
     } finally {
