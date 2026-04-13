@@ -542,202 +542,22 @@ export default function SetupClient() {
   // ══════════════════════════════════════════════════════════
   return (
     <div
-      style={{ minHeight: "100vh", display: "flex", background: "#F9FAFB", fontFamily: "'Noto Sans JP', sans-serif" }}
+      style={{ minHeight: "100vh", display: "flex", flexDirection: "column", background: "#F9FAFB", fontFamily: "'Noto Sans JP', sans-serif" }}
     >
       <FontLinks />
-
-      {/* ─── 左サイドバー ─── */}
-      <aside
-        style={{ width: 300, background: "#FFFFFF", borderRight: "1px solid #E2E8F0", flexShrink: 0, display: "flex", flexDirection: "column", justifyContent: "space-between", padding: "40px 32px" }}
-        className="hidden lg:block"
-      >
-        <div>
-          {/* ロゴ */}
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 40 }}>
-            <div
-              style={{ width: 36, height: 36, borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", background: "#EBF4FF", flexShrink: 0 }}
-            >
-              <MsIcon name="bolt" size={20} color={NAVY} />
-            </div>
-            <span className="font-bold text-sm" style={{ color: "#111827" }}>
-              AI サイトビルダー
-            </span>
-          </div>
-
-          {/* キャッチ */}
-          <h2
-            className="font-bold mb-2 leading-snug"
-            style={{ fontSize: 22, color: "#111827", letterSpacing: "-0.03em" }}
-          >
-            5つの質問で
-            <br />
-            <span style={{ color: NAVY }}>プロ仕様サイト</span>
-            を生成
-          </h2>
-          <p className="text-sm mb-8 leading-relaxed" style={{ color: "#6B7280" }}>
-            AIが日本市場の黄金構成で
-            <br />
-            自動的にコンテンツを作成します
-          </p>
-
-          {/* How it works */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-            {HOW_IT_WORKS.map((item, i) => (
-              <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 14 }}>
-                <div
-                  style={{ width: 40, height: 40, borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, background: "#F0F4FF", border: "1px solid #E2E8F0" }}
-                >
-                  <MsIcon name={item.icon} size={20} color={NAVY} />
-                </div>
-                <div style={{ paddingTop: 2 }}>
-                  <p className="text-sm font-semibold" style={{ color: "#111827" }}>
-                    {item.title}
-                  </p>
-                  <p className="text-xs leading-relaxed" style={{ color: "#6B7280" }}>
-                    {item.desc}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* 参考サイト解析 */}
-          <div style={{ marginTop: 32, paddingTop: 24, borderTop: "1px solid #E2E8F0" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
-              <MsIcon name="travel_explore" size={14} color={NAVY} />
-              <p className="text-xs font-semibold" style={{ color: "#374151" }}>
-                参考サイトのデザインを取り込む
-              </p>
-            </div>
-            <p className="text-[11px] mb-3 leading-relaxed" style={{ color: "#6B7280" }}>
-              URLを入力するとフォント・余白を自動解析しデザインに反映します
-            </p>
-            <div className="flex gap-1.5">
-              <input
-                type="url"
-                value={referenceUrl}
-                onChange={e => setReferenceUrl(e.target.value)}
-                onKeyDown={e => { if (e.key === "Enter") analyzeUrl(); }}
-                placeholder="https://example.com"
-                className="flex-1 text-xs rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-200"
-                style={{ border: "1px solid #E2E8F0", background: "#F9FAFB", color: "#111827" }}
-              />
-              <button
-                onClick={analyzeUrl}
-                disabled={isAnalyzing || !referenceUrl.trim()}
-                className="text-xs px-3 py-2 rounded-lg font-medium shrink-0 transition-opacity disabled:opacity-40"
-                style={{ background: NAVY, color: "#FFFFFF" }}
-              >
-                {isAnalyzing
-                  ? <span className="flex items-center gap-1"><MsIcon name="hourglass_top" size={12} color="#FFFFFF" />解析中</span>
-                  : "解析"
-                }
-              </button>
-            </div>
-            {analysisResult && (
-              <div className="mt-2.5 space-y-2">
-                <p className="text-[10px] font-semibold" style={{ color: "#10B981" }}>
-                  ✓ デザインDNA解析完了
-                </p>
-
-                {/* カラースウォッチ */}
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                  {[
-                    { key: "primaryColor",  label: "メイン" },
-                    { key: "accentColor",   label: "アクセント" },
-                    { key: "heroBgColor",   label: "Hero" },
-                    { key: "bgColor",       label: "背景" },
-                    { key: "cardBgColor",   label: "カード" },
-                    { key: "buttonBgColor", label: "ボタン" },
-                  ].map(({ key, label }) => {
-                    const color = (analysisResult as Record<string, string>)[key];
-                    if (!color) return null;
-                    return (
-                      <div key={key} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
-                        <div
-                          title={`${label}: ${color}`}
-                          style={{
-                            width: 22, height: 22, borderRadius: 6,
-                            backgroundColor: color,
-                            border: "1.5px solid rgba(0,0,0,0.12)",
-                            boxShadow: "0 1px 3px rgba(0,0,0,0.15)",
-                          }}
-                        />
-                        <span style={{ fontSize: 8, color: "#9CA3AF", lineHeight: 1 }}>{label}</span>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {/* フォント・スタイルチップ */}
-                <div className="flex flex-wrap gap-1.5">
-                  {analysisResult.headingFont && (
-                    <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ background: "#EBF4FF", color: NAVY }}>
-                      見出し: {analysisResult.headingFont}
-                    </span>
-                  )}
-                  {analysisResult.bodyFont && (
-                    <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ background: "#EBF4FF", color: NAVY }}>
-                      本文: {analysisResult.bodyFont}
-                    </span>
-                  )}
-                  {analysisResult.buttonRadius && (
-                    <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ background: "#F0F4FF", color: "#4338CA" }}>
-                      ボタンR: {analysisResult.buttonRadius}
-                    </span>
-                  )}
-                  {analysisResult.designStyle && (
-                    <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ background: "#FFF7ED", color: "#92400E" }}>
-                      {analysisResult.designStyle}
-                    </span>
-                  )}
-                  {analysisResult.designNotes && (
-                    <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ background: "#F0FFF4", color: "#065F46" }}>
-                      {analysisResult.designNotes}
-                    </span>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* 黄金構成カード */}
-        <div
-          className="rounded-2xl p-5"
-          style={{ background: "#F0F4FF", border: "1px solid #C3DAFE" }}
-        >
-          <p
-            className="text-[10px] font-bold uppercase tracking-widest mb-3"
-            style={{ color: NAVY }}
-          >
-            黄金のセクション構成
-          </p>
-          <div className="space-y-1.5">
-            {Object.values(SECTION_LABELS).slice(0, 8).map(label => (
-              <div key={label} className="flex items-center gap-2 text-xs" style={{ color: "#374151" }}>
-                <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: NAVY }} />
-                {label}
-              </div>
-            ))}
-          </div>
-        </div>
-      </aside>
 
       {/* ─── チャットエリア ─── */}
       <main style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: "100vh" }}>
         {/* ヘッダー */}
         <div
-          style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 24px", borderBottom: "1px solid #E2E8F0", background: "#FFFFFF", flexShrink: 0 }}
+          style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 24px", borderBottom: "1px solid #E2E8F0", background: "#FFFFFF", flexShrink: 0 }}
         >
-          {/* SP: タイトル */}
-          <div className="flex items-center gap-2 lg:hidden">
-            <MsIcon name="bolt" size={16} color={NAVY} />
-            <span className="text-sm font-semibold" style={{ color: "#111827" }}>
-              AIサイト自動生成
-            </span>
+          {/* ロゴ＋タイトル */}
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo.png" alt="ツクリエ" style={{ width: 36, height: 36, borderRadius: 10, objectFit: "cover" }} />
+            <span className="font-bold text-base" style={{ color: "#111827" }}>ツクリエ</span>
           </div>
-          <div className="hidden lg:block" />
 
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             {error && (
@@ -753,6 +573,61 @@ export default function SetupClient() {
               スキップして編集へ →
             </a>
           </div>
+        </div>
+
+        {/* ─── URL解析バー ─── */}
+        <div
+          style={{ background: "#FFFFFF", borderBottom: "1px solid #E2E8F0", padding: "10px 24px" }}
+        >
+          <div className="max-w-2xl mx-auto flex items-center gap-2">
+            <MsIcon name="travel_explore" size={16} color={NAVY} />
+            <span className="text-xs font-semibold shrink-0" style={{ color: "#374151" }}>参考サイトURL</span>
+            <input
+              type="url"
+              value={referenceUrl}
+              onChange={e => setReferenceUrl(e.target.value)}
+              onKeyDown={e => { if (e.key === "Enter") analyzeUrl(); }}
+              placeholder="https://example.com — フォント・色を自動解析してデザインに反映"
+              className="flex-1 text-xs rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-200"
+              style={{ border: "1px solid #E2E8F0", background: "#F9FAFB", color: "#111827" }}
+            />
+            <button
+              onClick={analyzeUrl}
+              disabled={isAnalyzing || !referenceUrl.trim()}
+              className="text-xs px-3 py-2 rounded-lg font-medium shrink-0 transition-opacity disabled:opacity-40"
+              style={{ background: NAVY, color: "#FFFFFF" }}
+            >
+              {isAnalyzing
+                ? <span className="flex items-center gap-1"><MsIcon name="hourglass_top" size={12} color="#FFFFFF" />解析中</span>
+                : "解析"
+              }
+            </button>
+          </div>
+          {analysisResult && (
+            <div className="max-w-2xl mx-auto mt-2 flex flex-wrap items-center gap-2">
+              <span className="text-[10px] font-semibold" style={{ color: "#10B981" }}>✓ デザインDNA解析完了</span>
+              {[
+                { key: "primaryColor", label: "メイン" },
+                { key: "accentColor",  label: "アクセント" },
+                { key: "heroBgColor",  label: "Hero" },
+                { key: "bgColor",      label: "背景" },
+              ].map(({ key, label }) => {
+                const color = (analysisResult as Record<string, string>)[key];
+                if (!color) return null;
+                return (
+                  <div key={key} style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                    <div style={{ width: 14, height: 14, borderRadius: 4, backgroundColor: color, border: "1.5px solid rgba(0,0,0,0.12)" }} />
+                    <span style={{ fontSize: 10, color: "#6B7280" }}>{label}</span>
+                  </div>
+                );
+              })}
+              {analysisResult.designStyle && (
+                <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ background: "#FFF7ED", color: "#92400E" }}>
+                  {analysisResult.designStyle}
+                </span>
+              )}
+            </div>
+          )}
         </div>
 
         {/* メッセージ */}
@@ -854,3 +729,4 @@ export default function SetupClient() {
     </div>
   );
 }
+
