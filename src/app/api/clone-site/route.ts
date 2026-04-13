@@ -14,6 +14,8 @@ type FormData = {
   strengths?:   string;
 };
 
+export type CloneText = { id: number; tag: string; text: string };
+
 // ─── テキスト要素を抽出 ─────────────────────────────────────
 type TextEntry = { tag: string; full: string; inner: string };
 
@@ -21,14 +23,8 @@ function extractTextEntries(html: string): TextEntry[] {
   const entries: TextEntry[] = [];
 
   // 優先度1: 見出し h1〜h5
-  const headingPatterns: { tag: string; re: RegExp }[] = [
-    { tag: "h1", re: /<h1([^>]*)>([\s\S]*?)<\/h1>/gi },
-    { tag: "h2", re: /<h2([^>]*)>([\s\S]*?)<\/h2>/gi },
-    { tag: "h3", re: /<h3([^>]*)>([\s\S]*?)<\/h3>/gi },
-    { tag: "h4", re: /<h4([^>]*)>([\s\S]*?)<\/h4>/gi },
-    { tag: "h5", re: /<h5([^>]*)>([\s\S]*?)<\/h5>/gi },
-  ];
-  for (const { tag, re } of headingPatterns) {
+  for (const tag of ["h1","h2","h3","h4","h5"]) {
+    const re = new RegExp(`<${tag}([^>]*)>([\\s\\S]*?)<\\/${tag}>`, "gi");
     for (const m of html.matchAll(re)) {
       const inner = m[2].replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
       if (inner.length >= 1 && inner.length <= 200) {
@@ -37,7 +33,7 @@ function extractTextEntries(html: string): TextEntry[] {
     }
   }
 
-  // 優先度2: 見出しが少ない場合は p タグも補完（短めのもの）
+  // 優先度2: 見出しが少ない場合は p タグも補完
   if (entries.length < 5) {
     for (const m of html.matchAll(/<p([^>]*)>([\s\S]*?)<\/p>/gi)) {
       const inner = m[2].replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
@@ -109,24 +105,22 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // ── 2. <base href> 注入（相対URLを全て解決）─────────────────
+  // ── 2. <base href> 注入 ──────────────────────────────────
   const pageUrl = url.endsWith("/") ? url : url + "/";
   if (!html.includes("<base")) {
     html = html.replace(/(<head[^>]*>)/i, `$1\n<base href="${pageUrl}">`);
   }
 
-  // ── 3. 危険なインラインスクリプトのみ除去（外部srcは残す）──────
-  // src属性がないインライン<script>だけ除去。src付きは残してJSレンダリングを維持。
+  // ── 3. インラインスクリプトのみ除去（外部srcは残す）────────
   html = html.replace(/<script(?![^>]*\bsrc\b)[^>]*>[\s\S]*?<\/script>/gi, "");
 
   // ── 4. テキスト要素を抽出 ────────────────────────────────────
   const entries = extractTextEntries(html);
 
-  // 抽出0件の場合: AIテキスト書き換えをスキップしてHTMLをそのまま返す
+  // 抽出0件: そのまま返す
   if (entries.length === 0) {
     const credit = `<div style="position:fixed;bottom:12px;right:12px;z-index:99999;background:#1A365D;color:#fff;font-size:11px;padding:6px 12px;border-radius:20px;font-family:sans-serif;opacity:0.85">Made with ツクリエ</div>`;
-    const fallback = html.replace("</body>", `${credit}</body>`);
-    return NextResponse.json({ html: fallback });
+    return NextResponse.json({ html: html.replace("</body>", `${credit}</body>`), texts: [] });
   }
 
   // ── 5. AI でテキストを生成 ────────────────────────────────────
@@ -171,44 +165,25 @@ ${entries.map((e, i) => `[${i}] ${e.tag.toUpperCase()}: ${e.inner}`).join("\n")}
     return NextResponse.json({ error: "AI応答のパースに失敗しました", raw }, { status: 500 });
   }
 
-  // ── 7. テキストを差し替え ─────────────────────────────────────
+  // ── 7. テキストを差し替え（data-tsk-id 付与） ────────────────
   let modified = html;
+  const texts: CloneText[] = [];
+
   for (let i = 0; i < Math.min(entries.length, replacements.length); i++) {
     const { tag, full } = entries[i];
     const newText = replacements[i];
     if (!newText) continue;
     const attrMatch = full.match(new RegExp(`<${tag}([^>]*)>`));
     const attrs     = attrMatch?.[1] ?? "";
-    modified = modified.replace(full, `<${tag}${attrs}>${newText}</${tag}>`);
+    // data-tsk-id を付与して後から DOM 検索できるようにする
+    const newEl = `<${tag}${attrs} data-tsk-id="${i}">${newText}</${tag}>`;
+    modified = modified.replace(full, newEl);
+    texts.push({ id: i, tag, text: newText });
   }
 
-  // ── 8. 編集ヘルパー＋クレジット注入 ─────────────────────────
-  const editHelper = `<script>
-window.__tsukurie_enable=function(){
-  document.querySelectorAll('h1,h2,h3,h4,h5,p,a,li,button,span,td,th,label').forEach(function(el){
-    var t=el.innerText&&el.innerText.trim();
-    if(!t||t.length<2||t.length>400)return;
-    if(el.querySelector('img,video,iframe,svg,canvas'))return;
-    el.contentEditable='true';
-    el.dataset.tsk='1';
-    el.style.outline='2px dashed #2B6CB0';
-    el.style.borderRadius='3px';
-    el.style.cursor='text';
-  });
-};
-window.__tsukurie_disable=function(){
-  document.querySelectorAll('[data-tsk]').forEach(function(el){
-    el.contentEditable='false';
-    el.removeAttribute('data-tsk');
-    el.style.outline='';
-    el.style.borderRadius='';
-    el.style.cursor='';
-  });
-  return '<!DOCTYPE html>'+document.documentElement.outerHTML;
-};
-<\/script>`;
+  // ── 8. クレジット注入 ────────────────────────────────────────
   const credit = `<div style="position:fixed;bottom:12px;right:12px;z-index:99999;background:#1A365D;color:#fff;font-size:11px;padding:6px 12px;border-radius:20px;font-family:sans-serif;opacity:0.85">Made with ツクリエ</div>`;
-  modified = modified.replace("</body>", `${editHelper}${credit}</body>`);
+  modified = modified.replace("</body>", `${credit}</body>`);
 
-  return NextResponse.json({ html: modified });
+  return NextResponse.json({ html: modified, texts });
 }

@@ -1,16 +1,9 @@
 "use client";
 
-/**
- * /admin/setup — URL解析＆フォーム入力でサイト自動生成
- * ─────────────────────────────────────────────────────────
- * Phase 1 (form):       左サイドバーでURL解析 + 右でフォーム入力
- * Phase 2 (generating): アニメーション付きサイト生成
- * Phase 3 (preview):    実際のブロックをプレビュー + 編集開始
- */
-
 import "@material-symbols/font-400/rounded.css";
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback } from "react";
 import { GlobalStyle } from "@/types/site";
+import type { CloneText } from "@/app/api/clone-site/route";
 
 const NAVY = "#1A365D";
 
@@ -26,6 +19,14 @@ const GEN_STEPS = [
   { pct: 96,  text: "最終チェック中..." },
 ];
 
+const TAG_LABEL: Record<string, string> = {
+  h1: "メインキャッチコピー",
+  h2: "セクション見出し",
+  h3: "小見出し",
+  h4: "小見出し",
+  h5: "小見出し",
+  p:  "本文テキスト",
+};
 
 function MsIcon({ name, size = 20, color = NAVY, className = "" }: {
   name: string; size?: number; color?: string; className?: string;
@@ -41,7 +42,6 @@ function MsIcon({ name, size = 20, color = NAVY, className = "" }: {
   );
 }
 
-// ─── フォント link タグ ──────────────────────────────────────
 function FontLinks() {
   return (
     <>
@@ -59,19 +59,18 @@ function FontLinks() {
 // MAIN
 // ══════════════════════════════════════════════════════════
 export default function SetupClient() {
-  const [phase,           setPhase]           = useState<Phase>("form");
-  const [referenceUrl,    setReferenceUrl]    = useState("");
-  const [isAnalyzing,     setIsAnalyzing]     = useState(false);
-  const [analysisResult,  setAnalysisResultState] = useState<GlobalStyle | null>(null);
+  const [phase,          setPhase]          = useState<Phase>("form");
+  const [referenceUrl,   setReferenceUrl]   = useState("");
+  const [isAnalyzing,    setIsAnalyzing]    = useState(false);
+  const [analysisResult, setAnalysisResultState] = useState<GlobalStyle | null>(null);
   const analysisResultRef = useRef<GlobalStyle | null>(null);
-  const [cloneHtml,       setCloneHtml]       = useState<string | null>(null);
-  const [isEditing,       setIsEditing]       = useState(false);
+  const [cloneHtml,      setCloneHtml]      = useState<string | null>(null);
+  const [previewTexts,   setPreviewTexts]   = useState<CloneText[]>([]);
   const iframeRef = useRef<HTMLIFrameElement>(null);
-  const [error,           setError]           = useState("");
-  const [genPct,          setGenPct]          = useState(0);
-  const [genText,         setGenText]         = useState(GEN_STEPS[0].text);
+  const [error,          setError]          = useState("");
+  const [genPct,         setGenPct]         = useState(0);
+  const [genText,        setGenText]        = useState(GEN_STEPS[0].text);
 
-  // フォームフィールド
   const [businessName, setBusinessName] = useState("");
   const [serviceDesc,  setServiceDesc]  = useState("");
   const [target,       setTarget]       = useState("");
@@ -124,56 +123,37 @@ export default function SetupClient() {
           formData: { businessName, serviceDesc, target, strengths },
         }),
       });
-      let data: { error?: string; html?: string };
+      let data: { error?: string; html?: string; texts?: CloneText[] };
       try { data = await res.json(); } catch { throw new Error("サーバーエラーが発生しました。もう一度お試しください。"); }
       if (!res.ok || data.error) throw new Error(data.error ?? "生成に失敗しました");
 
       setGenPct(100);
-      setTimeout(() => { setCloneHtml(data.html ?? ""); setPhase("preview"); }, 800);
+      setTimeout(() => {
+        setCloneHtml(data.html ?? "");
+        setPreviewTexts(data.texts ?? []);
+        setPhase("preview");
+      }, 800);
     } catch (e) {
       setError(e instanceof Error ? e.message : "生成に失敗しました");
       setPhase("form");
     }
   }, [referenceUrl, businessName, serviceDesc, target, strengths]);
 
-  const downloadHtml = useCallback(() => {
-    const win = iframeRef.current?.contentWindow as (Window & { __tsukurie_disable?: () => string }) | null;
-    const html = win?.__tsukurie_disable?.() ?? cloneHtml ?? "";
-    if (!html) return;
-    const blob = new Blob([html], { type: "text/html" });
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement("a");
-    a.href = url; a.download = "my-site.html"; a.click();
-    URL.revokeObjectURL(url);
-  }, [cloneHtml]);
-
-  const toggleEdit = useCallback(() => {
-    const win = iframeRef.current?.contentWindow as (Window & {
-      __tsukurie_enable?: () => void;
-      __tsukurie_disable?: () => string;
-    }) | null;
-    if (!isEditing) {
-      win?.__tsukurie_enable?.();
-      setIsEditing(true);
-    } else {
-      const updated = win?.__tsukurie_disable?.();
-      if (updated) setCloneHtml(updated);
-      setIsEditing(false);
+  // ─── テキストをリアルタイムで更新 ─────────────────────────
+  const updateText = useCallback((id: number, newText: string) => {
+    setPreviewTexts(prev => prev.map(t => t.id === id ? { ...t, text: newText } : t));
+    // iframe の DOM を直接書き換え（再レンダリングなし）
+    const doc = iframeRef.current?.contentDocument;
+    if (doc) {
+      const el = doc.querySelector(`[data-tsk-id="${id}"]`);
+      if (el) el.textContent = newText;
     }
-  }, [isEditing]);
-
-  // iframeロード後に編集モードが有効なら再適用
-  useEffect(() => {
-    if (isEditing) {
-      const win = iframeRef.current?.contentWindow as (Window & { __tsukurie_enable?: () => void }) | null;
-      win?.__tsukurie_enable?.();
-    }
-  }, [cloneHtml, isEditing]);
+  }, []);
 
   const reset = useCallback(() => {
     setPhase("form");
     setCloneHtml(null);
-    setIsEditing(false);
+    setPreviewTexts([]);
     setError("");
   }, []);
 
@@ -226,7 +206,6 @@ export default function SetupClient() {
           {genPct}%
         </p>
 
-
         <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
     );
@@ -241,80 +220,94 @@ export default function SetupClient() {
         <FontLinks />
 
         {/* ─── トップバー ─── */}
-        <div
-          style={{
-            background: "#FFFFFF", borderBottom: "1px solid #E2E8F0",
-            height: 60, flexShrink: 0, display: "flex", alignItems: "center",
-            justifyContent: "space-between", padding: "0 20px", gap: 12,
-          }}
-        >
+        <div style={{
+          background: "#FFFFFF", borderBottom: "1px solid #E2E8F0",
+          height: 56, flexShrink: 0, display: "flex", alignItems: "center",
+          justifyContent: "space-between", padding: "0 20px",
+        }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo.png" alt="ツクリエ" style={{ width: 30, height: 30, borderRadius: 8, objectFit: "cover" }} />
+            <img src="/logo.png" alt="ツクリエ" style={{ width: 28, height: 28, borderRadius: 8, objectFit: "cover" }} />
             <div>
-              <p className="font-bold text-sm leading-tight" style={{ color: "#111827" }}>サイトが完成しました！</p>
-              <p className="text-xs" style={{ color: "#6B7280" }}>
-                参考サイトのデザインをそのまま反映しました
-              </p>
+              <p className="font-bold text-sm" style={{ color: "#111827" }}>サイトが完成しました！</p>
+              <p className="text-xs" style={{ color: "#6B7280" }}>左のパネルでテキストを自由に編集できます</p>
             </div>
           </div>
-
-          <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
-            <button
-              onClick={reset}
-              className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg transition-colors"
-              style={{ color: "#6B7280", border: "1px solid #E2E8F0", background: "#FFFFFF" }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "#F9FAFB"; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "#FFFFFF"; }}
-            >
-              <MsIcon name="refresh" size={14} color="#6B7280" />
-              やり直す
-            </button>
-            <button
-              onClick={toggleEdit}
-              className="flex items-center gap-1.5 font-semibold text-sm px-4 py-2 rounded-xl transition-all"
-              style={{
-                background: isEditing ? "#059669" : "#FFFFFF",
-                color: isEditing ? "#FFFFFF" : "#1A365D",
-                border: isEditing ? "none" : "1.5px solid #1A365D",
-              }}
-            >
-              <MsIcon name={isEditing ? "check" : "edit"} size={16} color={isEditing ? "#FFFFFF" : "#1A365D"} />
-              {isEditing ? "編集完了" : "テキストを編集する"}
-            </button>
-            <button
-              onClick={downloadHtml}
-              className="flex items-center gap-1.5 font-semibold text-sm px-4 py-2 rounded-xl transition-all"
-              style={{ background: "#1A365D", color: "#FFFFFF" }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "#2B6CB0"; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "#1A365D"; }}
-            >
-              <MsIcon name="download" size={16} color="#FFFFFF" />
-              保存
-            </button>
-          </div>
+          <button
+            onClick={reset}
+            className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg"
+            style={{ color: "#6B7280", border: "1px solid #E2E8F0", background: "#FFFFFF" }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "#F9FAFB"; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "#FFFFFF"; }}
+          >
+            <MsIcon name="refresh" size={14} color="#6B7280" />
+            やり直す
+          </button>
         </div>
 
-        {/* ─── 編集モードバナー ─── */}
-        {isEditing && (
-          <div style={{
-            background: "#EBF8FF", borderBottom: "1px solid #BEE3F8",
-            padding: "8px 20px", fontSize: 12, color: "#2B6CB0",
-            display: "flex", alignItems: "center", gap: 8, flexShrink: 0,
-          }}>
-            <MsIcon name="edit" size={14} color="#2B6CB0" />
-            テキストをクリックして直接編集できます。編集が終わったら「編集完了」を押してください。
-          </div>
-        )}
+        {/* ─── メインエリア（左パネル＋右iframe） ─── */}
+        <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
 
-        {/* ─── iframeプレビュー ─── */}
-        <iframe
-          ref={iframeRef}
-          srcDoc={cloneHtml ?? ""}
-          style={{ flex: 1, border: "none", width: "100%", display: "block" }}
-          sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
-          title="生成されたサイト"
-        />
+          {/* ─── 左：テキスト編集パネル ─── */}
+          <aside style={{
+            width: 300, flexShrink: 0, background: "#FFFFFF",
+            borderRight: "1px solid #E2E8F0", overflowY: "auto",
+            padding: "20px 16px", display: "flex", flexDirection: "column", gap: 0,
+          }}>
+            <div style={{ marginBottom: 16 }}>
+              <p className="text-xs font-bold uppercase tracking-widest" style={{ color: "#9CA3AF" }}>
+                テキストを編集
+              </p>
+              <p className="text-xs mt-1 leading-relaxed" style={{ color: "#6B7280" }}>
+                入力するとサイトがリアルタイムで更新されます
+              </p>
+            </div>
+
+            {previewTexts.length === 0 ? (
+              <div className="text-xs p-3 rounded-xl" style={{ background: "#F9FAFB", color: "#9CA3AF" }}>
+                このサイトはJavaScriptで動的に表示されているため、テキスト編集は直接サイト上でお試しください。
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                {previewTexts.map((t, i) => (
+                  <div key={t.id}>
+                    <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "#9CA3AF", marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                      {TAG_LABEL[t.tag] ?? t.tag.toUpperCase()} {i + 1}
+                    </label>
+                    {t.tag === "h1" || t.text.length > 50 ? (
+                      <textarea
+                        value={t.text}
+                        onChange={e => updateText(t.id, e.target.value)}
+                        rows={t.tag === "h1" ? 2 : 3}
+                        className="w-full text-xs rounded-lg px-3 py-2 outline-none resize-none focus:ring-2 focus:ring-blue-200"
+                        style={{ border: "1.5px solid #E2E8F0", background: "#F9FAFB", color: "#111827", lineHeight: 1.6 }}
+                      />
+                    ) : (
+                      <input
+                        type="text"
+                        value={t.text}
+                        onChange={e => updateText(t.id, e.target.value)}
+                        className="w-full text-xs rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-200"
+                        style={{ border: "1.5px solid #E2E8F0", background: "#F9FAFB", color: "#111827" }}
+                      />
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </aside>
+
+          {/* ─── 右：iframeプレビュー ─── */}
+          <main style={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column" }}>
+            <iframe
+              ref={iframeRef}
+              srcDoc={cloneHtml}
+              style={{ flex: 1, border: "none", width: "100%", display: "block" }}
+              sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+              title="生成されたサイト"
+            />
+          </main>
+        </div>
       </div>
     );
   }
@@ -428,7 +421,7 @@ export default function SetupClient() {
               { num: "01", text: "真似したいサイトのURLを入力する" },
               { num: "02", text: "あなたの事業情報を入力する" },
               { num: "03", text: "ボタンを押してサイトを生成" },
-              { num: "04", text: "内容を編集してプロ級に仕上げる" },
+              { num: "04", text: "テキストを編集してオリジナルに仕上げる" },
             ].map(step => (
               <div key={step.num} style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
                 <span
@@ -444,7 +437,7 @@ export default function SetupClient() {
         </div>
       </aside>
 
-      {/* ─── メインエリア（スクロール） ─── */}
+      {/* ─── メインエリア ─── */}
       <main style={{ flex: 1, display: "flex", flexDirection: "column", height: "100vh", overflow: "hidden" }}>
         {/* ヘッダー */}
         <div
@@ -454,7 +447,6 @@ export default function SetupClient() {
             background: "#FFFFFF", flexShrink: 0,
           }}
         >
-          {/* SP用ロゴ */}
           <div className="flex items-center gap-2 lg:hidden">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/logo.png" alt="ツクリエ" style={{ width: 28, height: 28, borderRadius: 8, objectFit: "cover" }} />
@@ -482,7 +474,6 @@ export default function SetupClient() {
         <div className="flex-1 overflow-y-auto">
           <div className="max-w-2xl mx-auto px-6 py-12">
 
-            {/* タイトル */}
             <div className="mb-10">
               <h1
                 className="font-bold mb-3 leading-tight"
@@ -499,7 +490,6 @@ export default function SetupClient() {
               </p>
             </div>
 
-            {/* URL未入力の案内 */}
             {!referenceUrl.trim() && (
               <div
                 className="mb-8 flex items-start gap-3 p-4 rounded-xl"
@@ -511,16 +501,14 @@ export default function SetupClient() {
                     まず参考サイトのURLを入力してください
                   </p>
                   <p className="text-xs mt-0.5 leading-relaxed" style={{ color: "#92400E" }}>
-                    左のメニューに真似したいサイトのURLを入力して「このデザインを取り込む」を押すと、デザイン解析もできます
+                    左のメニューに真似したいサイトのURLを入力して「このデザインを取り込む」を押してください
                   </p>
                 </div>
               </div>
             )}
 
-            {/* フォーム */}
             <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
 
-              {/* 事業名 */}
               <div>
                 <label className="block text-sm font-semibold mb-2" style={{ color: "#111827" }}>
                   事業・サービス名 <span style={{ color: "#EF4444" }}>*</span>
@@ -535,7 +523,6 @@ export default function SetupClient() {
                 />
               </div>
 
-              {/* サービス内容 */}
               <div>
                 <label className="block text-sm font-semibold mb-2" style={{ color: "#111827" }}>
                   どんなサービス・商品ですか？ <span style={{ color: "#EF4444" }}>*</span>
@@ -550,7 +537,6 @@ export default function SetupClient() {
                 />
               </div>
 
-              {/* ターゲット */}
               <div>
                 <label className="block text-sm font-semibold mb-1" style={{ color: "#111827" }}>
                   ターゲット（誰に向けたサービスですか？）
@@ -566,7 +552,6 @@ export default function SetupClient() {
                 />
               </div>
 
-              {/* 強み */}
               <div>
                 <label className="block text-sm font-semibold mb-1" style={{ color: "#111827" }}>
                   強み・特徴（他社との違い）
@@ -582,7 +567,6 @@ export default function SetupClient() {
                 />
               </div>
 
-              {/* 生成ボタン */}
               <button
                 onClick={generateSite}
                 disabled={!canGenerate}
