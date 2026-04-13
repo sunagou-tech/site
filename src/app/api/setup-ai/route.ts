@@ -693,10 +693,11 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
-  const { messages, phase, analysisResult } = body as {
-    messages: Array<{ role: "user" | "assistant"; content: string }>;
-    phase: "chat" | "generate";
+  const { messages, phase, analysisResult, formData } = body as {
+    messages?: Array<{ role: "user" | "assistant"; content: string }>;
+    phase: "chat" | "generate" | "form-generate";
     analysisResult?: GlobalStyle;
+    formData?: { businessName: string; serviceDesc: string; target?: string; strengths?: string };
   };
 
   if (phase === "chat") {
@@ -713,10 +714,21 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  // ── Generate phase ───────────────────────────────────────
-  const conversationText = messages
-    .map(m => `${m.role === "user" ? "ユーザー" : "AI"}: ${m.content}`)
-    .join("\n\n");
+  // ── Generate phase（チャット or フォーム）───────────────────
+  let conversationText: string;
+
+  if (phase === "form-generate" && formData) {
+    conversationText = [
+      `事業・サービス名: ${formData.businessName}`,
+      `サービス内容: ${formData.serviceDesc}`,
+      formData.target    ? `ターゲット: ${formData.target}`     : "",
+      formData.strengths ? `強み・特徴: ${formData.strengths}`  : "",
+    ].filter(Boolean).join("\n");
+  } else {
+    conversationText = (messages ?? [])
+      .map(m => `${m.role === "user" ? "ユーザー" : "AI"}: ${m.content}`)
+      .join("\n\n");
+  }
 
   // ストリーミングで受け取り → 全文集積 → JSON解析
   const upstream = await anthropicFetch({

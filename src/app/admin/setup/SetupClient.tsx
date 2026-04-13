@@ -1,33 +1,26 @@
 "use client";
 
 /**
- * /admin/setup — AIヒアリング＆自動生成画面
+ * /admin/setup — URL解析＆フォーム入力でサイト自動生成
  * ─────────────────────────────────────────────────────────
- * Phase 1 (interview): チャット形式でビジネス情報をヒアリング
+ * Phase 1 (form):       左サイドバーでURL解析 + 右でフォーム入力
  * Phase 2 (generating): アニメーション付きサイト生成
- * Phase 3 (preview): 実際のブロックをプレビュー + 編集開始
- *
- * デザイン: 白基調・清潔感・日本市場特化
- * アイコン: Material Symbols Rounded (@material-symbols/font-400)
+ * Phase 3 (preview):    実際のブロックをプレビュー + 編集開始
  */
 
 import "@material-symbols/font-400/rounded.css";
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { SiteConfig, GlobalStyle } from "@/types/site";
 import CanvasEditor from "@/components/canvas/CanvasEditor";
 import { EditingContext } from "@/contexts/EditingContext";
 
-// ─── カラー定数 ──────────────────────────────────────────
 const NAVY = "#1A365D";
 
-// ─── 型 ────────────────────────────────────────────────────
-type Phase = "interview" | "generating" | "preview";
-type Msg = { role: "user" | "assistant"; content: string };
+type Phase = "form" | "generating" | "preview";
 
-// ─── 生成進捗テキスト ────────────────────────────────────────
 const GEN_STEPS = [
-  { pct: 10,  text: "ヒアリング内容を分析中..." },
+  { pct: 10,  text: "参考サイトのデザインを解析中..." },
   { pct: 25,  text: "ファーストビューを構築中..." },
   { pct: 40,  text: "課題・解決策セクションを生成中..." },
   { pct: 55,  text: "強み・特徴カードを作成中..." },
@@ -37,7 +30,6 @@ const GEN_STEPS = [
   { pct: 98,  text: "最終チェック中..." },
 ];
 
-// ─── セクション名マップ ─────────────────────────────────────
 const SECTION_LABELS: Record<string, string> = {
   "hero-gradient": "① ファーストビュー（Hero）",
   problem:         "② お悩み共感セクション",
@@ -50,15 +42,6 @@ const SECTION_LABELS: Record<string, string> = {
   footer:          "フッター",
 };
 
-// ─── How it works（Material Symbols アイコン）─────────────
-const HOW_IT_WORKS = [
-  { icon: "chat",          title: "AIがヒアリング",     desc: "5つの質問に答えるだけ" },
-  { icon: "bolt",          title: "自動でサイト生成",   desc: "日本市場の黄金構成で即時生成" },
-  { icon: "edit_note",     title: "自由に編集",         desc: "テキスト・色・画像をカスタマイズ" },
-  { icon: "rocket_launch", title: "公開",               desc: "ワンクリックで世界に公開" },
-];
-
-// ─── Material Symbol コンポーネント ─────────────────────────
 function MsIcon({ name, size = 20, color = NAVY, className = "" }: {
   name: string; size?: number; color?: string; className?: string;
 }) {
@@ -73,50 +56,16 @@ function MsIcon({ name, size = 20, color = NAVY, className = "" }: {
   );
 }
 
-// ─── SSE ストリームパーサー ─────────────────────────────────
-async function* parseAnthropicStream(
-  reader: ReadableStreamDefaultReader<Uint8Array>
-): AsyncGenerator<string> {
-  const decoder = new TextDecoder();
-  let buf = "";
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    buf += decoder.decode(value, { stream: true });
-    const lines = buf.split("\n");
-    buf = lines.pop() ?? "";
-    for (const line of lines) {
-      if (!line.startsWith("data: ")) continue;
-      const data = line.slice(6).trim();
-      if (!data || data === "[DONE]") continue;
-      try {
-        const parsed = JSON.parse(data);
-        if (parsed.type === "content_block_delta" && parsed.delta?.type === "text_delta") {
-          yield parsed.delta.text as string;
-        }
-      } catch { /* ignore */ }
-    }
-  }
-}
-
-// ─── Markdown 簡易レンダラー ────────────────────────────────
-function RenderMarkdown({ text }: { text: string }) {
-  const cleaned = text.replace(/\[GENERATE\]/g, "");
+// ─── フォント link タグ ──────────────────────────────────────
+function FontLinks() {
   return (
     <>
-      {cleaned.split("\n").map((line, i, arr) => {
-        const parts = line.split(/(\*\*[^*]+\*\*)/g);
-        return (
-          <span key={i}>
-            {parts.map((p, k) =>
-              p.startsWith("**") && p.endsWith("**") ? (
-                <strong key={k} style={{ fontWeight: 700 }}>{p.slice(2, -2)}</strong>
-              ) : p
-            )}
-            {i < arr.length - 1 && <br />}
-          </span>
-        );
-      })}
+      <link rel="preconnect" href="https://fonts.googleapis.com" />
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+      <link
+        href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Montserrat:wght@600;700&display=swap"
+        rel="stylesheet"
+      />
     </>
   );
 }
@@ -127,134 +76,26 @@ function RenderMarkdown({ text }: { text: string }) {
 export default function SetupClient() {
   const router = useRouter();
 
-  const [phase,           setPhase]           = useState<Phase>("interview");
-  const [messages,        setMessages]        = useState<Msg[]>([]);
-  const [input,           setInput]           = useState("");
-  const [isStreaming,     setIsStreaming]      = useState(false);
-  const [genPct,          setGenPct]          = useState(0);
-  const [genText,         setGenText]         = useState(GEN_STEPS[0].text);
-  const [generatedConfig, setGeneratedConfig] = useState<SiteConfig | null>(null);
-  const [error,           setError]           = useState("");
+  const [phase,           setPhase]           = useState<Phase>("form");
   const [referenceUrl,    setReferenceUrl]    = useState("");
   const [isAnalyzing,     setIsAnalyzing]     = useState(false);
   const [analysisResult,  setAnalysisResultState] = useState<GlobalStyle | null>(null);
   const analysisResultRef = useRef<GlobalStyle | null>(null);
+  const [generatedConfig, setGeneratedConfig] = useState<SiteConfig | null>(null);
+  const [error,           setError]           = useState("");
+  const [genPct,          setGenPct]          = useState(0);
+  const [genText,         setGenText]         = useState(GEN_STEPS[0].text);
 
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const inputRef       = useRef<HTMLTextAreaElement>(null);
+  // フォームフィールド
+  const [businessName, setBusinessName] = useState("");
+  const [serviceDesc,  setServiceDesc]  = useState("");
+  const [target,       setTarget]       = useState("");
+  const [strengths,    setStrengths]    = useState("");
 
   function setAnalysisResult(val: GlobalStyle | null) {
     analysisResultRef.current = val;
     setAnalysisResultState(val);
   }
-
-  // 初期 AI メッセージ
-  useEffect(() => {
-    setMessages([{
-      role: "assistant",
-      content:
-        "こんにちは！私はAIウェブサイトコンサルタントです😊\n\nあなたのビジネスにぴったりの**プロ仕様サイト**を、たった5つの質問で自動生成します！\n\nまず最初に教えてください👇\n\n**どのような事業・サービスを行っていますか？**\n（例：税理士事務所、フリーランスデザイナー、カフェ、ECサイトなど）",
-    }]);
-  }, []);
-
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    // AIの返答完了後にフォーカスを戻す
-    if (!isStreaming) inputRef.current?.focus();
-  }, [messages, isStreaming]);
-
-  // ─── チャット送信 ────────────────────────────────────────
-  const sendMessage = useCallback(async () => {
-    const text = input.trim();
-    if (!text || isStreaming) return;
-    setInput("");
-    setError("");
-
-    const userMsg: Msg = { role: "user", content: text };
-    const historyWithUser = [...messages, userMsg];
-    setMessages([...historyWithUser, { role: "assistant", content: "" }]);
-    setIsStreaming(true);
-
-    try {
-      const res = await fetch("/api/setup-ai", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: historyWithUser, phase: "chat" }),
-      });
-      if (!res.ok || !res.body) throw new Error(await res.text());
-
-      const reader = res.body.getReader();
-      let accumulated = "";
-      for await (const chunk of parseAnthropicStream(reader)) {
-        accumulated += chunk;
-        setMessages(prev => {
-          const next = [...prev];
-          next[next.length - 1] = { role: "assistant", content: accumulated };
-          return next;
-        });
-      }
-      setIsStreaming(false);
-      inputRef.current?.focus();
-      if (accumulated.includes("[GENERATE]")) {
-        setTimeout(() => generateSite(historyWithUser), 600);
-      }
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "エラーが発生しました");
-      setIsStreaming(false);
-      inputRef.current?.focus();
-      setMessages(prev => {
-        const next = [...prev];
-        next[next.length - 1] = { role: "assistant", content: "申し訳ありません、エラーが発生しました。もう一度お試しください。" };
-        return next;
-      });
-    }
-  }, [input, messages, isStreaming]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // ─── サイト生成 ──────────────────────────────────────────
-  const generateSite = useCallback(async (chatMessages: Msg[]) => {
-    setPhase("generating");
-    setGenPct(0);
-    setGenText(GEN_STEPS[0].text);
-
-    GEN_STEPS.forEach(({ pct, text }, i) => {
-      setTimeout(() => { setGenPct(pct); setGenText(text); }, i * 1200);
-    });
-
-    try {
-      const res  = await fetch("/api/setup-ai", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          messages: chatMessages,
-          phase: "generate",
-          analysisResult: analysisResultRef.current ?? undefined,
-        }),
-      });
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      let data: { error?: string; config?: any };
-      try { data = await res.json(); } catch { throw new Error("サーバーエラーが発生しました。もう一度お試しください。"); }
-      if (!res.ok || data.error) throw new Error(data.error ?? "生成に失敗しました");
-
-      setGenPct(100);
-      setTimeout(() => { setGeneratedConfig(data.config); setPhase("preview"); }, 800);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "生成に失敗しました");
-      setPhase("interview");
-    }
-  }, []);
-
-
-  const startEditing = useCallback(() => {
-    if (!generatedConfig) return;
-    localStorage.setItem("site-config", JSON.stringify(generatedConfig));
-    router.push("/admin");
-  }, [generatedConfig, router]);
-
-  const reset = useCallback(() => {
-    setPhase("interview");
-    setMessages([{ role: "assistant", content: "最初からやり直しましょう😊\n\n**どのような事業・サービスを行っていますか？**" }]);
-    setInput(""); setGeneratedConfig(null); setError("");
-  }, []);
 
   // ─── 参考サイト解析 ──────────────────────────────────────
   const analyzeUrl = useCallback(async () => {
@@ -271,7 +112,7 @@ export default function SetupClient() {
       let data: { error?: string; style?: unknown };
       try { data = await res.json(); } catch { throw new Error("URL解析がタイムアウトしました。別のURLをお試しください。"); }
       if (!res.ok || data.error) throw new Error(data.error ?? "解析に失敗しました");
-      setAnalysisResult(data.style as Parameters<typeof setAnalysisResult>[0]);
+      setAnalysisResult(data.style as GlobalStyle);
     } catch (e) {
       setError(e instanceof Error ? e.message : "URL解析に失敗しました");
     } finally {
@@ -279,25 +120,50 @@ export default function SetupClient() {
     }
   }, [referenceUrl, isAnalyzing]);
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    // IME変換中（日本語入力確定のEnter）は送信しない
-    if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
-      e.preventDefault();
-      sendMessage();
-    }
-  };
+  // ─── サイト生成 ──────────────────────────────────────────
+  const generateSite = useCallback(async () => {
+    setPhase("generating");
+    setGenPct(0);
+    setGenText(GEN_STEPS[0].text);
 
-  // ─── フォント link タグ（全 phase 共通） ──────────────────
-  const FontLinks = () => (
-    <>
-      <link rel="preconnect" href="https://fonts.googleapis.com" />
-      <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-      <link
-        href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Montserrat:wght@600;700&display=swap"
-        rel="stylesheet"
-      />
-    </>
-  );
+    GEN_STEPS.forEach(({ pct, text }, i) => {
+      setTimeout(() => { setGenPct(pct); setGenText(text); }, i * 1200);
+    });
+
+    try {
+      const res = await fetch("/api/setup-ai", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          phase: "form-generate",
+          formData: { businessName, serviceDesc, target, strengths },
+          analysisResult: analysisResultRef.current ?? undefined,
+        }),
+      });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let data: { error?: string; config?: any };
+      try { data = await res.json(); } catch { throw new Error("サーバーエラーが発生しました。もう一度お試しください。"); }
+      if (!res.ok || data.error) throw new Error(data.error ?? "生成に失敗しました");
+
+      setGenPct(100);
+      setTimeout(() => { setGeneratedConfig(data.config); setPhase("preview"); }, 800);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "生成に失敗しました");
+      setPhase("form");
+    }
+  }, [businessName, serviceDesc, target, strengths]);
+
+  const startEditing = useCallback(() => {
+    if (!generatedConfig) return;
+    localStorage.setItem("site-config", JSON.stringify(generatedConfig));
+    router.push("/admin");
+  }, [generatedConfig, router]);
+
+  const reset = useCallback(() => {
+    setPhase("form");
+    setGeneratedConfig(null);
+    setError("");
+  }, []);
 
   // ══════════════════════════════════════════════════════════
   // PHASE: GENERATING
@@ -322,7 +188,7 @@ export default function SetupClient() {
             style={{ animation: "spin 1.8s linear infinite reverse" }}
           />
           <div className="absolute inset-0 flex items-center justify-center">
-            <MsIcon name="bolt" size={36} color={NAVY} />
+            <MsIcon name="auto_awesome" size={36} color={NAVY} />
           </div>
         </div>
 
@@ -382,7 +248,7 @@ export default function SetupClient() {
   // ══════════════════════════════════════════════════════════
   if (phase === "preview" && generatedConfig) {
     const cfg = generatedConfig;
-    const TOP_H = 60; // px
+    const TOP_H = 60;
 
     return (
       <div style={{ minHeight: "100vh", background: "#F9FAFB", fontFamily: "'Noto Sans JP', sans-serif" }}>
@@ -538,26 +404,147 @@ export default function SetupClient() {
   }
 
   // ══════════════════════════════════════════════════════════
-  // PHASE: INTERVIEW
+  // PHASE: FORM
   // ══════════════════════════════════════════════════════════
+  const canGenerate = !!analysisResult && !!businessName.trim() && !!serviceDesc.trim();
+
   return (
     <div
-      style={{ minHeight: "100vh", display: "flex", flexDirection: "column", background: "#F9FAFB", fontFamily: "'Noto Sans JP', sans-serif" }}
+      style={{ minHeight: "100vh", display: "flex", background: "#F9FAFB", fontFamily: "'Noto Sans JP', sans-serif" }}
     >
       <FontLinks />
 
-      {/* ─── チャットエリア ─── */}
+      {/* ─── 左サイドバー ─── */}
+      <aside
+        style={{
+          width: 300, background: "#FFFFFF", borderRight: "1px solid #E2E8F0",
+          flexShrink: 0, display: "flex", flexDirection: "column",
+          padding: "36px 28px", gap: 28,
+        }}
+        className="hidden lg:flex"
+      >
+        {/* ロゴ */}
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo.png" alt="ツクリエ" style={{ width: 36, height: 36, borderRadius: 10, objectFit: "cover" }} />
+          <span className="font-bold text-base" style={{ color: "#111827" }}>ツクリエ</span>
+        </div>
+
+        {/* URL入力 */}
+        <div>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+            <MsIcon name="travel_explore" size={16} color={NAVY} />
+            <p className="text-sm font-bold" style={{ color: "#111827" }}>参考サイトのURLを入力</p>
+          </div>
+          <p className="text-xs mb-3 leading-relaxed" style={{ color: "#6B7280" }}>
+            真似したいサイトのURLを入れると、そのデザイン・配色・フォントを丸ごと取り込みます
+          </p>
+          <input
+            type="url"
+            value={referenceUrl}
+            onChange={e => setReferenceUrl(e.target.value)}
+            onKeyDown={e => { if (e.key === "Enter") analyzeUrl(); }}
+            placeholder="https://example.com"
+            className="w-full text-xs rounded-lg px-3 py-2.5 outline-none focus:ring-2 focus:ring-blue-200 mb-2"
+            style={{ border: "1px solid #E2E8F0", background: "#F9FAFB", color: "#111827" }}
+          />
+          <button
+            onClick={analyzeUrl}
+            disabled={isAnalyzing || !referenceUrl.trim()}
+            className="w-full text-sm py-2.5 rounded-lg font-semibold transition-opacity disabled:opacity-40"
+            style={{ background: NAVY, color: "#FFFFFF" }}
+          >
+            {isAnalyzing
+              ? <span className="flex items-center justify-center gap-2"><MsIcon name="hourglass_top" size={14} color="#FFFFFF" />解析中...</span>
+              : "このデザインを取り込む"
+            }
+          </button>
+
+          {/* 解析結果 */}
+          {analysisResult && (
+            <div className="mt-3 p-3 rounded-xl" style={{ background: "#F0FDF4", border: "1px solid #BBF7D0" }}>
+              <p className="text-xs font-semibold mb-2" style={{ color: "#059669" }}>✓ デザイン解析完了</p>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 8 }}>
+                {[
+                  { key: "primaryColor",  label: "メイン" },
+                  { key: "accentColor",   label: "アクセント" },
+                  { key: "heroBgColor",   label: "Hero" },
+                  { key: "bgColor",       label: "背景" },
+                  { key: "cardBgColor",   label: "カード" },
+                  { key: "buttonBgColor", label: "ボタン" },
+                ].map(({ key, label }) => {
+                  const color = (analysisResult as Record<string, string>)[key];
+                  if (!color) return null;
+                  return (
+                    <div key={key} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
+                      <div style={{ width: 20, height: 20, borderRadius: 5, backgroundColor: color, border: "1.5px solid rgba(0,0,0,0.12)" }} />
+                      <span style={{ fontSize: 9, color: "#9CA3AF" }}>{label}</span>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {analysisResult.headingFont && (
+                  <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ background: "#EBF4FF", color: NAVY }}>
+                    {analysisResult.headingFont}
+                  </span>
+                )}
+                {analysisResult.designStyle && (
+                  <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ background: "#FFF7ED", color: "#92400E" }}>
+                    {analysisResult.designStyle}
+                  </span>
+                )}
+                {analysisResult.designNotes && (
+                  <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ background: "#F0FFF4", color: "#065F46" }}>
+                    {analysisResult.designNotes}
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* 使い方ステップ */}
+        <div style={{ paddingTop: 20, borderTop: "1px solid #E2E8F0" }}>
+          <p className="text-[10px] font-bold uppercase tracking-widest mb-4" style={{ color: "#9CA3AF" }}>使い方</p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            {[
+              { num: "01", text: "真似したいサイトのURLを入力する" },
+              { num: "02", text: "あなたの事業情報を入力する" },
+              { num: "03", text: "ボタンを押してサイトを生成" },
+              { num: "04", text: "内容を編集してプロ級に仕上げる" },
+            ].map(step => (
+              <div key={step.num} style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
+                <span
+                  className="font-bold text-xs shrink-0"
+                  style={{ color: NAVY, fontFamily: "'Montserrat', sans-serif" }}
+                >
+                  {step.num}
+                </span>
+                <span className="text-xs leading-relaxed" style={{ color: "#374151" }}>{step.text}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </aside>
+
+      {/* ─── メインエリア ─── */}
       <main style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: "100vh" }}>
         {/* ヘッダー */}
         <div
-          style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 24px", borderBottom: "1px solid #E2E8F0", background: "#FFFFFF", flexShrink: 0 }}
+          style={{
+            display: "flex", alignItems: "center", justifyContent: "space-between",
+            padding: "14px 24px", borderBottom: "1px solid #E2E8F0",
+            background: "#FFFFFF", flexShrink: 0,
+          }}
         >
-          {/* ロゴ＋タイトル */}
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          {/* SP用ロゴ */}
+          <div className="flex items-center gap-2 lg:hidden">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo.png" alt="ツクリエ" style={{ width: 36, height: 36, borderRadius: 10, objectFit: "cover" }} />
-            <span className="font-bold text-base" style={{ color: "#111827" }}>ツクリエ</span>
+            <img src="/logo.png" alt="ツクリエ" style={{ width: 28, height: 28, borderRadius: 8, objectFit: "cover" }} />
+            <span className="text-sm font-bold" style={{ color: "#111827" }}>ツクリエ</span>
           </div>
+          <div className="hidden lg:block" />
 
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             {error && (
@@ -567,7 +554,7 @@ export default function SetupClient() {
             )}
             <a
               href="/admin"
-              className="text-xs px-3 py-1.5 rounded-lg transition-colors"
+              className="text-xs px-3 py-1.5 rounded-lg"
               style={{ color: "#6B7280", border: "1px solid #E2E8F0", background: "#FFFFFF" }}
             >
               スキップして編集へ →
@@ -575,158 +562,138 @@ export default function SetupClient() {
           </div>
         </div>
 
-        {/* ─── URL解析バー ─── */}
-        <div
-          style={{ background: "#FFFFFF", borderBottom: "1px solid #E2E8F0", padding: "10px 24px" }}
-        >
-          <div className="max-w-2xl mx-auto flex items-center gap-2">
-            <MsIcon name="travel_explore" size={16} color={NAVY} />
-            <span className="text-xs font-semibold shrink-0" style={{ color: "#374151" }}>参考サイトURL</span>
-            <input
-              type="url"
-              value={referenceUrl}
-              onChange={e => setReferenceUrl(e.target.value)}
-              onKeyDown={e => { if (e.key === "Enter") analyzeUrl(); }}
-              placeholder="https://example.com — フォント・色を自動解析してデザインに反映"
-              className="flex-1 text-xs rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-200"
-              style={{ border: "1px solid #E2E8F0", background: "#F9FAFB", color: "#111827" }}
-            />
-            <button
-              onClick={analyzeUrl}
-              disabled={isAnalyzing || !referenceUrl.trim()}
-              className="text-xs px-3 py-2 rounded-lg font-medium shrink-0 transition-opacity disabled:opacity-40"
-              style={{ background: NAVY, color: "#FFFFFF" }}
-            >
-              {isAnalyzing
-                ? <span className="flex items-center gap-1"><MsIcon name="hourglass_top" size={12} color="#FFFFFF" />解析中</span>
-                : "解析"
-              }
-            </button>
-          </div>
-          {analysisResult && (
-            <div className="max-w-2xl mx-auto mt-2 flex flex-wrap items-center gap-2">
-              <span className="text-[10px] font-semibold" style={{ color: "#10B981" }}>✓ デザインDNA解析完了</span>
-              {[
-                { key: "primaryColor", label: "メイン" },
-                { key: "accentColor",  label: "アクセント" },
-                { key: "heroBgColor",  label: "Hero" },
-                { key: "bgColor",      label: "背景" },
-              ].map(({ key, label }) => {
-                const color = (analysisResult as Record<string, string>)[key];
-                if (!color) return null;
-                return (
-                  <div key={key} style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                    <div style={{ width: 14, height: 14, borderRadius: 4, backgroundColor: color, border: "1.5px solid rgba(0,0,0,0.12)" }} />
-                    <span style={{ fontSize: 10, color: "#6B7280" }}>{label}</span>
-                  </div>
-                );
-              })}
-              {analysisResult.designStyle && (
-                <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ background: "#FFF7ED", color: "#92400E" }}>
-                  {analysisResult.designStyle}
-                </span>
-              )}
+        {/* フォームエリア */}
+        <div className="flex-1 overflow-y-auto">
+          <div className="max-w-2xl mx-auto px-6 py-12">
+
+            {/* タイトル */}
+            <div className="mb-10">
+              <h1
+                className="font-bold mb-3 leading-tight"
+                style={{ fontSize: 26, color: "#111827", letterSpacing: "-0.03em" }}
+              >
+                参考サイトのデザインで
+                <br />
+                <span style={{ color: NAVY }}>プロ級サイト</span>を自動生成
+              </h1>
+              <p className="text-sm leading-relaxed" style={{ color: "#6B7280" }}>
+                真似したいサイトのURLを左のメニューから入力するだけ。
+                <br />
+                同じデザインのプロ仕様サイトが自動で完成します。
+              </p>
             </div>
-          )}
-        </div>
 
-        {/* メッセージ */}
-        <div className="flex-1 overflow-y-auto px-4 py-8 space-y-5 max-w-2xl mx-auto w-full">
-          {messages.map((msg, i) => (
-            <div
-              key={i}
-              className={`flex gap-3 ${msg.role === "user" ? "flex-row-reverse" : ""}`}
-            >
-              {/* AI アバター */}
-              {msg.role === "assistant" && (
-                <div
-                  className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 mt-0.5 shadow-sm"
-                  style={{ background: "#EBF4FF", border: "1.5px solid #BEE3F8" }}
-                >
-                  <MsIcon name="smart_toy" size={18} color={NAVY} />
-                </div>
-              )}
-
-              {/* バブル */}
+            {/* URL未解析の案内 */}
+            {!analysisResult && (
               <div
-                className="max-w-[78%] rounded-2xl px-4 py-3 text-sm leading-loose"
-                style={msg.role === "user" ? {
-                  // ユーザー: 白背景 + メインカラー文字 + グレー枠線
-                  background: "#FFFFFF",
-                  color: NAVY,
-                  border: "1.5px solid #E2E8F0",
-                  borderRadius: "18px 4px 18px 18px",
-                  boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
-                } : {
-                  // AI: 薄ベージュ
-                  background: "#FEFCE8",
-                  color: "#111827",
-                  border: "1.5px solid #FEF08A",
-                  borderRadius: "4px 18px 18px 18px",
-                  boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
+                className="mb-8 flex items-start gap-3 p-4 rounded-xl"
+                style={{ background: "#FFF7ED", border: "1px solid #FED7AA" }}
+              >
+                <MsIcon name="info" size={18} color="#EA580C" />
+                <div>
+                  <p className="text-sm font-semibold" style={{ color: "#EA580C" }}>
+                    まず参考サイトを解析してください
+                  </p>
+                  <p className="text-xs mt-0.5 leading-relaxed" style={{ color: "#92400E" }}>
+                    左のメニューに真似したいサイトのURLを入力して「このデザインを取り込む」を押してください
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* フォーム */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+
+              {/* 事業名 */}
+              <div>
+                <label className="block text-sm font-semibold mb-2" style={{ color: "#111827" }}>
+                  事業・サービス名 <span style={{ color: "#EF4444" }}>*</span>
+                </label>
+                <input
+                  type="text"
+                  value={businessName}
+                  onChange={e => setBusinessName(e.target.value)}
+                  placeholder="例：田中税理士事務所 / フリーランスデザイナー 山田太郎"
+                  className="w-full text-sm rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-200"
+                  style={{ border: "1.5px solid #E2E8F0", background: "#FFFFFF", color: "#111827" }}
+                />
+              </div>
+
+              {/* サービス内容 */}
+              <div>
+                <label className="block text-sm font-semibold mb-2" style={{ color: "#111827" }}>
+                  どんなサービス・商品ですか？ <span style={{ color: "#EF4444" }}>*</span>
+                </label>
+                <textarea
+                  value={serviceDesc}
+                  onChange={e => setServiceDesc(e.target.value)}
+                  placeholder="例：中小企業向けの税務申告・節税対策サービスを提供しています。年間100社以上のサポート実績があります。"
+                  rows={3}
+                  className="w-full text-sm rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-200 resize-none"
+                  style={{ border: "1.5px solid #E2E8F0", background: "#FFFFFF", color: "#111827" }}
+                />
+              </div>
+
+              {/* ターゲット */}
+              <div>
+                <label className="block text-sm font-semibold mb-1" style={{ color: "#111827" }}>
+                  ターゲット（誰に向けたサービスですか？）
+                </label>
+                <p className="text-xs mb-2" style={{ color: "#9CA3AF" }}>任意</p>
+                <input
+                  type="text"
+                  value={target}
+                  onChange={e => setTarget(e.target.value)}
+                  placeholder="例：30〜50代の経営者 / 副業を始めたいサラリーマン"
+                  className="w-full text-sm rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-200"
+                  style={{ border: "1.5px solid #E2E8F0", background: "#FFFFFF", color: "#111827" }}
+                />
+              </div>
+
+              {/* 強み */}
+              <div>
+                <label className="block text-sm font-semibold mb-1" style={{ color: "#111827" }}>
+                  強み・特徴（他社との違い）
+                </label>
+                <p className="text-xs mb-2" style={{ color: "#9CA3AF" }}>任意</p>
+                <textarea
+                  value={strengths}
+                  onChange={e => setStrengths(e.target.value)}
+                  placeholder="例：即日対応 / 完全オンライン / 初回相談無料 / 20年の実績"
+                  rows={2}
+                  className="w-full text-sm rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-200 resize-none"
+                  style={{ border: "1.5px solid #E2E8F0", background: "#FFFFFF", color: "#111827" }}
+                />
+              </div>
+
+              {/* 生成ボタン */}
+              <button
+                onClick={generateSite}
+                disabled={!canGenerate}
+                className="w-full flex items-center justify-center gap-3 font-bold text-base py-4 rounded-2xl text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                style={{
+                  background: canGenerate
+                    ? `linear-gradient(135deg, ${NAVY}, #2B6CB0)`
+                    : "#CBD5E1",
+                  boxShadow: canGenerate ? "0 4px 20px rgba(26,54,93,0.3)" : "none",
                 }}
               >
-                <RenderMarkdown text={msg.content} />
-                {/* ストリーミングカーソル */}
-                {isStreaming && i === messages.length - 1 && msg.role === "assistant" && (
-                  <span
-                    className="inline-block w-0.5 h-4 ml-0.5 animate-pulse"
-                    style={{ background: NAVY, verticalAlign: "middle" }}
-                  />
-                )}
-              </div>
-            </div>
-          ))}
-          <div ref={messagesEndRef} />
-        </div>
+                <MsIcon name="auto_awesome" size={20} color="#FFFFFF" />
+                このデザインでサイトを生成する
+              </button>
 
-        {/* 入力エリア */}
-        <div
-          className="px-4 py-5 max-w-2xl mx-auto w-full"
-          style={{ borderTop: "1px solid #E2E8F0" }}
-        >
-          <div
-            style={{ display: "flex", alignItems: "flex-end", gap: 12, padding: "12px 16px", borderRadius: 16, background: "#FFFFFF", border: "1.5px solid #E2E8F0" }}
-            onFocus={() => {}}
-          >
-            <textarea
-              ref={inputRef}
-              value={input}
-              onChange={e => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder={isStreaming ? "AIが回答中..." : "メッセージを入力（Enter で送信）"}
-              disabled={isStreaming}
-              rows={1}
-              className="bg-transparent text-sm resize-none outline-none leading-relaxed"
-              style={{
-                flex: 1,
-                fontFamily: "'Noto Sans JP', sans-serif",
-                color: "#111827",
-                maxHeight: "120px",
-                overflowY: "auto",
-              }}
-              onInput={e => {
-                const el = e.currentTarget;
-                el.style.height = "auto";
-                el.style.height = Math.min(el.scrollHeight, 120) + "px";
-              }}
-            />
-            <button
-              onClick={sendMessage}
-              disabled={isStreaming || !input.trim()}
-              style={{ width: 36, height: 36, borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, background: NAVY, opacity: isStreaming || !input.trim() ? 0.3 : 1, cursor: isStreaming || !input.trim() ? "not-allowed" : "pointer", border: "none" }}
-              onMouseEnter={e => { if (!isStreaming && input.trim()) (e.currentTarget as HTMLElement).style.background = "#2B6CB0"; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = NAVY; }}
-            >
-              <MsIcon name="send" size={16} color="#FFFFFF" />
-            </button>
+              {!canGenerate && (
+                <p className="text-center text-xs" style={{ color: "#9CA3AF" }}>
+                  {!analysisResult
+                    ? "参考サイトの解析が完了するとボタンが有効になります"
+                    : "事業名とサービス内容を入力してください"
+                  }
+                </p>
+              )}
+            </div>
           </div>
-          <p className="text-center text-[10px] mt-2" style={{ color: "#9CA3AF" }}>
-            Shift+Enter で改行 &nbsp;/&nbsp; Enter で送信
-          </p>
         </div>
       </main>
     </div>
   );
 }
-
