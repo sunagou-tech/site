@@ -182,9 +182,33 @@ ${entries.map((e, i) => `[${i}] ${e.tag.toUpperCase()}: ${e.inner}`).join("\n")}
     modified = modified.replace(full, `<${tag}${attrs}>${newText}</${tag}>`);
   }
 
-  // ── 8. ツクリエ表示用クレジット注入 ─────────────────────────
+  // ── 8. 編集ヘルパー＋クレジット注入 ─────────────────────────
+  const editHelper = `<script>
+window.__tsukurie_enable=function(){
+  document.querySelectorAll('h1,h2,h3,h4,h5,p,a,li,button,span,td,th,label').forEach(function(el){
+    var t=el.innerText&&el.innerText.trim();
+    if(!t||t.length<2||t.length>400)return;
+    if(el.querySelector('img,video,iframe,svg,canvas'))return;
+    el.contentEditable='true';
+    el.dataset.tsk='1';
+    el.style.outline='2px dashed #2B6CB0';
+    el.style.borderRadius='3px';
+    el.style.cursor='text';
+  });
+};
+window.__tsukurie_disable=function(){
+  document.querySelectorAll('[data-tsk]').forEach(function(el){
+    el.contentEditable='false';
+    el.removeAttribute('data-tsk');
+    el.style.outline='';
+    el.style.borderRadius='';
+    el.style.cursor='';
+  });
+  return '<!DOCTYPE html>'+document.documentElement.outerHTML;
+};
+<\/script>`;
   const credit = `<div style="position:fixed;bottom:12px;right:12px;z-index:99999;background:#1A365D;color:#fff;font-size:11px;padding:6px 12px;border-radius:20px;font-family:sans-serif;opacity:0.85">Made with ツクリエ</div>`;
-  modified = modified.replace("</body>", `${credit}</body>`);
+  modified = modified.replace("</body>", `${editHelper}${credit}</body>`);
 
   return NextResponse.json({ html: modified });
 }

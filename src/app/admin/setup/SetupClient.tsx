@@ -9,7 +9,7 @@
  */
 
 import "@material-symbols/font-400/rounded.css";
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { GlobalStyle } from "@/types/site";
 
 const NAVY = "#1A365D";
@@ -65,6 +65,8 @@ export default function SetupClient() {
   const [analysisResult,  setAnalysisResultState] = useState<GlobalStyle | null>(null);
   const analysisResultRef = useRef<GlobalStyle | null>(null);
   const [cloneHtml,       setCloneHtml]       = useState<string | null>(null);
+  const [isEditing,       setIsEditing]       = useState(false);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
   const [error,           setError]           = useState("");
   const [genPct,          setGenPct]          = useState(0);
   const [genText,         setGenText]         = useState(GEN_STEPS[0].text);
@@ -135,17 +137,43 @@ export default function SetupClient() {
   }, [referenceUrl, businessName, serviceDesc, target, strengths]);
 
   const downloadHtml = useCallback(() => {
-    if (!cloneHtml) return;
-    const blob = new Blob([cloneHtml], { type: "text/html" });
+    const win = iframeRef.current?.contentWindow as (Window & { __tsukurie_disable?: () => string }) | null;
+    const html = win?.__tsukurie_disable?.() ?? cloneHtml ?? "";
+    if (!html) return;
+    const blob = new Blob([html], { type: "text/html" });
     const url  = URL.createObjectURL(blob);
     const a    = document.createElement("a");
     a.href = url; a.download = "my-site.html"; a.click();
     URL.revokeObjectURL(url);
   }, [cloneHtml]);
 
+  const toggleEdit = useCallback(() => {
+    const win = iframeRef.current?.contentWindow as (Window & {
+      __tsukurie_enable?: () => void;
+      __tsukurie_disable?: () => string;
+    }) | null;
+    if (!isEditing) {
+      win?.__tsukurie_enable?.();
+      setIsEditing(true);
+    } else {
+      const updated = win?.__tsukurie_disable?.();
+      if (updated) setCloneHtml(updated);
+      setIsEditing(false);
+    }
+  }, [isEditing]);
+
+  // iframeロード後に編集モードが有効なら再適用
+  useEffect(() => {
+    if (isEditing) {
+      const win = iframeRef.current?.contentWindow as (Window & { __tsukurie_enable?: () => void }) | null;
+      win?.__tsukurie_enable?.();
+    }
+  }, [cloneHtml, isEditing]);
+
   const reset = useCallback(() => {
     setPhase("form");
     setCloneHtml(null);
+    setIsEditing(false);
     setError("");
   }, []);
 
@@ -198,29 +226,6 @@ export default function SetupClient() {
           {genPct}%
         </p>
 
-        {/* ステップ進捗バッジ */}
-        <div className="mt-12 grid grid-cols-2 sm:grid-cols-3 gap-2 max-w-lg">
-          {GEN_STEPS.map(({ pct, text }, i) => {
-            const done = genPct >= pct;
-            return (
-              <div
-                key={i}
-                className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border transition-all duration-500"
-                style={{
-                  background: done ? "#EBF4FF" : "#FFFFFF",
-                  borderColor: done ? "#BEE3F8" : "#E2E8F0",
-                  color: done ? NAVY : "#9CA3AF",
-                }}
-              >
-                {done
-                  ? <MsIcon name="check_circle" size={12} color={NAVY} />
-                  : <span className="w-3 h-3 rounded-full border border-[#E2E8F0] shrink-0" />
-                }
-                <span>{text.replace(/中\.\.\.$/, "").replace(/\.\.\.$/, "")}</span>
-              </div>
-            );
-          })}
-        </div>
 
         <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
@@ -266,6 +271,18 @@ export default function SetupClient() {
               やり直す
             </button>
             <button
+              onClick={toggleEdit}
+              className="flex items-center gap-1.5 font-semibold text-sm px-4 py-2 rounded-xl transition-all"
+              style={{
+                background: isEditing ? "#059669" : "#FFFFFF",
+                color: isEditing ? "#FFFFFF" : "#1A365D",
+                border: isEditing ? "none" : "1.5px solid #1A365D",
+              }}
+            >
+              <MsIcon name={isEditing ? "check" : "edit"} size={16} color={isEditing ? "#FFFFFF" : "#1A365D"} />
+              {isEditing ? "編集完了" : "テキストを編集する"}
+            </button>
+            <button
               onClick={downloadHtml}
               className="flex items-center gap-1.5 font-semibold text-sm px-4 py-2 rounded-xl transition-all"
               style={{ background: "#1A365D", color: "#FFFFFF" }}
@@ -273,14 +290,27 @@ export default function SetupClient() {
               onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "#1A365D"; }}
             >
               <MsIcon name="download" size={16} color="#FFFFFF" />
-              HTMLをダウンロード
+              保存
             </button>
           </div>
         </div>
 
+        {/* ─── 編集モードバナー ─── */}
+        {isEditing && (
+          <div style={{
+            background: "#EBF8FF", borderBottom: "1px solid #BEE3F8",
+            padding: "8px 20px", fontSize: 12, color: "#2B6CB0",
+            display: "flex", alignItems: "center", gap: 8, flexShrink: 0,
+          }}>
+            <MsIcon name="edit" size={14} color="#2B6CB0" />
+            テキストをクリックして直接編集できます。編集が終わったら「編集完了」を押してください。
+          </div>
+        )}
+
         {/* ─── iframeプレビュー ─── */}
         <iframe
-          srcDoc={cloneHtml}
+          ref={iframeRef}
+          srcDoc={cloneHtml ?? ""}
           style={{ flex: 1, border: "none", width: "100%", display: "block" }}
           sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
           title="生成されたサイト"
