@@ -10,37 +10,22 @@
 
 import "@material-symbols/font-400/rounded.css";
 import { useState, useRef, useCallback } from "react";
-import { useRouter } from "next/navigation";
-import { SiteConfig, GlobalStyle } from "@/types/site";
-import CanvasEditor from "@/components/canvas/CanvasEditor";
-import { EditingContext } from "@/contexts/EditingContext";
+import { GlobalStyle } from "@/types/site";
 
 const NAVY = "#1A365D";
 
 type Phase = "form" | "generating" | "preview";
 
 const GEN_STEPS = [
-  { pct: 10,  text: "参考サイトのデザインを解析中..." },
-  { pct: 25,  text: "ファーストビューを構築中..." },
-  { pct: 40,  text: "課題・解決策セクションを生成中..." },
-  { pct: 55,  text: "強み・特徴カードを作成中..." },
-  { pct: 70,  text: "ステップ・お客様の声を生成中..." },
-  { pct: 82,  text: "FAQ・CTAを最適化中..." },
-  { pct: 92,  text: "デザインを日本市場向けに調整中..." },
-  { pct: 98,  text: "最終チェック中..." },
+  { pct: 10,  text: "参考サイトのHTMLを取得中..." },
+  { pct: 28,  text: "デザイン・構成を解析中..." },
+  { pct: 45,  text: "テキスト要素を抽出中..." },
+  { pct: 60,  text: "AIがビジネス情報を書き込み中..." },
+  { pct: 75,  text: "見出し・コピーを最適化中..." },
+  { pct: 88,  text: "HTMLを組み立て中..." },
+  { pct: 96,  text: "最終チェック中..." },
 ];
 
-const SECTION_LABELS: Record<string, string> = {
-  "hero-gradient": "① ファーストビュー（Hero）",
-  problem:         "② お悩み共感セクション",
-  solution:        "③ 解決策の提示",
-  features:        "④ 選ばれる理由（3つの強み）",
-  steps:           "⑤ ご利用の流れ",
-  testimonials:    "⑥ お客様の声",
-  faq:             "⑦ よくある質問",
-  cta:             "⑧ お問い合わせ CTA",
-  footer:          "フッター",
-};
 
 function MsIcon({ name, size = 20, color = NAVY, className = "" }: {
   name: string; size?: number; color?: string; className?: string;
@@ -74,14 +59,12 @@ function FontLinks() {
 // MAIN
 // ══════════════════════════════════════════════════════════
 export default function SetupClient() {
-  const router = useRouter();
-
   const [phase,           setPhase]           = useState<Phase>("form");
   const [referenceUrl,    setReferenceUrl]    = useState("");
   const [isAnalyzing,     setIsAnalyzing]     = useState(false);
   const [analysisResult,  setAnalysisResultState] = useState<GlobalStyle | null>(null);
   const analysisResultRef = useRef<GlobalStyle | null>(null);
-  const [generatedConfig, setGeneratedConfig] = useState<SiteConfig | null>(null);
+  const [cloneHtml,       setCloneHtml]       = useState<string | null>(null);
   const [error,           setError]           = useState("");
   const [genPct,          setGenPct]          = useState(0);
   const [genText,         setGenText]         = useState(GEN_STEPS[0].text);
@@ -127,41 +110,42 @@ export default function SetupClient() {
     setGenText(GEN_STEPS[0].text);
 
     GEN_STEPS.forEach(({ pct, text }, i) => {
-      setTimeout(() => { setGenPct(pct); setGenText(text); }, i * 1200);
+      setTimeout(() => { setGenPct(pct); setGenText(text); }, i * 1800);
     });
 
     try {
-      const res = await fetch("/api/setup-ai", {
+      const res = await fetch("/api/clone-site", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          phase: "form-generate",
+          url: referenceUrl.trim(),
           formData: { businessName, serviceDesc, target, strengths },
-          analysisResult: analysisResultRef.current ?? undefined,
         }),
       });
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      let data: { error?: string; config?: any };
+      let data: { error?: string; html?: string };
       try { data = await res.json(); } catch { throw new Error("サーバーエラーが発生しました。もう一度お試しください。"); }
       if (!res.ok || data.error) throw new Error(data.error ?? "生成に失敗しました");
 
       setGenPct(100);
-      setTimeout(() => { setGeneratedConfig(data.config); setPhase("preview"); }, 800);
+      setTimeout(() => { setCloneHtml(data.html ?? ""); setPhase("preview"); }, 800);
     } catch (e) {
       setError(e instanceof Error ? e.message : "生成に失敗しました");
       setPhase("form");
     }
-  }, [businessName, serviceDesc, target, strengths]);
+  }, [referenceUrl, businessName, serviceDesc, target, strengths]);
 
-  const startEditing = useCallback(() => {
-    if (!generatedConfig) return;
-    localStorage.setItem("site-config", JSON.stringify(generatedConfig));
-    router.push("/admin");
-  }, [generatedConfig, router]);
+  const downloadHtml = useCallback(() => {
+    if (!cloneHtml) return;
+    const blob = new Blob([cloneHtml], { type: "text/html" });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement("a");
+    a.href = url; a.download = "my-site.html"; a.click();
+    URL.revokeObjectURL(url);
+  }, [cloneHtml]);
 
   const reset = useCallback(() => {
     setPhase("form");
-    setGeneratedConfig(null);
+    setCloneHtml(null);
     setError("");
   }, []);
 
@@ -214,13 +198,13 @@ export default function SetupClient() {
           {genPct}%
         </p>
 
-        {/* セクション進捗バッジ */}
+        {/* ステップ進捗バッジ */}
         <div className="mt-12 grid grid-cols-2 sm:grid-cols-3 gap-2 max-w-lg">
-          {Object.values(SECTION_LABELS).map((label, i) => {
-            const done = genPct >= (i + 1) * 10;
+          {GEN_STEPS.map(({ pct, text }, i) => {
+            const done = genPct >= pct;
             return (
               <div
-                key={label}
+                key={i}
                 className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border transition-all duration-500"
                 style={{
                   background: done ? "#EBF4FF" : "#FFFFFF",
@@ -232,7 +216,7 @@ export default function SetupClient() {
                   ? <MsIcon name="check_circle" size={12} color={NAVY} />
                   : <span className="w-3 h-3 rounded-full border border-[#E2E8F0] shrink-0" />
                 }
-                <span>{label.replace(/^[①-⑨] /, "")}</span>
+                <span>{text.replace(/中\.\.\.$/, "").replace(/\.\.\.$/, "")}</span>
               </div>
             );
           })}
@@ -246,159 +230,61 @@ export default function SetupClient() {
   // ══════════════════════════════════════════════════════════
   // PHASE: PREVIEW
   // ══════════════════════════════════════════════════════════
-  if (phase === "preview" && generatedConfig) {
-    const cfg = generatedConfig;
-    const TOP_H = 60;
-
+  if (phase === "preview" && cloneHtml) {
     return (
-      <div style={{ minHeight: "100vh", background: "#F9FAFB", fontFamily: "'Noto Sans JP', sans-serif" }}>
+      <div style={{ height: "100vh", display: "flex", flexDirection: "column", fontFamily: "'Noto Sans JP', sans-serif" }}>
         <FontLinks />
 
-        <EditingContext.Provider value={true}>
-          {/* ─── トップバー ─── */}
-          <div
-            className="sticky top-0 z-50 shadow-sm"
-            style={{ background: "#FFFFFF", borderBottom: "1px solid #E2E8F0", height: TOP_H }}
-          >
-            <div className="max-w-7xl mx-auto px-5 h-full flex items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <div
-                  className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
-                  style={{ background: "#EBF4FF" }}
-                >
-                  <MsIcon name="check_circle" size={18} color={NAVY} />
-                </div>
-                <div>
-                  <p className="font-bold text-sm leading-tight" style={{ color: "#111827" }}>
-                    サイトが完成しました
-                  </p>
-                  <p className="text-xs" style={{ color: "#6B7280" }}>
-                    テキストをクリックして直接編集できます
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 shrink-0">
-                <button
-                  onClick={reset}
-                  className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg transition-colors"
-                  style={{ color: "#6B7280", border: "1px solid #E2E8F0", background: "#FFFFFF" }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "#F9FAFB"; }}
-                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "#FFFFFF"; }}
-                >
-                  <MsIcon name="refresh" size={14} color="#6B7280" />
-                  やり直す
-                </button>
-                <button
-                  onClick={startEditing}
-                  className="flex items-center gap-2 font-bold text-sm px-5 py-2 rounded-xl text-white transition-all shadow-md"
-                  style={{ background: "#EA580C" }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "#C2410C"; }}
-                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "#EA580C"; }}
-                >
-                  この内容で編集を始める
-                  <MsIcon name="arrow_forward" size={16} color="#FFFFFF" />
-                </button>
-              </div>
+        {/* ─── トップバー ─── */}
+        <div
+          style={{
+            background: "#FFFFFF", borderBottom: "1px solid #E2E8F0",
+            height: 60, flexShrink: 0, display: "flex", alignItems: "center",
+            justifyContent: "space-between", padding: "0 20px", gap: 12,
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo.png" alt="ツクリエ" style={{ width: 30, height: 30, borderRadius: 8, objectFit: "cover" }} />
+            <div>
+              <p className="font-bold text-sm leading-tight" style={{ color: "#111827" }}>サイトが完成しました！</p>
+              <p className="text-xs" style={{ color: "#6B7280" }}>
+                参考サイトのデザインをそのまま反映しました
+              </p>
             </div>
           </div>
 
-          {/* ─── 2カラムレイアウト ─── */}
-          <div className="flex max-w-7xl mx-auto">
-            {/* 左：サマリー */}
-            <aside
-              className="w-68 shrink-0 overflow-y-auto p-6"
-              style={{
-                width: 272,
-                borderRight: "1px solid #E2E8F0",
-                background: "#FFFFFF",
-                position: "sticky",
-                top: TOP_H,
-                height: `calc(100vh - ${TOP_H}px)`,
-              }}
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+            <button
+              onClick={reset}
+              className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg transition-colors"
+              style={{ color: "#6B7280", border: "1px solid #E2E8F0", background: "#FFFFFF" }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "#F9FAFB"; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "#FFFFFF"; }}
             >
-              <div className="mb-6">
-                <p className="text-[10px] font-semibold uppercase tracking-widest mb-1" style={{ color: NAVY }}>
-                  生成されたサイト
-                </p>
-                <h2 className="text-lg font-bold leading-snug" style={{ color: "#111827" }}>
-                  {cfg.title}
-                </h2>
-                <p className="text-sm mt-1 leading-relaxed" style={{ color: "#6B7280" }}>
-                  {cfg.catchCopy}
-                </p>
-              </div>
-
-              {/* カラー */}
-              <div className="mb-6">
-                <p className="text-[10px] font-semibold uppercase tracking-widest mb-2" style={{ color: "#9CA3AF" }}>
-                  カラー設定
-                </p>
-                <div className="flex gap-3">
-                  {[
-                    { label: "メイン", color: cfg.primaryColor },
-                    { label: "アクセント", color: cfg.accentColor },
-                  ].map(({ label, color }) => (
-                    <div key={label} className="flex items-center gap-1.5">
-                      <div
-                        className="w-5 h-5 rounded-full shadow-sm"
-                        style={{ backgroundColor: color, border: "2px solid #E2E8F0" }}
-                      />
-                      <span className="text-xs" style={{ color: "#6B7280" }}>{label}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* キャンバス要素数 */}
-              <div className="mb-6">
-                <p className="text-[10px] font-semibold uppercase tracking-widest mb-2" style={{ color: "#9CA3AF" }}>
-                  キャンバス要素
-                </p>
-                <div className="flex items-center gap-2 text-xs" style={{ color: "#374151" }}>
-                  <MsIcon name="check_circle" size={13} color="#10B981" />
-                  {cfg.elements?.length ?? 0} 個の要素が配置されました
-                </div>
-              </div>
-
-              {/* ナビゲーション */}
-              <div className="mb-6">
-                <p className="text-[10px] font-semibold uppercase tracking-widest mb-2" style={{ color: "#9CA3AF" }}>
-                  ナビゲーション
-                </p>
-                <div className="space-y-1">
-                  {cfg.navLinks.map(n => (
-                    <div key={n.id} className="text-xs" style={{ color: "#6B7280" }}>
-                      {n.label}
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="pt-4" style={{ borderTop: "1px solid #E2E8F0" }}>
-                <p className="text-[10px] text-center leading-relaxed mb-4" style={{ color: "#9CA3AF" }}>
-                  右のプレビューでテキストを
-                  <br />
-                  クリック編集できます
-                </p>
-                <button
-                  onClick={startEditing}
-                  className="w-full flex items-center justify-center gap-2 font-bold text-sm px-4 py-3 rounded-xl text-white transition-colors"
-                  style={{ background: "#EA580C" }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "#C2410C"; }}
-                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "#EA580C"; }}
-                >
-                  編集画面へ進む
-                  <MsIcon name="arrow_forward" size={14} color="#FFFFFF" />
-                </button>
-              </div>
-            </aside>
-
-            {/* 右：キャンバスプレビュー */}
-            <main className="flex-1 overflow-hidden flex flex-col">
-              <CanvasEditor config={cfg} onChange={setGeneratedConfig} />
-            </main>
+              <MsIcon name="refresh" size={14} color="#6B7280" />
+              やり直す
+            </button>
+            <button
+              onClick={downloadHtml}
+              className="flex items-center gap-1.5 font-semibold text-sm px-4 py-2 rounded-xl transition-all"
+              style={{ background: "#1A365D", color: "#FFFFFF" }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "#2B6CB0"; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "#1A365D"; }}
+            >
+              <MsIcon name="download" size={16} color="#FFFFFF" />
+              HTMLをダウンロード
+            </button>
           </div>
-        </EditingContext.Provider>
+        </div>
+
+        {/* ─── iframeプレビュー ─── */}
+        <iframe
+          srcDoc={cloneHtml}
+          style={{ flex: 1, border: "none", width: "100%", display: "block" }}
+          sandbox="allow-same-origin allow-forms"
+          title="生成されたサイト"
+        />
       </div>
     );
   }
@@ -406,7 +292,7 @@ export default function SetupClient() {
   // ══════════════════════════════════════════════════════════
   // PHASE: FORM
   // ══════════════════════════════════════════════════════════
-  const canGenerate = !!analysisResult && !!businessName.trim() && !!serviceDesc.trim();
+  const canGenerate = !!referenceUrl.trim() && !!businessName.trim() && !!serviceDesc.trim();
 
   return (
     <div
@@ -583,8 +469,8 @@ export default function SetupClient() {
               </p>
             </div>
 
-            {/* URL未解析の案内 */}
-            {!analysisResult && (
+            {/* URL未入力の案内 */}
+            {!referenceUrl.trim() && (
               <div
                 className="mb-8 flex items-start gap-3 p-4 rounded-xl"
                 style={{ background: "#FFF7ED", border: "1px solid #FED7AA" }}
@@ -592,10 +478,10 @@ export default function SetupClient() {
                 <MsIcon name="info" size={18} color="#EA580C" />
                 <div>
                   <p className="text-sm font-semibold" style={{ color: "#EA580C" }}>
-                    まず参考サイトを解析してください
+                    まず参考サイトのURLを入力してください
                   </p>
                   <p className="text-xs mt-0.5 leading-relaxed" style={{ color: "#92400E" }}>
-                    左のメニューに真似したいサイトのURLを入力して「このデザインを取り込む」を押してください
+                    左のメニューに真似したいサイトのURLを入力して「このデザインを取り込む」を押すと、デザイン解析もできます
                   </p>
                 </div>
               </div>
@@ -684,8 +570,8 @@ export default function SetupClient() {
 
               {!canGenerate && (
                 <p className="text-center text-xs" style={{ color: "#9CA3AF" }}>
-                  {!analysisResult
-                    ? "参考サイトの解析が完了するとボタンが有効になります"
+                  {!referenceUrl.trim()
+                    ? "左のメニューに参考サイトのURLを入力してください"
                     : "事業名とサービス内容を入力してください"
                   }
                 </p>
