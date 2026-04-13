@@ -4,9 +4,9 @@ import { GlobalStyle, CanvasElement, uid } from "@/types/site";
 export const runtime = "edge";
 export const maxDuration = 30;
 
-const API_KEY      = process.env.GEMINI_API_KEY ?? "";
-const GEMINI_MODEL = "gemini-2.5-flash";
-const GEMINI_BASE  = "https://generativelanguage.googleapis.com/v1beta/models";
+const API_KEY         = process.env.GEMINI_API_KEY ?? "";
+const GEMINI_BASE     = "https://generativelanguage.googleapis.com/v1beta/models";
+const GEMINI_MODELS   = ["gemini-2.5-flash", "gemini-2.0-flash-lite", "gemini-2.0-flash-001"];
 
 // ── Chat system prompt ───────────────────────────────────────
 const CHAT_SYSTEM = `あなたは日本市場向けウェブサイト制作の専門コンサルタントです。
@@ -651,41 +651,45 @@ function buildCanvasFromSections(data: SectionData, dna?: GlobalStyle): CanvasEl
   return els;
 }
 
-// ── Gemini fetch with retry ───────────────────────────────────
+// ── Gemini fetch with retry + model fallback ─────────────────
 async function geminiFetch(
   systemPrompt: string,
   userPrompt: string,
   maxTokens = 3072,
-  retries = 3
 ): Promise<string> {
-  for (let i = 0; i < retries; i++) {
-    const res = await fetch(
-      `${GEMINI_BASE}/${GEMINI_MODEL}:generateContent?key=${API_KEY}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          systemInstruction: { parts: [{ text: systemPrompt }] },
-          contents: [{ role: "user", parts: [{ text: userPrompt }] }],
-          generationConfig: { maxOutputTokens: maxTokens },
-        }),
+  for (const model of GEMINI_MODELS) {
+    for (let i = 0; i < 3; i++) {
+      const res = await fetch(
+        `${GEMINI_BASE}/${model}:generateContent?key=${API_KEY}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            systemInstruction: { parts: [{ text: systemPrompt }] },
+            contents: [{ role: "user", parts: [{ text: userPrompt }] }],
+            generationConfig: { maxOutputTokens: maxTokens },
+          }),
+        }
+      );
+
+      if (res.ok) {
+        const data = await res.json();
+        return data.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
       }
-    );
 
-    if (res.ok) {
-      const data = await res.json();
-      return data.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
+      const errText = await res.text();
+      const is503 = res.status === 503 || errText.includes("UNAVAILABLE");
+      const is429 = res.status === 429 || errText.includes("RESOURCE_EXHAUSTED");
+
+      // 503/429 → 少し待ってリトライ、それでもダメなら次のモデルへ
+      if ((is503 || is429) && i < 2) {
+        await new Promise(r => setTimeout(r, 3000 * (i + 1)));
+        continue;
+      }
+      break; // このモデルは諦めて次へ
     }
-
-    if (i < retries - 1) {
-      await new Promise(r => setTimeout(r, 2000 * (i + 1)));
-      continue;
-    }
-
-    const err = await res.text();
-    throw new Error(`Gemini APIエラー: ${err}`);
   }
-  throw new Error("APIが混雑しています。数秒待って「やり直す」を押してください。");
+  throw new Error("APIが混雑しています。しばらく待ってからやり直してください。");
 }
 
 // ── Route handler ────────────────────────────────────────────

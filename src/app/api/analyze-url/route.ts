@@ -4,9 +4,9 @@ import { GlobalStyle } from "@/types/site";
 export const runtime = "edge";
 export const maxDuration = 30; // Vercel Pro: 最大60秒
 
-const API_KEY     = process.env.GEMINI_API_KEY ?? "";
-const GEMINI_MODEL = "gemini-2.5-flash";
-const GEMINI_BASE  = "https://generativelanguage.googleapis.com/v1beta/models";
+const API_KEY       = process.env.GEMINI_API_KEY ?? "";
+const GEMINI_BASE   = "https://generativelanguage.googleapis.com/v1beta/models";
+const GEMINI_MODELS = ["gemini-2.5-flash", "gemini-2.0-flash-lite", "gemini-2.0-flash-001"];
 
 const FONT_URL_MAP: Record<string, string> = {
   "Noto Sans JP":        "Noto+Sans+JP:wght@400;500;700",
@@ -170,31 +170,40 @@ ${structHtml || "取得できませんでした"}
 - heroLayout: ファーストビューで画像が右側なら"split"、テキストが画面中央なら"centered"、大きなタイポグラフィなら"typographic"、白背景でシンプルなら"light"
 - featureColumns: 特徴カードが何列で並んでいるかを推定（2〜4）`;
 
-  // Gemini でデザイン解析
+  // Gemini でデザイン解析（モデルフォールバック付き）
   let raw = "";
-  for (let attempt = 0; attempt < 3; attempt++) {
-    const upstream = await fetch(
-      `${GEMINI_BASE}/${GEMINI_MODEL}:generateContent?key=${API_KEY}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ role: "user", parts: [{ text: prompt }] }],
-          generationConfig: { maxOutputTokens: 1536 },
-        }),
+  let lastError = "";
+  outer: for (const model of GEMINI_MODELS) {
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const upstream = await fetch(
+        `${GEMINI_BASE}/${model}:generateContent?key=${API_KEY}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ role: "user", parts: [{ text: prompt }] }],
+            generationConfig: { maxOutputTokens: 1536 },
+          }),
+        }
+      );
+      if (upstream.ok) {
+        const data = await upstream.json();
+        raw = data.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
+        break outer;
       }
-    );
-    if (upstream.ok) {
-      const data = await upstream.json();
-      raw = data.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
-      break;
+      const errText = await upstream.text();
+      lastError = errText;
+      const is503 = upstream.status === 503 || errText.includes("UNAVAILABLE");
+      const is429 = upstream.status === 429 || errText.includes("RESOURCE_EXHAUSTED");
+      if ((is503 || is429) && attempt < 2) {
+        await new Promise(r => setTimeout(r, 3000 * (attempt + 1)));
+        continue;
+      }
+      break; // 次のモデルへ
     }
-    if (attempt < 2) {
-      await new Promise(r => setTimeout(r, 2000 * (attempt + 1)));
-      continue;
-    }
-    const errText = await upstream.text();
-    return NextResponse.json({ error: `Gemini APIエラー: ${errText}` }, { status: upstream.status });
+  }
+  if (!raw) {
+    return NextResponse.json({ error: `Gemini APIエラー: ${lastError}` }, { status: 503 });
   }
   const match  = raw.match(/```json\s*([\s\S]*?)\s*```/);
   const jsonStr = match ? match[1] : raw;
