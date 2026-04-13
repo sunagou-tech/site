@@ -410,16 +410,16 @@ export default function SetupClient() {
 
   return (
     <div
-      style={{ minHeight: "100vh", display: "flex", background: "#F9FAFB", fontFamily: "'Noto Sans JP', sans-serif" }}
+      style={{ height: "100vh", display: "flex", overflow: "hidden", background: "#F9FAFB", fontFamily: "'Noto Sans JP', sans-serif" }}
     >
       <FontLinks />
 
-      {/* ─── 左サイドバー ─── */}
+      {/* ─── 左サイドバー（固定） ─── */}
       <aside
         style={{
-          width: 300, background: "#FFFFFF", borderRight: "1px solid #E2E8F0",
+          width: 300, height: "100vh", background: "#FFFFFF", borderRight: "1px solid #E2E8F0",
           flexShrink: 0, display: "flex", flexDirection: "column",
-          padding: "36px 28px", gap: 28,
+          padding: "36px 28px", gap: 28, overflowY: "auto",
         }}
         className="hidden lg:flex"
       >
@@ -528,8 +528,8 @@ export default function SetupClient() {
         </div>
       </aside>
 
-      {/* ─── メインエリア ─── */}
-      <main style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: "100vh" }}>
+      {/* ─── メインエリア（スクロール） ─── */}
+      <main style={{ flex: 1, display: "flex", flexDirection: "column", height: "100vh", overflow: "hidden" }}>
         {/* ヘッダー */}
         <div
           style={{
