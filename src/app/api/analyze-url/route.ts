@@ -2,11 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { GlobalStyle } from "@/types/site";
 
 export const runtime = "edge";
-export const maxDuration = 30; // Vercel Pro: 最大60秒
+export const maxDuration = 30;
 
 const API_KEY       = process.env.GEMINI_API_KEY ?? "";
 const GEMINI_BASE   = "https://generativelanguage.googleapis.com/v1beta/models";
-const GEMINI_MODELS = ["gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-2.0-flash-lite"];
+// 軽量モデルを先にして速度優先
+const GEMINI_MODELS = ["gemini-2.0-flash-lite", "gemini-2.5-flash-lite", "gemini-2.5-flash"];
 
 const FONT_URL_MAP: Record<string, string> = {
   "Noto Sans JP":        "Noto+Sans+JP:wght@400;500;700",
@@ -38,13 +39,13 @@ function buildGoogleFontsUrl(headingFont?: string, bodyFont?: string): string {
 
 export async function POST(req: NextRequest) {
   if (!API_KEY) {
-    return NextResponse.json({ error: "ANTHROPIC_API_KEY not set" }, { status: 500 });
+    return NextResponse.json({ error: "GEMINI_API_KEY not set" }, { status: 500 });
   }
 
   const { url } = (await req.json()) as { url: string };
   if (!url) return NextResponse.json({ error: "url required" }, { status: 400 });
 
-  // ─── 1. HTMLフェッチ ──────────────────────────────────────
+  // ─── 1. HTMLフェッチ（5秒で打ち切り）──────────────────────
   let html = "";
   try {
     const res = await fetch(url, {
@@ -52,7 +53,7 @@ export async function POST(req: NextRequest) {
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/120 Safari/537.36",
         Accept: "text/html,application/xhtml+xml",
       },
-      signal: AbortSignal.timeout(7000),
+      signal: AbortSignal.timeout(5000),
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     html = await res.text();
@@ -63,116 +64,62 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // ─── 2. デザイン情報を抽出 ───────────────────────────────
+  // ─── 2. デザイン情報を抽出（軽量化）────────────────────────
   const headMatch = html.match(/<head[^>]*>([\s\S]*?)<\/head>/i);
   const headHtml  = headMatch?.[1] ?? "";
-  const bodyMatch = html.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
-  const bodyHtml  = bodyMatch?.[1] ?? "";
 
   // Google Fonts
   const gfMatch    = headHtml.match(/href="(https:\/\/fonts\.googleapis\.com\/css2[^"]+)"/i);
   const detectedGF = gfMatch?.[1] ?? "";
 
-  // CSS — styleブロック + :root変数を優先的に抽出
-  const styleBlocks  = [...html.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/gi)].map(m => m[1]);
-  const cssAll       = styleBlocks.join("\n");
-  const rootVars     = cssAll.match(/:root\s*\{[^}]+\}/g)?.join("\n") ?? "";
-  const inlineStyles = [...html.matchAll(/style="([^"]{10,300})"/gi)].map(m => m[1]).slice(0, 60).join(" ");
-  const cssText      = (rootVars + "\n" + cssAll + "\n" + inlineStyles).slice(0, 10000);
+  // CSS — :root変数を優先（3000字に絞る）
+  const styleBlocks = [...html.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/gi)].map(m => m[1]);
+  const cssAll      = styleBlocks.join("\n");
+  const rootVars    = cssAll.match(/:root\s*\{[^}]+\}/g)?.join("\n") ?? "";
+  const inlineStyles = [...html.matchAll(/style="([^"]{10,200})"/gi)].map(m => m[1]).slice(0, 30).join(" ");
+  const cssText     = (rootVars + "\n" + cssAll + "\n" + inlineStyles).slice(0, 3000);
 
-  // ナビゲーションリンクを抽出（サイト構成把握）
-  const navHtml   = html.match(/<nav[^>]*>([\s\S]*?)<\/nav>/i)?.[1]
-                 ?? html.match(/<header[^>]*>([\s\S]*?)<\/header>/i)?.[1] ?? "";
-  const navLinks  = [...navHtml.matchAll(/<a[^>]*>([\s\S]*?)<\/a>/gi)]
-    .map(m => m[1].replace(/<[^>]+>/g, "").trim())
-    .filter(t => t.length > 0 && t.length < 30)
-    .slice(0, 10);
-
-  // 見出しを抽出（コンテンツ構造把握）
+  // 見出しのみ（コンテンツ把握、軽量）
   const headings = [...html.matchAll(/<h([1-3])[^>]*>([\s\S]*?)<\/h\1>/gi)]
     .map(m => `H${m[1]}: ${m[2].replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim()}`)
     .filter(t => t.length < 80)
-    .slice(0, 20);
+    .slice(0, 10);
 
-  // 構造を保ったHTML（スクリプト・SVGを除去、タグは残す）
-  const structHtml = bodyHtml
-    .replace(/<script[\s\S]*?<\/script>/gi, "")
-    .replace(/<svg[\s\S]*?<\/svg>/gi, "")
-    .replace(/<style[\s\S]*?<\/style>/gi, "")
-    .replace(/\s+/g, " ")
-    .slice(0, 6000);
+  // ─── 3. Gemini でデザイン解析（軽量プロンプト）────────────
+  const prompt = `ウェブサイトのCSS・HTMLを分析し、デザインDNAをJSON形式で返してください。
 
-  // ─── 3. Gemini でデザインDNA解析 ──────────────────────────
-  const prompt = `あなたはウェブデザイン解析の専門家です。
-以下のウェブサイトのHTML/CSSを詳細に分析し、デザインDNAと構造を完全に抽出してください。
-
-【参考URL】${url}
-
-【Google Fontsリンク（自動検出）】
-${detectedGF || "なし"}
-
-【CSS（:root変数＋スタイル）】
+【Google Fonts】${detectedGF || "なし"}
+【CSS（:root変数含む）】
 ${cssText || "取得できませんでした"}
+【見出し】
+${headings.length ? headings.join("\n") : "なし"}
 
-【ナビゲーションリンク】
-${navLinks.length ? navLinks.join(" / ") : "検出できませんでした"}
-
-【見出し一覧（H1〜H3）】
-${headings.length ? headings.join("\n") : "検出できませんでした"}
-
-【ページ構造HTML（簡略）】
-${structHtml || "取得できませんでした"}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━
-以下のJSON形式でデザインDNAを返してください。\`\`\`json ... \`\`\` に包んで出力。
-不明な値はnullにせず、HTMLとCSSから積極的に推定してください。
-
+以下のJSON形式のみで返答（\`\`\`json ... \`\`\` に包む）:
 {
-  "headingFont":     "フォント名（例: Noto Serif JP）",
-  "bodyFont":        "フォント名（例: Noto Sans JP）",
-
-  "primaryColor":    "#hex — ナビ・ボタン・アクセントで最もよく使われるブランドカラー",
-  "accentColor":     "#hex — CTAボタン・強調要素の色（primaryと異なる場合）",
-  "heroBgColor":     "#hex — ファーストビューの背景色",
-  "bgColor":         "#hex — ページ全体のメイン背景色",
-  "cardBgColor":     "#hex — カードや囲み要素の背景色",
-  "textColor":       "#hex — メイン本文テキストカラー",
-  "buttonBgColor":   "#hex — 主要CTAボタンの背景色",
-  "buttonTextColor": "#hex — CTAボタンのテキスト色",
-  "buttonRadius":    "px値（例: 8px, 24px, 999px）",
-
-  "h1Size":               "px値（例: 56px）",
-  "h2Size":               "px値（例: 38px）",
-  "h3Size":               "px値（例: 24px）",
-  "bodySize":             "px値（例: 16px）",
-  "headingLineHeight":    1.2,
-  "bodyLineHeight":       1.8,
-  "headingLetterSpacing": "em値（例: -0.03em）",
-  "headingWeight":        700,
-  "sectionPaddingY":      "px値（例: 100px）",
-  "cardBorderRadius":     "px値（例: 12px）",
-  "containerMaxWidth":    "px値（例: 1200px）",
-
-  "designStyle":  "minimal/bold/corporate/elegant/playful/modern のいずれか",
-  "designNotes":  "このサイトのデザインの特徴を30字以内で",
-
-  "heroLayout":       "split（左テキスト右画像）/ centered（中央配置）/ typographic（大文字タイポ）/ light（白背景クリーン）のいずれか",
-  "featureColumns":   3,
-  "sectionOrder":     ["hero","about","features","steps","testimonials","pricing","faq","cta"],
-  "detectedNavLinks": ["サービス","実績","料金","お問い合わせ"]
+  "headingFont": "フォント名",
+  "bodyFont": "フォント名",
+  "primaryColor": "#hex",
+  "accentColor": "#hex",
+  "heroBgColor": "#hex",
+  "bgColor": "#hex",
+  "cardBgColor": "#hex",
+  "buttonBgColor": "#hex",
+  "buttonTextColor": "#hex",
+  "textColor": "#hex",
+  "designStyle": "minimal/bold/corporate/elegant/playful/modern のいずれか",
+  "designNotes": "このサイトの特徴を20字以内で",
+  "heroLayout": "split/centered/typographic/light のいずれか",
+  "featureColumns": 3,
+  "sectionOrder": ["hero","features","cta"],
+  "detectedNavLinks": ["サービス","料金","お問い合わせ"]
 }
 
-【重要な指示】
-- CSSの :root変数（--color-xxx, --primary等）を最優先で色抽出する
-- rgb()/rgba()値はすべて#hex形式に変換する
-- 日本語サイトは headingFont に "Noto Serif JP" か "Noto Sans JP" を優先
-- sectionOrder は実際にページ上で見つかったセクションを上から順に並べる
-- heroLayout: ファーストビューで画像が右側なら"split"、テキストが画面中央なら"centered"、大きなタイポグラフィなら"typographic"、白背景でシンプルなら"light"
-- featureColumns: 特徴カードが何列で並んでいるかを推定（2〜4）`;
+ルール: rgb()はhex変換。不明な値はデフォルト推定値を入れる（nullにしない）。`;
 
-  // Gemini でデザイン解析（モデルフォールバック付き）
+  // Gemini 呼び出し（モデルフォールバック・遅延なし・8秒タイムアウト）
   let raw = "";
   let lastError = "";
+
   outer: for (const model of GEMINI_MODELS) {
     for (let attempt = 0; attempt < 2; attempt++) {
       const upstream = await fetch(
@@ -182,9 +129,9 @@ ${structHtml || "取得できませんでした"}
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             contents: [{ role: "user", parts: [{ text: prompt }] }],
-            generationConfig: { maxOutputTokens: 1536 },
+            generationConfig: { maxOutputTokens: 800 },
           }),
-          signal: AbortSignal.timeout(12000),
+          signal: AbortSignal.timeout(8000),
         }
       );
       if (upstream.ok) {
@@ -197,16 +144,18 @@ ${structHtml || "取得できませんでした"}
       const is503 = upstream.status === 503 || errText.includes("UNAVAILABLE");
       const is429 = upstream.status === 429 || errText.includes("RESOURCE_EXHAUSTED");
       if ((is503 || is429) && attempt === 0) {
-        await new Promise(r => setTimeout(r, 1500));
+        // 遅延なしで即リトライ
         continue;
       }
       break; // 次のモデルへ
     }
   }
+
   if (!raw) {
     return NextResponse.json({ error: `Gemini APIエラー: ${lastError}` }, { status: 503 });
   }
-  const match  = raw.match(/```json\s*([\s\S]*?)\s*```/);
+
+  const match   = raw.match(/```json\s*([\s\S]*?)\s*```/);
   const jsonStr = match ? match[1] : raw;
 
   let parsed: Partial<GlobalStyle> = {};
@@ -216,7 +165,7 @@ ${structHtml || "取得できませんでした"}
     return NextResponse.json({ error: "AI解析結果のパースに失敗", raw }, { status: 500 });
   }
 
-  // ─── 4. Google Fonts URL を確定 ───────────────────────────
+  // ─── 4. Google Fonts URL を確定 ─────────────────────────────
   const googleFontsUrl = detectedGF || buildGoogleFontsUrl(
     parsed.headingFont ?? undefined,
     parsed.bodyFont ?? undefined
