@@ -5,7 +5,7 @@ export const runtime = "edge";
 export const maxDuration = 30;
 
 const API_KEY      = process.env.GEMINI_API_KEY ?? "";
-const GEMINI_MODEL = "gemini-2.0-flash";
+const GEMINI_MODEL = "gemini-2.5-flash-preview-04-17";
 const GEMINI_BASE  = "https://generativelanguage.googleapis.com/v1beta/models";
 
 // ── Chat system prompt ───────────────────────────────────────
