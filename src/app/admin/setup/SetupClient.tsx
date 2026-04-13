@@ -94,8 +94,8 @@ export default function SetupClient() {
         body: JSON.stringify({ url }),
       });
       let data: { error?: string; style?: unknown };
-      try { data = await res.json(); } catch { throw new Error("URL解析がタイムアウトしました。別のURLをお試しください。"); }
-      if (!res.ok || data.error) throw new Error(data.error ?? "解析に失敗しました");
+      try { data = await res.json(); } catch { throw new Error("デザイン解析をスキップしました（そのまま生成できます）"); }
+      if (!res.ok || data.error) throw new Error(data.error ?? "デザイン解析をスキップしました（そのまま生成できます）");
       setAnalysisResult(data.style as GlobalStyle);
     } catch (e) {
       setError(e instanceof Error ? e.message : "URL解析に失敗しました");
@@ -456,7 +456,7 @@ export default function SetupClient() {
 
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             {error && (
-              <span className="text-xs px-3 py-1.5 rounded-lg" style={{ color: "#DC2626", background: "#FEF2F2", border: "1px solid #FECACA" }}>
+              <span className="text-xs px-3 py-1.5 rounded-lg" style={{ color: "#6B7280", background: "#F3F4F6", border: "1px solid #E5E7EB" }}>
                 {error}
               </span>
             )}
