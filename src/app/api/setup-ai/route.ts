@@ -4,9 +4,9 @@ import { GlobalStyle, CanvasElement, uid } from "@/types/site";
 export const runtime = "edge";
 export const maxDuration = 30;
 
-const API_KEY      = process.env.ANTHROPIC_API_KEY ?? "";
-const MODEL_CHAT   = "claude-haiku-4-5-20251001"; // チャット用（軽量・高速）
-const MODEL_GEN    = "claude-haiku-4-5-20251001"; // Vercel Hobby 10s制限のためHaikuに統一
+const API_KEY      = process.env.GEMINI_API_KEY ?? "";
+const GEMINI_MODEL = "gemini-2.0-flash";
+const GEMINI_BASE  = "https://generativelanguage.googleapis.com/v1beta/models";
 
 // ── Chat system prompt ───────────────────────────────────────
 const CHAT_SYSTEM = `あなたは日本市場向けウェブサイト制作の専門コンサルタントです。
@@ -637,57 +637,48 @@ function buildCanvasFromSections(data: SectionData, dna?: GlobalStyle): CanvasEl
   return els;
 }
 
-// ── Anthropic fetch with retry + model fallback ───────────────
-const FALLBACK_MODELS: Record<string, string> = {
-  "claude-sonnet-4-6":         "claude-haiku-4-5-20251001",
-  "claude-haiku-4-5-20251001": "claude-haiku-4-5-20251001",
-};
-
-async function anthropicFetch(
-  payload: Record<string, unknown>,
-  retries = 4
-): Promise<Response> {
-  let currentPayload = { ...payload };
-
+// ── Gemini fetch with retry ───────────────────────────────────
+async function geminiFetch(
+  systemPrompt: string,
+  userPrompt: string,
+  maxTokens = 3072,
+  retries = 3
+): Promise<string> {
   for (let i = 0; i < retries; i++) {
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-API-Key": API_KEY,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify(currentPayload),
-    });
-    if (res.ok) return res;
-
-    const text = await res.text();
-    const isOverloaded = res.status === 529 || text.includes("overloaded_error");
-
-    if (isOverloaded && i < retries - 1) {
-      const currentModel = currentPayload.model as string;
-      const fallback = FALLBACK_MODELS[currentModel] ?? currentModel;
-      // 2回目以降はフォールバックモデルに切り替え
-      if (i >= 1 && fallback !== currentModel) {
-        currentPayload = { ...currentPayload, model: fallback };
+    const res = await fetch(
+      `${GEMINI_BASE}/${GEMINI_MODEL}:generateContent?key=${API_KEY}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: systemPrompt }] },
+          contents: [{ role: "user", parts: [{ text: userPrompt }] }],
+          generationConfig: { maxOutputTokens: maxTokens },
+        }),
       }
-      await new Promise(r => setTimeout(r, 2000 * (i + 1))); // 2s, 4s, 6s
+    );
+
+    if (res.ok) {
+      const data = await res.json();
+      return data.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
+    }
+
+    if (i < retries - 1) {
+      await new Promise(r => setTimeout(r, 2000 * (i + 1)));
       continue;
     }
 
-    return new Response(text, { status: res.status });
+    const err = await res.text();
+    throw new Error(`Gemini APIエラー: ${err}`);
   }
-  return new Response(
-    JSON.stringify({ error: "APIが混雑しています。数秒待って「やり直す」を押してください。" }),
-    { status: 529, headers: { "Content-Type": "application/json" } }
-  );
+  throw new Error("APIが混雑しています。数秒待って「やり直す」を押してください。");
 }
 
 // ── Route handler ────────────────────────────────────────────
 export async function POST(req: NextRequest) {
   if (!API_KEY) {
     return NextResponse.json(
-      { error: "ANTHROPIC_API_KEY が設定されていません。.env.local に追加してください。" },
+      { error: "GEMINI_API_KEY が設定されていません。.env.local に追加してください。" },
       { status: 500 }
     );
   }
@@ -695,34 +686,20 @@ export async function POST(req: NextRequest) {
   const body = await req.json();
   const { messages, phase, analysisResult, formData } = body as {
     messages?: Array<{ role: "user" | "assistant"; content: string }>;
-    phase: "chat" | "generate" | "form-generate";
+    phase: "generate" | "form-generate";
     analysisResult?: GlobalStyle;
     formData?: { businessName: string; serviceDesc: string; target?: string; strengths?: string };
   };
 
-  if (phase === "chat") {
-    const upstream = await anthropicFetch({
-      model: MODEL_CHAT, max_tokens: 512,
-      system: CHAT_SYSTEM, messages, stream: true,
-    });
-    if (!upstream.ok) {
-      const err = await upstream.text();
-      return NextResponse.json({ error: err }, { status: upstream.status });
-    }
-    return new NextResponse(upstream.body, {
-      headers: { "Content-Type": "text/event-stream", "Cache-Control": "no-cache", Connection: "keep-alive" },
-    });
-  }
-
-  // ── Generate phase（チャット or フォーム）───────────────────
+  // ── Generate phase（フォーム or チャット履歴）────────────────
   let conversationText: string;
 
   if (phase === "form-generate" && formData) {
     conversationText = [
       `事業・サービス名: ${formData.businessName}`,
       `サービス内容: ${formData.serviceDesc}`,
-      formData.target    ? `ターゲット: ${formData.target}`     : "",
-      formData.strengths ? `強み・特徴: ${formData.strengths}`  : "",
+      formData.target    ? `ターゲット: ${formData.target}`    : "",
+      formData.strengths ? `強み・特徴: ${formData.strengths}` : "",
     ].filter(Boolean).join("\n");
   } else {
     conversationText = (messages ?? [])
@@ -730,41 +707,19 @@ export async function POST(req: NextRequest) {
       .join("\n\n");
   }
 
-  // ストリーミングで受け取り → 全文集積 → JSON解析
-  const upstream = await anthropicFetch({
-    model: MODEL_GEN, max_tokens: 3072,
-    system: GENERATE_SYSTEM,
-    messages: [{ role: "user", content: buildGeneratePrompt(conversationText, analysisResult) }],
-    stream: true,
-  });
-
-  if (!upstream.ok) {
-    const err = await upstream.text();
-    return NextResponse.json({ error: err }, { status: upstream.status });
-  }
-
-  // ストリームを読み切ってテキストを集積（行バッファリング対応）
-  const reader = upstream.body!.getReader();
-  const decoder = new TextDecoder();
-  let raw = "";
-  let lineBuffer = "";
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    lineBuffer += decoder.decode(value, { stream: true });
-    const lines = lineBuffer.split("\n");
-    lineBuffer = lines.pop() ?? ""; // 末尾の不完全な行をバッファに残す
-    for (const line of lines) {
-      if (!line.startsWith("data: ")) continue;
-      const payload = line.slice(6).trim();
-      if (payload === "[DONE]") continue;
-      try {
-        const evt = JSON.parse(payload);
-        if (evt.type === "content_block_delta" && evt.delta?.type === "text_delta") {
-          raw += evt.delta.text;
-        }
-      } catch { /* ignore */ }
-    }
+  // ── Gemini でサイトコンテンツ生成 ───────────────────────────
+  let raw: string;
+  try {
+    raw = await geminiFetch(
+      GENERATE_SYSTEM,
+      buildGeneratePrompt(conversationText, analysisResult),
+      3072
+    );
+  } catch (e) {
+    return NextResponse.json(
+      { error: e instanceof Error ? e.message : "生成に失敗しました" },
+      { status: 500 }
+    );
   }
 
   // JSON抽出（```json...``` 形式 or 直接JSON）

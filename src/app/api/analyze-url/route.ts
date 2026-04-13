@@ -4,7 +4,9 @@ import { GlobalStyle } from "@/types/site";
 export const runtime = "edge";
 export const maxDuration = 30; // Vercel Pro: 最大60秒
 
-const API_KEY = process.env.ANTHROPIC_API_KEY ?? "";
+const API_KEY     = process.env.GEMINI_API_KEY ?? "";
+const GEMINI_MODEL = "gemini-2.0-flash";
+const GEMINI_BASE  = "https://generativelanguage.googleapis.com/v1beta/models";
 
 const FONT_URL_MAP: Record<string, string> = {
   "Noto Sans JP":        "Noto+Sans+JP:wght@400;500;700",
@@ -141,31 +143,32 @@ ${bodySnip || "取得できませんでした"}
 - primaryColorが不明な場合はナビゲーションの色を使う
 - heroBgColorが不明な場合はprimaryColorを使う`;
 
-  // リトライ付きフェッチ（overloaded_error 対策）
-  let aiData: { content?: Array<{ text: string }> } = {};
-  for (let attempt = 0; attempt < 4; attempt++) {
-    const upstream = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-API-Key": API_KEY,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify({
-        model: "claude-haiku-4-5-20251001",
-        max_tokens: 1536,
-        messages: [{ role: "user", content: prompt }],
-      }),
-    });
-    const text = await upstream.text();
-    if (upstream.ok) { aiData = JSON.parse(text); break; }
-    if (text.includes("overloaded_error") && attempt < 3) {
-      await new Promise(r => setTimeout(r, 3000 * (attempt + 1)));
+  // Gemini でデザイン解析
+  let raw = "";
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const upstream = await fetch(
+      `${GEMINI_BASE}/${GEMINI_MODEL}:generateContent?key=${API_KEY}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ role: "user", parts: [{ text: prompt }] }],
+          generationConfig: { maxOutputTokens: 1536 },
+        }),
+      }
+    );
+    if (upstream.ok) {
+      const data = await upstream.json();
+      raw = data.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
+      break;
+    }
+    if (attempt < 2) {
+      await new Promise(r => setTimeout(r, 2000 * (attempt + 1)));
       continue;
     }
-    return NextResponse.json({ error: `API エラー: ${text}` }, { status: upstream.status });
+    const errText = await upstream.text();
+    return NextResponse.json({ error: `Gemini APIエラー: ${errText}` }, { status: upstream.status });
   }
-  const raw    = aiData.content?.[0]?.text ?? "";
   const match  = raw.match(/```json\s*([\s\S]*?)\s*```/);
   const jsonStr = match ? match[1] : raw;
 
