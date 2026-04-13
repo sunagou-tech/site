@@ -658,7 +658,7 @@ async function geminiFetch(
   maxTokens = 3072,
 ): Promise<string> {
   for (const model of GEMINI_MODELS) {
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < 2; i++) {
       const res = await fetch(
         `${GEMINI_BASE}/${model}:generateContent?key=${API_KEY}`,
         {
@@ -669,6 +669,7 @@ async function geminiFetch(
             contents: [{ role: "user", parts: [{ text: userPrompt }] }],
             generationConfig: { maxOutputTokens: maxTokens },
           }),
+          signal: AbortSignal.timeout(20000),
         }
       );
 
@@ -681,12 +682,11 @@ async function geminiFetch(
       const is503 = res.status === 503 || errText.includes("UNAVAILABLE");
       const is429 = res.status === 429 || errText.includes("RESOURCE_EXHAUSTED");
 
-      // 503/429 → 少し待ってリトライ、それでもダメなら次のモデルへ
-      if ((is503 || is429) && i < 2) {
-        await new Promise(r => setTimeout(r, 3000 * (i + 1)));
+      if ((is503 || is429) && i === 0) {
+        await new Promise(r => setTimeout(r, 1500));
         continue;
       }
-      break; // このモデルは諦めて次へ
+      break; // 次のモデルへ
     }
   }
   throw new Error("APIが混雑しています。しばらく待ってからやり直してください。");

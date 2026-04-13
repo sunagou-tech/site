@@ -174,7 +174,7 @@ ${structHtml || "取得できませんでした"}
   let raw = "";
   let lastError = "";
   outer: for (const model of GEMINI_MODELS) {
-    for (let attempt = 0; attempt < 3; attempt++) {
+    for (let attempt = 0; attempt < 2; attempt++) {
       const upstream = await fetch(
         `${GEMINI_BASE}/${model}:generateContent?key=${API_KEY}`,
         {
@@ -184,6 +184,7 @@ ${structHtml || "取得できませんでした"}
             contents: [{ role: "user", parts: [{ text: prompt }] }],
             generationConfig: { maxOutputTokens: 1536 },
           }),
+          signal: AbortSignal.timeout(12000),
         }
       );
       if (upstream.ok) {
@@ -195,8 +196,8 @@ ${structHtml || "取得できませんでした"}
       lastError = errText;
       const is503 = upstream.status === 503 || errText.includes("UNAVAILABLE");
       const is429 = upstream.status === 429 || errText.includes("RESOURCE_EXHAUSTED");
-      if ((is503 || is429) && attempt < 2) {
-        await new Promise(r => setTimeout(r, 3000 * (attempt + 1)));
+      if ((is503 || is429) && attempt === 0) {
+        await new Promise(r => setTimeout(r, 1500));
         continue;
       }
       break; // 次のモデルへ
