@@ -39,9 +39,18 @@ function buildGeneratePrompt(conversation: string, analysis?: GlobalStyle): stri
   const cb = analysis?.cardBgColor  ?? "#F9FAFB";
   const bb = analysis?.buttonBgColor ?? ac;
 
+  const structureInfo = analysis ? [
+    `色: primary=${pc} accent=${ac} heroBg=${hb} bg=${bg} card=${cb} btn=${bb}`,
+    analysis.heroLayout     ? `ヒーローレイアウト: ${analysis.heroLayout}` : "",
+    analysis.featureColumns ? `特徴カード列数: ${analysis.featureColumns}列` : "",
+    analysis.sectionOrder?.length ? `参考サイトのセクション構成: ${analysis.sectionOrder.join(" → ")}` : "",
+    analysis.detectedNavLinks?.length ? `参考サイトのナビ: ${analysis.detectedNavLinks.join(" / ")}` : "",
+    analysis.designNotes    ? `デザインの特徴: ${analysis.designNotes}` : "",
+  ].filter(Boolean).join("\n") : "";
+
   return `ヒアリング内容：
 ${conversation}
-${analysis ? `色: primary=${pc} accent=${ac} heroBg=${hb} bg=${bg} card=${cb} btn=${bb}` : ""}
+${structureInfo}
 
 以下のJSON構造でサイトコンテンツを生成してください。\`\`\`json ... \`\`\` に包んで出力。
 
@@ -374,13 +383,18 @@ function buildCanvasFromSections(data: SectionData, dna?: GlobalStyle): CanvasEl
   const CW = 1200;
   let y = 0;
 
-  // ── HERO: designStyle で自動テンプレート選択 ──────────────────
+  // ── HERO: 参考サイトのheroLayout → designStyle の順で選択 ───
   const tpl: HeroTpl = (() => {
+    // URL解析で取得したheroLayoutを最優先
+    if (dna?.heroLayout && ["split","centered","typographic","light"].includes(dna.heroLayout)) {
+      return dna.heroLayout as HeroTpl;
+    }
+    // designStyleからフォールバック
     const s = dna?.designStyle?.toLowerCase() ?? "";
     if (s === "minimal" || s === "corporate") return "light";
     if (s === "elegant")                       return "typographic";
     if (s === "bold" || s === "playful")       return "centered";
-    return "split"; // modern / default
+    return "split";
   })();
 
   if      (tpl === "centered")    y += heroCentered(data, tk, dna, y, CW, add);

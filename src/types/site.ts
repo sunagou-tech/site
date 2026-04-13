@@ -660,6 +660,12 @@ export interface GlobalStyle {
   buttonRadius?: string;         // ボタン角丸          例: "8px"
   designStyle?: string;          // スタイル識別        例: "minimal"
 
+  // ── レイアウト構造（参考サイトから抽出）──────────────
+  heroLayout?: "split" | "centered" | "typographic" | "light"; // ヒーローレイアウト
+  featureColumns?: number;      // 特徴カード列数 例: 3
+  sectionOrder?: string[];      // 検出されたセクション順 例: ["hero","features","faq","cta"]
+  detectedNavLinks?: string[];  // ナビリンクラベル 例: ["サービス","実績","料金"]
+
   // ── メタ ─────────────────────────────────────────────
   referenceUrl?: string;
   designNotes?: string;

@@ -66,58 +66,80 @@ export async function POST(req: NextRequest) {
   // ─── 2. デザイン情報を抽出 ───────────────────────────────
   const headMatch = html.match(/<head[^>]*>([\s\S]*?)<\/head>/i);
   const headHtml  = headMatch?.[1] ?? "";
+  const bodyMatch = html.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+  const bodyHtml  = bodyMatch?.[1] ?? "";
 
   // Google Fonts
-  const gfMatch   = headHtml.match(/href="(https:\/\/fonts\.googleapis\.com\/css2[^"]+)"/i);
+  const gfMatch    = headHtml.match(/href="(https:\/\/fonts\.googleapis\.com\/css2[^"]+)"/i);
   const detectedGF = gfMatch?.[1] ?? "";
 
-  // CSS（最大 20,000 字）
-  const styleBlocks = [...html.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/gi)].map(m => m[1]);
-  // インラインスタイルも一部含める
-  const inlineStyles = [...html.matchAll(/style="([^"]{10,200})"/gi)].map(m => m[1]).slice(0, 100).join(" ");
-  const cssText = (styleBlocks.join("\n") + "\n" + inlineStyles).slice(0, 8000);
+  // CSS — styleブロック + :root変数を優先的に抽出
+  const styleBlocks  = [...html.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/gi)].map(m => m[1]);
+  const cssAll       = styleBlocks.join("\n");
+  const rootVars     = cssAll.match(/:root\s*\{[^}]+\}/g)?.join("\n") ?? "";
+  const inlineStyles = [...html.matchAll(/style="([^"]{10,300})"/gi)].map(m => m[1]).slice(0, 60).join(" ");
+  const cssText      = (rootVars + "\n" + cssAll + "\n" + inlineStyles).slice(0, 10000);
 
-  // ページ本文（色・構造把握用）
-  const bodyMatch = html.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
-  const bodySnip  = bodyMatch?.[1]
-    ?.replace(/<script[\s\S]*?<\/script>/gi, "")
+  // ナビゲーションリンクを抽出（サイト構成把握）
+  const navHtml   = html.match(/<nav[^>]*>([\s\S]*?)<\/nav>/i)?.[1]
+                 ?? html.match(/<header[^>]*>([\s\S]*?)<\/header>/i)?.[1] ?? "";
+  const navLinks  = [...navHtml.matchAll(/<a[^>]*>([\s\S]*?)<\/a>/gi)]
+    .map(m => m[1].replace(/<[^>]+>/g, "").trim())
+    .filter(t => t.length > 0 && t.length < 30)
+    .slice(0, 10);
+
+  // 見出しを抽出（コンテンツ構造把握）
+  const headings = [...html.matchAll(/<h([1-3])[^>]*>([\s\S]*?)<\/h\1>/gi)]
+    .map(m => `H${m[1]}: ${m[2].replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim()}`)
+    .filter(t => t.length < 80)
+    .slice(0, 20);
+
+  // 構造を保ったHTML（スクリプト・SVGを除去、タグは残す）
+  const structHtml = bodyHtml
+    .replace(/<script[\s\S]*?<\/script>/gi, "")
     .replace(/<svg[\s\S]*?<\/svg>/gi, "")
-    .replace(/<[^>]+>/g, " ")
-    .replace(/\s{2,}/g, " ")
-    .slice(0, 2000) ?? "";
+    .replace(/<style[\s\S]*?<\/style>/gi, "")
+    .replace(/\s+/g, " ")
+    .slice(0, 6000);
 
-  // ─── 3. Claude でデザインDNA解析 ─────────────────────────
+  // ─── 3. Gemini でデザインDNA解析 ──────────────────────────
   const prompt = `あなたはウェブデザイン解析の専門家です。
-以下のウェブサイトのHTML/CSSを詳細に分析し、デザインDNAを完全に抽出してください。
+以下のウェブサイトのHTML/CSSを詳細に分析し、デザインDNAと構造を完全に抽出してください。
 
 【参考URL】${url}
 
 【Google Fontsリンク（自動検出）】
-${detectedGF || "なし（CSSから推定してください）"}
+${detectedGF || "なし"}
 
-【CSSコンテンツ（インラインスタイル含む）】
+【CSS（:root変数＋スタイル）】
 ${cssText || "取得できませんでした"}
 
-【ページテキスト（構造・配色把握用）】
-${bodySnip || "取得できませんでした"}
+【ナビゲーションリンク】
+${navLinks.length ? navLinks.join(" / ") : "検出できませんでした"}
+
+【見出し一覧（H1〜H3）】
+${headings.length ? headings.join("\n") : "検出できませんでした"}
+
+【ページ構造HTML（簡略）】
+${structHtml || "取得できませんでした"}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━
 以下のJSON形式でデザインDNAを返してください。\`\`\`json ... \`\`\` に包んで出力。
-不明な値はnullにせず、CSSとテキストから積極的に推定してください。
+不明な値はnullにせず、HTMLとCSSから積極的に推定してください。
 
 {
-  "headingFont":          "フォント名（例: Noto Serif JP）",
-  "bodyFont":             "フォント名（例: Noto Sans JP）",
+  "headingFont":     "フォント名（例: Noto Serif JP）",
+  "bodyFont":        "フォント名（例: Noto Sans JP）",
 
-  "primaryColor":         "#hex — ブランドカラー（ナビ・ボタン・アクセントで最もよく使われる色）",
-  "accentColor":          "#hex — CTAボタン・強調要素の色（primaryと異なる場合）",
-  "heroBgColor":          "#hex — ファーストビューの背景色",
-  "bgColor":              "#hex — ページ全体のメイン背景色",
-  "cardBgColor":          "#hex — カードや白い囲み要素の背景色",
-  "textColor":            "#hex — メインの本文テキストカラー",
-  "buttonBgColor":        "#hex — 主要CTAボタンの背景色",
-  "buttonTextColor":      "#hex — CTAボタンのテキスト色",
-  "buttonRadius":         "px値 — ボタンの角丸（例: 8px, 24px, 999px）",
+  "primaryColor":    "#hex — ナビ・ボタン・アクセントで最もよく使われるブランドカラー",
+  "accentColor":     "#hex — CTAボタン・強調要素の色（primaryと異なる場合）",
+  "heroBgColor":     "#hex — ファーストビューの背景色",
+  "bgColor":         "#hex — ページ全体のメイン背景色",
+  "cardBgColor":     "#hex — カードや囲み要素の背景色",
+  "textColor":       "#hex — メイン本文テキストカラー",
+  "buttonBgColor":   "#hex — 主要CTAボタンの背景色",
+  "buttonTextColor": "#hex — CTAボタンのテキスト色",
+  "buttonRadius":    "px値（例: 8px, 24px, 999px）",
 
   "h1Size":               "px値（例: 56px）",
   "h2Size":               "px値（例: 38px）",
@@ -127,21 +149,26 @@ ${bodySnip || "取得できませんでした"}
   "bodyLineHeight":       1.8,
   "headingLetterSpacing": "em値（例: -0.03em）",
   "headingWeight":        700,
-  "sectionPaddingY":      "px値 — セクションの上下余白（例: 100px）",
-  "cardBorderRadius":     "px値 — カードの角丸（例: 12px）",
+  "sectionPaddingY":      "px値（例: 100px）",
+  "cardBorderRadius":     "px値（例: 12px）",
   "containerMaxWidth":    "px値（例: 1200px）",
 
-  "designStyle":          "minimal/bold/corporate/elegant/playful/modern のいずれか",
-  "designNotes":          "このサイトのデザインの特徴を30字以内で"
+  "designStyle":  "minimal/bold/corporate/elegant/playful/modern のいずれか",
+  "designNotes":  "このサイトのデザインの特徴を30字以内で",
+
+  "heroLayout":       "split（左テキスト右画像）/ centered（中央配置）/ typographic（大文字タイポ）/ light（白背景クリーン）のいずれか",
+  "featureColumns":   3,
+  "sectionOrder":     ["hero","about","features","steps","testimonials","pricing","faq","cta"],
+  "detectedNavLinks": ["サービス","実績","料金","お問い合わせ"]
 }
 
 【重要な指示】
-- CSSの color, background-color, background プロパティから色を抽出する
-- :root変数や --color-xxx 変数も必ず確認する
-- ヘキサ値(#xxx)、rgb()値はすべて#hex形式に変換する
-- 日本語サイトの場合は headingFont "Noto Serif JP"か"Noto Sans JP"を優先
-- primaryColorが不明な場合はナビゲーションの色を使う
-- heroBgColorが不明な場合はprimaryColorを使う`;
+- CSSの :root変数（--color-xxx, --primary等）を最優先で色抽出する
+- rgb()/rgba()値はすべて#hex形式に変換する
+- 日本語サイトは headingFont に "Noto Serif JP" か "Noto Sans JP" を優先
+- sectionOrder は実際にページ上で見つかったセクションを上から順に並べる
+- heroLayout: ファーストビューで画像が右側なら"split"、テキストが画面中央なら"centered"、大きなタイポグラフィなら"typographic"、白背景でシンプルなら"light"
+- featureColumns: 特徴カードが何列で並んでいるかを推定（2〜4）`;
 
   // Gemini でデザイン解析
   let raw = "";
