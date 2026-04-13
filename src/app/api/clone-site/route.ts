@@ -19,19 +19,35 @@ type TextEntry = { tag: string; full: string; inner: string };
 
 function extractTextEntries(html: string): TextEntry[] {
   const entries: TextEntry[] = [];
-  const patterns: { tag: string; re: RegExp }[] = [
+
+  // 優先度1: 見出し h1〜h5
+  const headingPatterns: { tag: string; re: RegExp }[] = [
     { tag: "h1", re: /<h1([^>]*)>([\s\S]*?)<\/h1>/gi },
     { tag: "h2", re: /<h2([^>]*)>([\s\S]*?)<\/h2>/gi },
     { tag: "h3", re: /<h3([^>]*)>([\s\S]*?)<\/h3>/gi },
+    { tag: "h4", re: /<h4([^>]*)>([\s\S]*?)<\/h4>/gi },
+    { tag: "h5", re: /<h5([^>]*)>([\s\S]*?)<\/h5>/gi },
   ];
-  for (const { tag, re } of patterns) {
+  for (const { tag, re } of headingPatterns) {
     for (const m of html.matchAll(re)) {
       const inner = m[2].replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
-      if (inner.length >= 2 && inner.length <= 120) {
+      if (inner.length >= 1 && inner.length <= 200) {
         entries.push({ tag, full: m[0], inner });
       }
     }
   }
+
+  // 優先度2: 見出しが少ない場合は p タグも補完（短めのもの）
+  if (entries.length < 5) {
+    for (const m of html.matchAll(/<p([^>]*)>([\s\S]*?)<\/p>/gi)) {
+      const inner = m[2].replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
+      if (inner.length >= 10 && inner.length <= 150) {
+        entries.push({ tag: "p", full: m[0], inner });
+        if (entries.length >= 30) break;
+      }
+    }
+  }
+
   return entries.slice(0, 30);
 }
 
@@ -104,8 +120,12 @@ export async function POST(req: NextRequest) {
 
   // ── 4. テキスト要素を抽出 ────────────────────────────────────
   const entries = extractTextEntries(html);
+
+  // 抽出0件の場合: AIテキスト書き換えをスキップしてHTMLをそのまま返す
   if (entries.length === 0) {
-    return NextResponse.json({ error: "テキスト要素を検出できませんでした" }, { status: 400 });
+    const credit = `<div style="position:fixed;bottom:12px;right:12px;z-index:99999;background:#1A365D;color:#fff;font-size:11px;padding:6px 12px;border-radius:20px;font-family:sans-serif;opacity:0.85">Made with ツクリエ</div>`;
+    const fallback = html.replace("</body>", `${credit}</body>`);
+    return NextResponse.json({ html: fallback });
   }
 
   // ── 5. AI でテキストを生成 ────────────────────────────────────
