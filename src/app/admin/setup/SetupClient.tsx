@@ -157,6 +157,8 @@ export default function SetupClient() {
     setPreviewTexts([]);
     setDrawerOpen(false);
     setError("");
+    setReferenceUrl("");
+    setAnalysisResult(null);
   }, []);
 
   // ══════════════════════════════════════════════════════════
@@ -192,6 +194,9 @@ export default function SetupClient() {
         >
           AIがサイトを生成中
         </h2>
+        <p className="text-xs mb-2 text-center px-6 truncate max-w-sm" style={{ color: "#9CA3AF" }}>
+          {referenceUrl}
+        </p>
         <p className="text-sm mb-10 text-center" style={{ color: "#6B7280" }}>{genText}</p>
 
         {/* プログレスバー */}
@@ -230,7 +235,10 @@ export default function SetupClient() {
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/logo.png" alt="ツクリエ" style={{ width: 26, height: 26, borderRadius: 7, objectFit: "cover" }} />
-            <p className="font-bold text-sm" style={{ color: "#111827" }}>サイトが完成しました！</p>
+            <div>
+              <p className="font-bold text-sm" style={{ color: "#111827" }}>サイトが完成しました！</p>
+              <p className="text-xs truncate max-w-xs" style={{ color: "#9CA3AF" }}>{referenceUrl}</p>
+            </div>
           </div>
 
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
