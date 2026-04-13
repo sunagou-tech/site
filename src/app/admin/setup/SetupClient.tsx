@@ -282,7 +282,7 @@ export default function SetupClient() {
         <iframe
           srcDoc={cloneHtml}
           style={{ flex: 1, border: "none", width: "100%", display: "block" }}
-          sandbox="allow-same-origin allow-forms"
+          sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
           title="生成されたサイト"
         />
       </div>

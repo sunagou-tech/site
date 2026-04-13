@@ -115,8 +115,9 @@ export async function POST(req: NextRequest) {
     html = html.replace(/(<head[^>]*>)/i, `$1\n<base href="${pageUrl}">`);
   }
 
-  // ── 3. scriptタグ除去（セキュリティ）────────────────────────
-  html = html.replace(/<script[\s\S]*?<\/script>/gi, "");
+  // ── 3. 危険なインラインスクリプトのみ除去（外部srcは残す）──────
+  // src属性がないインライン<script>だけ除去。src付きは残してJSレンダリングを維持。
+  html = html.replace(/<script(?![^>]*\bsrc\b)[^>]*>[\s\S]*?<\/script>/gi, "");
 
   // ── 4. テキスト要素を抽出 ────────────────────────────────────
   const entries = extractTextEntries(html);
