@@ -66,6 +66,7 @@ export default function SetupClient() {
   const analysisResultRef = useRef<GlobalStyle | null>(null);
   const [cloneHtml,      setCloneHtml]      = useState<string | null>(null);
   const [previewTexts,   setPreviewTexts]   = useState<CloneText[]>([]);
+  const [drawerOpen,     setDrawerOpen]     = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [error,          setError]          = useState("");
   const [genPct,         setGenPct]         = useState(0);
@@ -154,6 +155,7 @@ export default function SetupClient() {
     setPhase("form");
     setCloneHtml(null);
     setPreviewTexts([]);
+    setDrawerOpen(false);
     setError("");
   }, []);
 
@@ -222,91 +224,97 @@ export default function SetupClient() {
         {/* ─── トップバー ─── */}
         <div style={{
           background: "#FFFFFF", borderBottom: "1px solid #E2E8F0",
-          height: 56, flexShrink: 0, display: "flex", alignItems: "center",
-          justifyContent: "space-between", padding: "0 20px",
+          height: 52, flexShrink: 0, display: "flex", alignItems: "center",
+          justifyContent: "space-between", padding: "0 16px", gap: 10,
         }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo.png" alt="ツクリエ" style={{ width: 28, height: 28, borderRadius: 8, objectFit: "cover" }} />
-            <div>
-              <p className="font-bold text-sm" style={{ color: "#111827" }}>サイトが完成しました！</p>
-              <p className="text-xs" style={{ color: "#6B7280" }}>左のパネルでテキストを自由に編集できます</p>
-            </div>
+            <img src="/logo.png" alt="ツクリエ" style={{ width: 26, height: 26, borderRadius: 7, objectFit: "cover" }} />
+            <p className="font-bold text-sm" style={{ color: "#111827" }}>サイトが完成しました！</p>
           </div>
-          <button
-            onClick={reset}
-            className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg"
-            style={{ color: "#6B7280", border: "1px solid #E2E8F0", background: "#FFFFFF" }}
-            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "#F9FAFB"; }}
-            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "#FFFFFF"; }}
-          >
-            <MsIcon name="refresh" size={14} color="#6B7280" />
-            やり直す
-          </button>
+
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            {previewTexts.length > 0 && (
+              <button
+                onClick={() => setDrawerOpen(o => !o)}
+                className="flex items-center gap-1.5 font-semibold text-sm px-4 py-2 rounded-xl transition-all"
+                style={{
+                  background: drawerOpen ? "#059669" : NAVY,
+                  color: "#FFFFFF",
+                }}
+              >
+                <MsIcon name={drawerOpen ? "check" : "edit"} size={16} color="#FFFFFF" />
+                {drawerOpen ? "編集を閉じる" : "テキストを編集する"}
+              </button>
+            )}
+            <button
+              onClick={reset}
+              className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg"
+              style={{ color: "#6B7280", border: "1px solid #E2E8F0", background: "#FFFFFF" }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "#F9FAFB"; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "#FFFFFF"; }}
+            >
+              <MsIcon name="refresh" size={14} color="#6B7280" />
+              やり直す
+            </button>
+          </div>
         </div>
 
-        {/* ─── メインエリア（左パネル＋右iframe） ─── */}
-        <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
+        {/* ─── iframeフル幅＋右ドロワー ─── */}
+        <div style={{ flex: 1, position: "relative", overflow: "hidden" }}>
 
-          {/* ─── 左：テキスト編集パネル ─── */}
-          <aside style={{
-            width: 300, flexShrink: 0, background: "#FFFFFF",
-            borderRight: "1px solid #E2E8F0", overflowY: "auto",
-            padding: "20px 16px", display: "flex", flexDirection: "column", gap: 0,
+          {/* iframe：常に全幅 */}
+          <iframe
+            ref={iframeRef}
+            srcDoc={cloneHtml}
+            style={{ width: "100%", height: "100%", border: "none", display: "block" }}
+            sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+            title="生成されたサイト"
+          />
+
+          {/* 右ドロワー：テキスト編集パネル */}
+          <div style={{
+            position: "absolute", top: 0, right: 0, height: "100%", width: 320,
+            background: "#FFFFFF", borderLeft: "1px solid #E2E8F0",
+            overflowY: "auto", padding: "20px 16px",
+            transform: drawerOpen ? "translateX(0)" : "translateX(100%)",
+            transition: "transform 0.25s ease",
+            boxShadow: drawerOpen ? "-4px 0 20px rgba(0,0,0,0.08)" : "none",
           }}>
             <div style={{ marginBottom: 16 }}>
-              <p className="text-xs font-bold uppercase tracking-widest" style={{ color: "#9CA3AF" }}>
-                テキストを編集
-              </p>
+              <p className="text-xs font-bold uppercase tracking-widest" style={{ color: "#9CA3AF" }}>テキストを編集</p>
               <p className="text-xs mt-1 leading-relaxed" style={{ color: "#6B7280" }}>
                 入力するとサイトがリアルタイムで更新されます
               </p>
             </div>
 
-            {previewTexts.length === 0 ? (
-              <div className="text-xs p-3 rounded-xl" style={{ background: "#F9FAFB", color: "#9CA3AF" }}>
-                このサイトはJavaScriptで動的に表示されているため、テキスト編集は直接サイト上でお試しください。
-              </div>
-            ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-                {previewTexts.map((t, i) => (
-                  <div key={t.id}>
-                    <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "#9CA3AF", marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                      {TAG_LABEL[t.tag] ?? t.tag.toUpperCase()} {i + 1}
-                    </label>
-                    {t.tag === "h1" || t.text.length > 50 ? (
-                      <textarea
-                        value={t.text}
-                        onChange={e => updateText(t.id, e.target.value)}
-                        rows={t.tag === "h1" ? 2 : 3}
-                        className="w-full text-xs rounded-lg px-3 py-2 outline-none resize-none focus:ring-2 focus:ring-blue-200"
-                        style={{ border: "1.5px solid #E2E8F0", background: "#F9FAFB", color: "#111827", lineHeight: 1.6 }}
-                      />
-                    ) : (
-                      <input
-                        type="text"
-                        value={t.text}
-                        onChange={e => updateText(t.id, e.target.value)}
-                        className="w-full text-xs rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-200"
-                        style={{ border: "1.5px solid #E2E8F0", background: "#F9FAFB", color: "#111827" }}
-                      />
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </aside>
-
-          {/* ─── 右：iframeプレビュー ─── */}
-          <main style={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column" }}>
-            <iframe
-              ref={iframeRef}
-              srcDoc={cloneHtml}
-              style={{ flex: 1, border: "none", width: "100%", display: "block" }}
-              sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
-              title="生成されたサイト"
-            />
-          </main>
+            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+              {previewTexts.map((t, i) => (
+                <div key={t.id}>
+                  <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: "#9CA3AF", marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                    {TAG_LABEL[t.tag] ?? t.tag.toUpperCase()} {i + 1}
+                  </label>
+                  {t.tag === "h1" || t.text.length > 50 ? (
+                    <textarea
+                      value={t.text}
+                      onChange={e => updateText(t.id, e.target.value)}
+                      rows={t.tag === "h1" ? 2 : 3}
+                      className="w-full text-xs rounded-lg px-3 py-2 outline-none resize-none focus:ring-2 focus:ring-blue-200"
+                      style={{ border: "1.5px solid #E2E8F0", background: "#F9FAFB", color: "#111827", lineHeight: 1.6 }}
+                    />
+                  ) : (
+                    <input
+                      type="text"
+                      value={t.text}
+                      onChange={e => updateText(t.id, e.target.value)}
+                      className="w-full text-xs rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-200"
+                      style={{ border: "1.5px solid #E2E8F0", background: "#F9FAFB", color: "#111827" }}
+                    />
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     );

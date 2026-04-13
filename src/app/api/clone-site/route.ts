@@ -181,8 +181,16 @@ ${entries.map((e, i) => `[${i}] ${e.tag.toUpperCase()}: ${e.inner}`).join("\n")}
     texts.push({ id: i, tag, text: newText });
   }
 
-  // ── 8. クレジット注入 ────────────────────────────────────────
+  // ── 8. レイアウト正規化CSS＋クレジット注入 ───────────────────
+  const fixCss = `<style>
+/* ツクリエ: 画像・レイアウト正規化 */
+img { max-width:100% !important; height:auto !important; }
+video { max-width:100% !important; }
+body { overflow-x:hidden !important; }
+* { box-sizing:border-box !important; }
+</style>`;
   const credit = `<div style="position:fixed;bottom:12px;right:12px;z-index:99999;background:#1A365D;color:#fff;font-size:11px;padding:6px 12px;border-radius:20px;font-family:sans-serif;opacity:0.85">Made with ツクリエ</div>`;
+  modified = modified.replace("</head>", `${fixCss}</head>`);
   modified = modified.replace("</body>", `${credit}</body>`);
 
   return NextResponse.json({ html: modified, texts });
