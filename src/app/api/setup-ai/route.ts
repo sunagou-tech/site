@@ -665,10 +665,14 @@ function buildCanvasFromSections(data: SectionData, dna?: GlobalStyle): CanvasEl
 async function geminiFetch(
   systemPrompt: string,
   userPrompt: string,
-  maxTokens = 3072,
+  maxTokens = 4096,
+  forceJson = false,
 ): Promise<string> {
   for (const model of GEMINI_MODELS) {
     for (let i = 0; i < 2; i++) {
+      const generationConfig: Record<string, unknown> = { maxOutputTokens: maxTokens };
+      if (forceJson) generationConfig.responseMimeType = "application/json";
+
       const res = await fetch(
         `${GEMINI_BASE}/${model}:generateContent?key=${API_KEY}`,
         {
@@ -677,7 +681,7 @@ async function geminiFetch(
           body: JSON.stringify({
             systemInstruction: { parts: [{ text: systemPrompt }] },
             contents: [{ role: "user", parts: [{ text: userPrompt }] }],
-            generationConfig: { maxOutputTokens: maxTokens },
+            generationConfig,
           }),
           signal: AbortSignal.timeout(20000),
         }
@@ -741,7 +745,8 @@ export async function POST(req: NextRequest) {
     raw = await geminiFetch(
       GENERATE_SYSTEM,
       buildGeneratePrompt(conversationText, analysisResult),
-      3072
+      4096,
+      true, // forceJson: responseMimeType=application/json
     );
   } catch (e) {
     return NextResponse.json(
@@ -750,9 +755,15 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // JSON抽出（```json...``` 形式 or 直接JSON）
-  const match   = raw.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
-  const jsonStr = match ? match[1] : raw.trim();
+  // JSON抽出（forceJson時はrawが直接JSON、念のためコードフェンスも試す）
+  let jsonStr = raw.trim();
+  const fenceMatch = raw.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+  if (fenceMatch) jsonStr = fenceMatch[1].trim();
+  // それでもJSONオブジェクトが見つからない場合は { } を探す
+  if (!jsonStr.startsWith("{")) {
+    const objMatch = raw.match(/\{[\s\S]*\}/);
+    if (objMatch) jsonStr = objMatch[0];
+  }
 
   try {
     const parsed = JSON.parse(jsonStr) as SectionData;
@@ -781,6 +792,6 @@ export async function POST(req: NextRequest) {
     };
     return NextResponse.json({ config });
   } catch {
-    return NextResponse.json({ error: "JSON解析失敗", raw }, { status: 500 });
+    return NextResponse.json({ error: "AI生成に失敗しました。もう一度お試しください。", raw }, { status: 500 });
   }
 }
