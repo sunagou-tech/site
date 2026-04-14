@@ -662,17 +662,20 @@ function buildCanvasFromSections(data: SectionData, dna?: GlobalStyle): CanvasEl
 }
 
 // ── Gemini fetch with retry + model fallback ─────────────────
+// タイムアウト設定: 1モデル12秒 × 最大2モデル = 24秒 → 30秒以内に収める
+const MODEL_TIMEOUT_MS = 12000;
+
 async function geminiFetch(
   systemPrompt: string,
   userPrompt: string,
   maxTokens = 4096,
   forceJson = false,
 ): Promise<string> {
-  for (const model of GEMINI_MODELS) {
-    for (let i = 0; i < 2; i++) {
-      const generationConfig: Record<string, unknown> = { maxOutputTokens: maxTokens };
-      if (forceJson) generationConfig.responseMimeType = "application/json";
+  const generationConfig: Record<string, unknown> = { maxOutputTokens: maxTokens };
+  if (forceJson) generationConfig.responseMimeType = "application/json";
 
+  for (const model of GEMINI_MODELS) {
+    try {
       const res = await fetch(
         `${GEMINI_BASE}/${model}:generateContent?key=${API_KEY}`,
         {
@@ -683,27 +686,30 @@ async function geminiFetch(
             contents: [{ role: "user", parts: [{ text: userPrompt }] }],
             generationConfig,
           }),
-          signal: AbortSignal.timeout(20000),
+          signal: AbortSignal.timeout(MODEL_TIMEOUT_MS),
         }
       );
 
       if (res.ok) {
         const data = await res.json();
-        return data.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
+        const text = data.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
+        if (text) return text;
+        continue; // 空ならば次モデルへ
       }
 
       const errText = await res.text();
-      const is503 = res.status === 503 || errText.includes("UNAVAILABLE");
-      const is429 = res.status === 429 || errText.includes("RESOURCE_EXHAUSTED");
-
-      if ((is503 || is429) && i === 0) {
-        await new Promise(r => setTimeout(r, 1500));
-        continue;
-      }
-      break; // 次のモデルへ
+      // 過負荷系は即次モデルへ（リトライなし）
+      const isRetryable = res.status === 503 || res.status === 429 ||
+        errText.includes("UNAVAILABLE") || errText.includes("RESOURCE_EXHAUSTED");
+      if (isRetryable) continue;
+      // それ以外のエラー（400など）も次モデルへ
+      continue;
+    } catch {
+      // タイムアウト・ネットワークエラー → 次モデルへ
+      continue;
     }
   }
-  throw new Error("APIが混雑しています。しばらく待ってからやり直してください。");
+  throw new Error("AIサービスが混雑しています。しばらく待ってからやり直してください。");
 }
 
 // ── Route handler ────────────────────────────────────────────
