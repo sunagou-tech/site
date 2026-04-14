@@ -413,41 +413,31 @@ function buildCanvasFromSections(data: SectionData, dna?: GlobalStyle): CanvasEl
   else                            y += heroSplit(data, tk, dna, y, CW, add);
 
   // ── PROBLEM ───────────────────────────────────────────────
-  const H_PROB = 580;
-  add({ type: "rect", x: 0, y, width: CW, height: H_PROB, style: { backgroundColor: data.problem.bgColor || tk.pageBg }, zIndex: 1 });
-  add({ type: "text", x: 200, y: y + 64, width: 800, height: 26,
-    html: "PROBLEM",
-    style: { fontSize: 10, color: tk.labelColor, textAlign: "center", letterSpacing: "0.35em", fontWeight: "700" }, zIndex: 2 });
-  add({ type: "text", x: 80, y: y + 98, width: 1040, height: 68,
+  const H_PROB = 560;
+  add({ type: "rect", x: 0, y, width: CW, height: H_PROB, style: { backgroundColor: data.problem.bgColor || "#F8FAFC" }, zIndex: 1 });
+  add({ type: "text", x: 400, y: y + 56, width: 400, height: 32,
+    html: `<div style="text-align:center"><span style="display:inline-block;background:#FEF2F2;color:#EF4444;padding:5px 18px;border-radius:999px;font-size:10px;font-weight:700;letter-spacing:0.22em;border:1px solid #FECACA">PROBLEM</span></div>`,
+    style: {}, zIndex: 2 });
+  add({ type: "text", x: 80, y: y + 100, width: 1040, height: 64,
     html: data.problem.heading,
-    style: { fontSize: 36, fontWeight: dna?.headingWeight ?? 900, color: tk.textMain, textAlign: "center",
+    style: { fontSize: 34, fontWeight: dna?.headingWeight ?? 900, color: tk.textMain, textAlign: "center",
       ...(dna?.headingFont ? { fontFamily: `'${dna.headingFont}'` } : {}) }, zIndex: 2 });
   const probXs = [60, 430, 800];
   (data.problem.items ?? []).slice(0, 3).forEach((item, i) => {
     const cx = probXs[i];
-    add({ type: "rect", x: cx, y: y + 196, width: 340, height: 320,
-      style: { backgroundColor: "#FFFFFF", borderRadius: tk.cardR, border: "1px solid #FEE2E2",
-        boxShadow: "0 4px 24px rgba(0,0,0,0.06)" }, zIndex: 2 });
-    // red accent left bar
-    add({ type: "rect", x: cx, y: y + 196, width: 5, height: 320,
-      style: { backgroundColor: "#EF4444", borderRadius: tk.cardR }, zIndex: 3 });
-    // number badge
-    add({ type: "rect", x: cx + 20, y: y + 218, width: 36, height: 36,
-      style: { backgroundColor: "#FEF2F2", borderRadius: 999, border: "1.5px solid #FCA5A5" }, zIndex: 3 });
-    add({ type: "text", x: cx + 20, y: y + 223, width: 36, height: 26,
-      html: `0${i + 1}`,
-      style: { fontSize: 13, fontWeight: "900", color: "#EF4444", textAlign: "center" }, zIndex: 4 });
-    add({ type: "text", x: cx + 68, y: y + 220, width: 252, height: 44,
-      html: item.title,
-      style: { fontSize: 16, fontWeight: "bold", color: tk.textMain, lineHeight: 1.35,
-        ...(dna?.headingFont ? { fontFamily: `'${dna.headingFont}'` } : {}) }, zIndex: 3 });
-    add({ type: "text", x: cx + 20, y: y + 278, width: 300, height: 100,
-      html: item.desc,
-      style: { fontSize: 13, color: tk.textMid, lineHeight: 1.8 }, zIndex: 3 });
-    // check mark at bottom
-    add({ type: "text", x: cx + 20, y: y + 388, width: 300, height: 24,
-      html: "→ このお悩み、私たちが解決します",
-      style: { fontSize: 11, color: tk.primary, fontWeight: "700" }, zIndex: 3 });
+    add({ type: "text", x: cx, y: y + 186, width: 340, height: 320,
+      html: `<div style="height:320px;background:#fff;border-radius:${tk.cardR}px;border:1px solid #FEE2E2;box-shadow:0 4px 24px rgba(239,68,68,0.08);overflow:hidden;box-sizing:border-box">
+        <div style="height:5px;background:linear-gradient(90deg,#EF4444,#F97316)"></div>
+        <div style="padding:24px">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+            <div style="min-width:40px;height:40px;border-radius:50%;background:#FEF2F2;border:1.5px solid #FCA5A5;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;color:#EF4444;flex-shrink:0">0${i+1}</div>
+            <div style="font-size:15px;font-weight:700;color:#111827;line-height:1.35">${item.title}</div>
+          </div>
+          <div style="font-size:13px;color:#6B7280;line-height:1.8;margin-bottom:16px">${item.desc}</div>
+          <div style="font-size:11px;font-weight:700;color:#EF4444;border-top:1px solid #FEE2E2;padding-top:12px">→ このお悩み、解決できます</div>
+        </div>
+      </div>`,
+      style: {}, zIndex: 2 });
   });
   y += H_PROB;
 
@@ -476,127 +466,122 @@ function buildCanvasFromSections(data: SectionData, dna?: GlobalStyle): CanvasEl
   // ── FEATURES ──────────────────────────────────────────────
   const H_FEAT = 620;
   add({ type: "rect", x: 0, y, width: CW, height: H_FEAT, style: { backgroundColor: data.features.bgColor || tk.pageBg }, zIndex: 1 });
-  add({ type: "text", x: 200, y: y + 60, width: 800, height: 26,
-    html: "FEATURES",
-    style: { fontSize: 10, color: tk.labelColor, textAlign: "center", letterSpacing: "0.35em", fontWeight: "700" }, zIndex: 2 });
-  add({ type: "text", x: 80, y: y + 94, width: 1040, height: 60,
+  add({ type: "text", x: 400, y: y + 56, width: 400, height: 32,
+    html: `<div style="text-align:center"><span style="display:inline-block;background:${tk.labelColor}18;color:${tk.labelColor};padding:5px 18px;border-radius:999px;font-size:10px;font-weight:700;letter-spacing:0.22em;border:1px solid ${tk.labelColor}30">FEATURES</span></div>`,
+    style: {}, zIndex: 2 });
+  add({ type: "text", x: 80, y: y + 100, width: 1040, height: 60,
     html: data.features.heading,
-    style: { fontSize: 36, fontWeight: dna?.headingWeight ?? 900, color: tk.textMain, textAlign: "center",
+    style: { fontSize: 34, fontWeight: dna?.headingWeight ?? 900, color: tk.textMain, textAlign: "center",
       ...(dna?.headingFont ? { fontFamily: `'${dna.headingFont}'` } : {}) }, zIndex: 2 });
-  // accent underline
-  add({ type: "rect", x: 560, y: y + 166, width: 80, height: 4,
+  add({ type: "rect", x: 560, y: y + 170, width: 80, height: 4,
     style: { backgroundColor: tk.accent, borderRadius: 2 }, zIndex: 2 });
   const featXs = [60, 420, 780];
-  const featRows = [y + 184, y + 414];
+  const featRows = [y + 188, y + 406];
   const FEAT_COLORS = [tk.primary, tk.accent, "#7C3AED", "#059669", "#2563EB", "#DC2626"];
   (data.features.items ?? []).slice(0, 6).forEach((item, i) => {
     const row = Math.floor(i / 3);
     const col = i % 3;
     const cx = featXs[col];
     const cy = featRows[row];
-    const iconColor = FEAT_COLORS[i];
-    // card bg
-    add({ type: "rect", x: cx, y: cy, width: 320, height: 210,
-      style: { backgroundColor: "#FFFFFF", borderRadius: tk.cardR, border: "1px solid #E5E7EB",
-        boxShadow: "0 4px 20px rgba(0,0,0,0.07)" }, zIndex: 2 });
-    // colored top bar
-    add({ type: "rect", x: cx, y: cy, width: 320, height: 6,
-      style: { backgroundColor: iconColor, borderRadius: tk.cardR }, zIndex: 3 });
-    // icon circle
-    add({ type: "rect", x: cx + 20, y: cy + 22, width: 40, height: 40,
-      style: { backgroundColor: iconColor + "20", borderRadius: 999 }, zIndex: 3 });
-    add({ type: "text", x: cx + 20, y: cy + 28, width: 40, height: 28,
-      html: item.title.match(/^\S+/)?.[0] ?? "●",
-      style: { fontSize: 18, textAlign: "center", lineHeight: 1 }, zIndex: 4 });
-    // title & desc
-    add({ type: "text", x: cx + 72, y: cy + 24, width: 228, height: 40,
-      html: item.title.replace(/^\S+\s*/, ""),
-      style: { fontSize: 15, fontWeight: "bold", color: tk.textMain, lineHeight: 1.3,
-        ...(dna?.headingFont ? { fontFamily: `'${dna.headingFont}'` } : {}) }, zIndex: 3 });
-    add({ type: "text", x: cx + 20, y: cy + 80, width: 280, height: 100,
-      html: item.desc,
-      style: { fontSize: 13, color: tk.textMid, lineHeight: 1.8 }, zIndex: 3 });
+    const color = FEAT_COLORS[i];
+    const num = `0${i + 1}`;
+    add({ type: "text", x: cx, y: cy, width: 320, height: 200,
+      html: `<div style="height:200px;background:#fff;border-radius:${tk.cardR}px;border:1px solid #E5E7EB;box-shadow:0 4px 20px rgba(0,0,0,0.07);overflow:hidden;box-sizing:border-box">
+        <div style="height:4px;background:linear-gradient(90deg,${color},${color}88)"></div>
+        <div style="padding:18px 20px">
+          <div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:10px">
+            <div style="min-width:36px;height:36px;border-radius:50%;background:${color}15;border:1.5px solid ${color}50;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;color:${color};flex-shrink:0">${num}</div>
+            <div style="font-size:14px;font-weight:700;color:#111827;line-height:1.4;padding-top:3px">${item.title}</div>
+          </div>
+          <div style="font-size:12.5px;color:#6B7280;line-height:1.75;padding-left:48px">${item.desc}</div>
+        </div>
+      </div>`,
+      style: {}, zIndex: 2 });
   });
-  y += H_FEAT + 20;
+  y += H_FEAT;
 
   // ── STEPS ─────────────────────────────────────────────────
-  const H_STEPS = 520;
-  add({ type: "rect", x: 0, y, width: CW, height: H_STEPS, style: { backgroundColor: data.steps.bgColor || tk.pageBg }, zIndex: 1 });
-  add({ type: "text", x: 200, y: y + 60, width: 800, height: 26,
-    html: "FLOW",
-    style: { fontSize: 10, color: tk.labelColor, textAlign: "center", letterSpacing: "0.35em", fontWeight: "700" }, zIndex: 2 });
-  add({ type: "text", x: 80, y: y + 94, width: 1040, height: 60,
+  const H_STEPS = 500;
+  add({ type: "rect", x: 0, y, width: CW, height: H_STEPS, style: { backgroundColor: data.steps.bgColor || tk.cardBg }, zIndex: 1 });
+  add({ type: "text", x: 400, y: y + 56, width: 400, height: 32,
+    html: `<div style="text-align:center"><span style="display:inline-block;background:${tk.labelColor}18;color:${tk.labelColor};padding:5px 18px;border-radius:999px;font-size:10px;font-weight:700;letter-spacing:0.22em;border:1px solid ${tk.labelColor}30">FLOW</span></div>`,
+    style: {}, zIndex: 2 });
+  add({ type: "text", x: 80, y: y + 100, width: 1040, height: 60,
     html: data.steps.heading,
-    style: { fontSize: 36, fontWeight: dna?.headingWeight ?? 900, color: tk.textMain, textAlign: "center",
+    style: { fontSize: 34, fontWeight: dna?.headingWeight ?? 900, color: tk.textMain, textAlign: "center",
       ...(dna?.headingFont ? { fontFamily: `'${dna.headingFont}'` } : {}) }, zIndex: 2 });
   const stepXs = [60, 340, 620, 900];
   (data.steps.items ?? []).slice(0, 4).forEach((step, i) => {
     const sx = stepXs[i];
-    // connector
-    if (i < 3) add({ type: "rect", x: sx + 244, y: y + 216, width: 100, height: 2,
-      style: { backgroundColor: "#E5E7EB" }, zIndex: 2 });
-    add({ type: "text", x: sx, y: y + 182, width: 240, height: 60,
-      html: step.number,
-      style: { fontSize: 44, fontWeight: 900, color: tk.accent, textAlign: "center" }, zIndex: 2 });
-    add({ type: "text", x: sx, y: y + 254, width: 240, height: 36,
-      html: step.title,
-      style: { fontSize: 16, fontWeight: "bold", color: tk.textMain, textAlign: "center",
-        ...(dna?.headingFont ? { fontFamily: `'${dna.headingFont}'` } : {}) }, zIndex: 2 });
-    add({ type: "text", x: sx, y: y + 298, width: 240, height: 64,
-      html: step.desc,
-      style: { fontSize: 13, color: tk.textMid, textAlign: "center", lineHeight: 1.7 }, zIndex: 2 });
+    if (i < 3) add({ type: "text", x: sx + 252, y: y + 200, width: 90, height: 40,
+      html: `<div style="display:flex;align-items:center;justify-content:center;height:40px;font-size:22px;color:#CBD5E1;font-weight:300">→</div>`,
+      style: {}, zIndex: 2 });
+    add({ type: "text", x: sx, y: y + 168, width: 240, height: 280,
+      html: `<div style="background:#fff;border-radius:${tk.cardR}px;border:1px solid #E5E7EB;box-shadow:0 2px 12px rgba(0,0,0,0.05);padding:24px 20px;box-sizing:border-box;text-align:center;height:280px">
+        <div style="font-size:44px;font-weight:900;color:${tk.accent};line-height:1;margin-bottom:10px">${step.number}</div>
+        <div style="width:36px;height:3px;background:${tk.accent};margin:0 auto 14px;border-radius:2px"></div>
+        <div style="font-size:14px;font-weight:700;color:#111827;line-height:1.4;margin-bottom:10px">${step.title}</div>
+        <div style="font-size:12.5px;color:#6B7280;line-height:1.7">${step.desc}</div>
+      </div>`,
+      style: {}, zIndex: 2 });
   });
   y += H_STEPS;
 
   // ── TESTIMONIALS ──────────────────────────────────────────
   const H_TESTI = 520;
-  add({ type: "rect", x: 0, y, width: CW, height: H_TESTI, style: { backgroundColor: data.testimonials.bgColor || tk.cardBg }, zIndex: 1 });
-  add({ type: "text", x: 200, y: y + 60, width: 800, height: 26,
-    html: "VOICE",
-    style: { fontSize: 10, color: tk.labelColor, textAlign: "center", letterSpacing: "0.35em", fontWeight: "700" }, zIndex: 2 });
-  add({ type: "text", x: 80, y: y + 94, width: 1040, height: 60,
+  add({ type: "rect", x: 0, y, width: CW, height: H_TESTI, style: { backgroundColor: data.testimonials.bgColor || "#F8FAFC" }, zIndex: 1 });
+  add({ type: "text", x: 400, y: y + 56, width: 400, height: 32,
+    html: `<div style="text-align:center"><span style="display:inline-block;background:${tk.labelColor}18;color:${tk.labelColor};padding:5px 18px;border-radius:999px;font-size:10px;font-weight:700;letter-spacing:0.22em;border:1px solid ${tk.labelColor}30">VOICE</span></div>`,
+    style: {}, zIndex: 2 });
+  add({ type: "text", x: 80, y: y + 100, width: 1040, height: 60,
     html: data.testimonials.heading,
-    style: { fontSize: 36, fontWeight: dna?.headingWeight ?? 900, color: tk.textMain, textAlign: "center",
+    style: { fontSize: 34, fontWeight: dna?.headingWeight ?? 900, color: tk.textMain, textAlign: "center",
       ...(dna?.headingFont ? { fontFamily: `'${dna.headingFont}'` } : {}) }, zIndex: 2 });
   const testiXs = [60, 430, 800];
   (data.testimonials.items ?? []).slice(0, 3).forEach((item, i) => {
     const tx = testiXs[i];
-    add({ type: "rect", x: tx, y: y + 184, width: 320, height: 280,
-      style: { backgroundColor: "#FFFFFF", borderRadius: tk.cardR, border: "1px solid #E5E7EB",
-        boxShadow: "0 2px 16px rgba(0,0,0,0.05)" }, zIndex: 2 });
-    add({ type: "text", x: tx + 20, y: y + 208, width: 280, height: 20,
-      html: "★★★★★",
-      style: { fontSize: 14, color: "#F59E0B", textAlign: "center" }, zIndex: 3 });
-    add({ type: "text", x: tx + 20, y: y + 240, width: 280, height: 140,
-      html: `"${item.quote}"`,
-      style: { fontSize: 13, color: "#374151", textAlign: "center", lineHeight: 1.85 }, zIndex: 3 });
-    add({ type: "text", x: tx + 20, y: y + 396, width: 280, height: 30,
-      html: `— ${item.name}（${item.role}）`,
-      style: { fontSize: 11, color: "#9CA3AF", textAlign: "center", fontWeight: "600" }, zIndex: 3 });
+    const initials = item.name.slice(0, 1);
+    const avatarBg = [tk.primary, tk.accent, "#7C3AED"][i];
+    add({ type: "text", x: tx, y: y + 184, width: 320, height: 290,
+      html: `<div style="height:290px;background:#fff;border-radius:${tk.cardR}px;border:1px solid #E5E7EB;box-shadow:0 4px 20px rgba(0,0,0,0.06);padding:24px 20px;box-sizing:border-box;display:flex;flex-direction:column">
+        <div style="font-size:42px;font-weight:900;color:${tk.primary}25;line-height:1;margin-bottom:6px;font-family:Georgia,serif">"</div>
+        <div style="font-size:13px;color:#374151;line-height:1.85;flex:1">${item.quote}</div>
+        <div style="margin-top:14px;display:flex;align-items:center;gap:10px;border-top:1px solid #F3F4F6;padding-top:12px">
+          <div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,${avatarBg},${avatarBg}99);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;flex-shrink:0">${initials}</div>
+          <div style="flex:1">
+            <div style="font-size:12px;font-weight:700;color:#374151">${item.name}</div>
+            <div style="font-size:10px;color:#9CA3AF;margin-top:1px">${item.role}</div>
+          </div>
+          <div style="font-size:11px;color:#F59E0B;letter-spacing:1px">★★★★★</div>
+        </div>
+      </div>`,
+      style: {}, zIndex: 2 });
   });
   y += H_TESTI;
 
   // ── FAQ ───────────────────────────────────────────────────
-  const H_FAQ = 620;
+  const H_FAQ = 580;
   add({ type: "rect", x: 0, y, width: CW, height: H_FAQ, style: { backgroundColor: data.faq.bgColor || tk.pageBg }, zIndex: 1 });
-  add({ type: "text", x: 200, y: y + 60, width: 800, height: 26,
-    html: "FAQ",
-    style: { fontSize: 10, color: tk.labelColor, textAlign: "center", letterSpacing: "0.35em", fontWeight: "700" }, zIndex: 2 });
-  add({ type: "text", x: 80, y: y + 94, width: 1040, height: 60,
+  add({ type: "text", x: 400, y: y + 56, width: 400, height: 32,
+    html: `<div style="text-align:center"><span style="display:inline-block;background:${tk.labelColor}18;color:${tk.labelColor};padding:5px 18px;border-radius:999px;font-size:10px;font-weight:700;letter-spacing:0.22em;border:1px solid ${tk.labelColor}30">FAQ</span></div>`,
+    style: {}, zIndex: 2 });
+  add({ type: "text", x: 80, y: y + 100, width: 1040, height: 60,
     html: data.faq.heading,
-    style: { fontSize: 36, fontWeight: dna?.headingWeight ?? 900, color: tk.textMain, textAlign: "center",
+    style: { fontSize: 34, fontWeight: dna?.headingWeight ?? 900, color: tk.textMain, textAlign: "center",
       ...(dna?.headingFont ? { fontFamily: `'${dna.headingFont}'` } : {}) }, zIndex: 2 });
   (data.faq.items ?? []).slice(0, 5).forEach((item, i) => {
-    const fy = y + 186 + i * 88;
-    add({ type: "rect", x: 160, y: fy, width: 880, height: 78,
-      style: { backgroundColor: i % 2 === 0 ? tk.cardBg : "#FFFFFF",
-        borderRadius: Math.min(tk.cardR, 10), border: "1px solid #E5E7EB" }, zIndex: 2 });
-    add({ type: "text", x: 192, y: fy + 8, width: 816, height: 28,
-      html: `Q. ${item.q}`,
-      style: { fontSize: 14, fontWeight: "bold", color: tk.textMain }, zIndex: 3 });
-    add({ type: "text", x: 192, y: fy + 42, width: 816, height: 26,
-      html: `A. ${item.a}`,
-      style: { fontSize: 13, color: tk.textMid }, zIndex: 3 });
+    const fy = y + 180 + i * 82;
+    add({ type: "text", x: 160, y: fy, width: 880, height: 76,
+      html: `<div style="background:${i % 2 === 0 ? tk.cardBg : "#fff"};border-radius:${Math.min(tk.cardR,10)}px;border:1px solid #E5E7EB;padding:14px 20px;box-sizing:border-box;height:76px">
+        <div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:4px">
+          <span style="min-width:24px;height:24px;border-radius:6px;background:${tk.primary};color:#fff;font-size:11px;font-weight:900;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px">Q</span>
+          <div style="font-size:13.5px;font-weight:700;color:#111827;line-height:1.4">${item.q}</div>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:12px;margin-left:0;padding-left:36px">
+          <div style="font-size:12.5px;color:#6B7280;line-height:1.6">${item.a}</div>
+        </div>
+      </div>`,
+      style: {}, zIndex: 2 });
   });
   y += H_FAQ;
 
