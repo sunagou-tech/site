@@ -724,10 +724,48 @@ export async function POST(req: NextRequest) {
   const body = await req.json();
   const { messages, phase, analysisResult, formData } = body as {
     messages?: Array<{ role: "user" | "assistant"; content: string }>;
-    phase: "generate" | "form-generate";
+    phase: "chat" | "generate" | "form-generate";
     analysisResult?: GlobalStyle;
     formData?: { businessName: string; serviceDesc: string; target?: string; strengths?: string };
   };
+
+  // ── Chat phase（ヒアリング会話）────────────────────────────────
+  if (phase === "chat") {
+    const history = messages ?? [];
+    // 初回は自己紹介トリガー、以降は会話履歴
+    const contents = history.length === 0
+      ? [{ role: "user", parts: [{ text: "はじめてください" }] }]
+      : history.map(m => ({
+          role: m.role === "user" ? "user" : "model",
+          parts: [{ text: m.content }],
+        }));
+
+    for (const model of ["gemini-2.0-flash-lite", "gemini-2.5-flash-lite", "gemini-2.5-flash"]) {
+      try {
+        const res = await fetch(
+          `${GEMINI_BASE}/${model}:generateContent?key=${API_KEY}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              systemInstruction: { parts: [{ text: CHAT_SYSTEM }] },
+              contents,
+              generationConfig: { maxOutputTokens: 400 },
+            }),
+            signal: AbortSignal.timeout(10000),
+          }
+        );
+        if (!res.ok) continue;
+        const data = await res.json();
+        const reply: string = data.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
+        if (!reply) continue;
+        const shouldGenerate = reply.includes("[GENERATE]");
+        const cleanReply = reply.replace(/\[GENERATE\]/g, "").trim();
+        return NextResponse.json({ reply: cleanReply, shouldGenerate });
+      } catch { continue; }
+    }
+    return NextResponse.json({ error: "AIに接続できませんでした。" }, { status: 503 });
+  }
 
   // ── Generate phase（フォーム or チャット履歴）────────────────
   let conversationText: string;
