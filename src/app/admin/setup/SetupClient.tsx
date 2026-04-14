@@ -52,6 +52,7 @@ export default function SetupClient() {
   const analysisResultRef = useRef<GlobalStyle | null>(null);
   const [generatedConfig, setGeneratedConfig] = useState<SiteConfig | null>(null);
   const [error,          setError]          = useState("");
+  const [urlError,       setUrlError]       = useState("");
   const [genPct,         setGenPct]         = useState(0);
   const [genText,        setGenText]        = useState(GEN_STEPS[0].text);
 
@@ -70,7 +71,8 @@ export default function SetupClient() {
     const url = referenceUrl.trim();
     if (!url || isAnalyzing) return;
     setIsAnalyzing(true);
-    setError("");
+    setUrlError("");
+    setAnalysisResult(null);
     try {
       const res = await fetch("/api/analyze-url", {
         method: "POST",
@@ -78,11 +80,20 @@ export default function SetupClient() {
         body: JSON.stringify({ url }),
       });
       let data: { error?: string; style?: unknown };
-      try { data = await res.json(); } catch { throw new Error("デザイン解析をスキップしました（そのまま生成できます）"); }
-      if (!res.ok || data.error) throw new Error(data.error ?? "デザイン解析をスキップしました（そのまま生成できます）");
+      try { data = await res.json(); } catch { throw new Error("解析に失敗しました。別のURLをお試しください。"); }
+      if (!res.ok || data.error) {
+        const msg = data.error ?? "";
+        if (msg.includes("401") || msg.includes("403")) {
+          throw new Error("このサイトはアクセス制限があり解析できませんでした。別のURLをお試しいただくか、URLなしで生成できます。");
+        }
+        if (msg.includes("404")) {
+          throw new Error("URLが見つかりませんでした（404）。URLを確認してください。");
+        }
+        throw new Error(msg || "デザイン解析に失敗しました。URLなしで生成できます。");
+      }
       setAnalysisResult(data.style as GlobalStyle);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "URL解析に失敗しました");
+      setUrlError(e instanceof Error ? e.message : "URL解析に失敗しました");
     } finally {
       setIsAnalyzing(false);
     }
@@ -133,9 +144,10 @@ export default function SetupClient() {
     setReferenceUrl("");
     setAnalysisResult(null);
     setError("");
+    setUrlError("");
   }, []);
 
-  const canGenerate = !!referenceUrl.trim() && !!businessName.trim() && !!serviceDesc.trim();
+  const canGenerate = !!businessName.trim() && !!serviceDesc.trim();
 
   // ══════════════════════════════════════════════════════════
   // PHASE: GENERATING
@@ -314,6 +326,13 @@ export default function SetupClient() {
               : "このデザインを取り込む"}
           </button>
 
+          {urlError && (
+            <div className="mt-2 p-3 rounded-xl" style={{ background: "#FEF2F2", border: "1px solid #FECACA" }}>
+              <p className="text-xs leading-relaxed" style={{ color: "#DC2626" }}>{urlError}</p>
+              <p className="text-xs mt-1" style={{ color: "#991B1B" }}>↓ URLなしでもサイト生成できます</p>
+            </div>
+          )}
+
           {analysisResult && (
             <div className="mt-3 p-3 rounded-xl" style={{ background: "#F0FDF4", border: "1px solid #BBF7D0" }}>
               <p className="text-xs font-semibold mb-2" style={{ color: "#059669" }}>✓ デザイン解析完了</p>
@@ -379,7 +398,8 @@ export default function SetupClient() {
           <div className="hidden lg:block" />
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             {error && (
-              <span className="text-xs px-3 py-1.5 rounded-lg" style={{ color: "#6B7280", background: "#F3F4F6", border: "1px solid #E5E7EB" }}>
+              <span className="text-xs flex items-center gap-1.5" style={{ color: "#DC2626" }}>
+                <MsIcon name="error" size={14} color="#DC2626" />
                 {error}
               </span>
             )}
@@ -403,14 +423,26 @@ export default function SetupClient() {
               </p>
             </div>
 
-            {!referenceUrl.trim() && (
+            {!analysisResult && !urlError && (
               <div className="mb-8 flex items-start gap-3 p-4 rounded-xl"
-                style={{ background: "#FFF7ED", border: "1px solid #FED7AA" }}>
-                <MsIcon name="info" size={18} color="#EA580C" />
+                style={{ background: "#EFF6FF", border: "1px solid #BFDBFE" }}>
+                <MsIcon name="lightbulb" size={18} color="#2563EB" />
                 <div>
-                  <p className="text-sm font-semibold" style={{ color: "#EA580C" }}>まず参考サイトのURLを入力してください</p>
-                  <p className="text-xs mt-0.5 leading-relaxed" style={{ color: "#92400E" }}>
-                    左のメニューにURLを入力して「このデザインを取り込む」を押すと色・フォントが反映されます
+                  <p className="text-sm font-semibold" style={{ color: "#1E40AF" }}>参考サイトのURLでデザインを取り込めます（任意）</p>
+                  <p className="text-xs mt-0.5 leading-relaxed" style={{ color: "#1D4ED8" }}>
+                    左のメニューにURLを入力すると配色・フォントを反映。URLなしでもAIが自動でデザインを作ります。
+                  </p>
+                </div>
+              </div>
+            )}
+            {urlError && (
+              <div className="mb-8 flex items-start gap-3 p-4 rounded-xl"
+                style={{ background: "#EFF6FF", border: "1px solid #BFDBFE" }}>
+                <MsIcon name="info" size={18} color="#2563EB" />
+                <div>
+                  <p className="text-sm font-semibold" style={{ color: "#1E40AF" }}>URLなしでも生成できます</p>
+                  <p className="text-xs mt-0.5 leading-relaxed" style={{ color: "#1D4ED8" }}>
+                    事業名とサービス内容を入力してサイトを生成してください。AIが自動でデザインを作ります。
                   </p>
                 </div>
               </div>
@@ -467,9 +499,7 @@ export default function SetupClient() {
 
               {!canGenerate && (
                 <p className="text-center text-xs" style={{ color: "#9CA3AF" }}>
-                  {!referenceUrl.trim()
-                    ? "左のメニューに参考サイトのURLを入力してください"
-                    : "事業名とサービス内容を入力してください"}
+                  事業名とサービス内容を入力してください
                 </p>
               )}
             </div>
