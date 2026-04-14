@@ -65,6 +65,80 @@ function mkEl(
 }
 
 // ══════════════════════════════════════════════════════════════
+// STOCK IMAGE LIBRARY
+// ══════════════════════════════════════════════════════════════
+const UNS = (id: string, w = 800, h = 500) =>
+  `https://images.unsplash.com/photo-${id}?w=${w}&h=${h}&fit=crop&auto=format&q=80`;
+
+interface StockImage { id: string; url: string; label: string; category: string; }
+
+const STOCK_IMAGES: StockImage[] = [
+  // 学習・教育
+  { id:"u1",  url: UNS("1503676260728-1c00da094a0b"), label:"教室",       category:"学習・教育" },
+  { id:"u2",  url: UNS("1434030216411-0b793f4b4173"), label:"勉強する学生", category:"学習・教育" },
+  { id:"u3",  url: UNS("1524178232236-ddb28a1bbfb3"), label:"子どもと勉強", category:"学習・教育" },
+  { id:"u4",  url: UNS("1513475382585-d06e58bcb0e0"), label:"本・参考書",   category:"学習・教育" },
+  { id:"u5",  url: UNS("1456513080510-7bf3a84b82f8"), label:"図書館",       category:"学習・教育" },
+  { id:"u6",  url: UNS("1488190211105-8dff86957e5d"), label:"ノートPC勉強", category:"学習・教育" },
+  { id:"u7",  url: UNS("1491841651911-c44f07d27b38"), label:"女性・学習",   category:"学習・教育" },
+  { id:"u8",  url: UNS("1509062522246-c50e40e6ad61"), label:"授業・講師",   category:"学習・教育" },
+  // ビジネス・オフィス
+  { id:"b1",  url: UNS("1497366216548-37526070297c"), label:"モダンオフィス", category:"ビジネス" },
+  { id:"b2",  url: UNS("1497366811353-6e2b87ec0b95"), label:"会議室",         category:"ビジネス" },
+  { id:"b3",  url: UNS("1522071820081-009f0129c71c"), label:"チームミーティング", category:"ビジネス" },
+  { id:"b4",  url: UNS("1556761175-4b46a572b786"),    label:"ビジネス・PC",   category:"ビジネス" },
+  { id:"b5",  url: UNS("1560472354-b33ff0ad50a0"),    label:"握手・契約",     category:"ビジネス" },
+  { id:"b6",  url: UNS("1517245386807-bb43f82c33c4"), label:"ノートPC作業",   category:"ビジネス" },
+  { id:"b7",  url: UNS("1551434678-e076c223a692"),    label:"チーム作業",     category:"ビジネス" },
+  { id:"b8",  url: UNS("1504384308090-c894fdcc538d"), label:"コーディング",   category:"ビジネス" },
+  // 人物・笑顔
+  { id:"p1",  url: UNS("1573496359142-b8d87734a5a2"), label:"ビジネス男性",   category:"人物" },
+  { id:"p2",  url: UNS("1507003211169-0a1dd7228f2d"), label:"男性・笑顔",     category:"人物" },
+  { id:"p3",  url: UNS("1519085360753-af0119f7cbe7"), label:"女性・笑顔",     category:"人物" },
+  { id:"p4",  url: UNS("1529156069898-49953e39b3ac"), label:"チーム・集合",   category:"人物" },
+  { id:"p5",  url: UNS("1521737852567-6949f3f9f2b5"), label:"オフィス男性",   category:"人物" },
+  { id:"p6",  url: UNS("1438761681033-6461ffad8d80"), label:"女性・プロフ",   category:"人物" },
+  { id:"p7",  url: UNS("1507003211169-0a1dd7228f2d"), label:"男性ポートレート", category:"人物" },
+  { id:"p8",  url: UNS("1580489944761-15a19d654956"), label:"女性ポートレート", category:"人物" },
+  // 医療・健康
+  { id:"m1",  url: UNS("1576091160399-112ba8d25d1d"), label:"医師・白衣",     category:"医療・健康" },
+  { id:"m2",  url: UNS("1559839734-2b71ea197ec2"),    label:"医療チーム",     category:"医療・健康" },
+  { id:"m3",  url: UNS("1576671081954-d9c07b253ca9"), label:"健康診断",       category:"医療・健康" },
+  { id:"m4",  url: UNS("1584820927498-cad076eae54a"), label:"医療相談",       category:"医療・健康" },
+  // 飲食・カフェ
+  { id:"f1",  url: UNS("1414235077428-338989a2e8c0"), label:"レストラン",     category:"飲食・カフェ" },
+  { id:"f2",  url: UNS("1493770348161-369560ae357d"), label:"料理・フード",   category:"飲食・カフェ" },
+  { id:"f3",  url: UNS("1495214783159-3364efd730f5"), label:"コーヒー・カフェ", category:"飲食・カフェ" },
+  { id:"f4",  url: UNS("1504674900247-0877df9cc836"), label:"カラフルフード", category:"飲食・カフェ" },
+  // フィットネス・スポーツ
+  { id:"s1",  url: UNS("1534438327276-14e5300c3a48"), label:"ジム・トレーニング", category:"フィットネス" },
+  { id:"s2",  url: UNS("1517836357463-d25dfeac3438"), label:"フィットネス",   category:"フィットネス" },
+  { id:"s3",  url: UNS("1540497077202-7c8a3999166f"), label:"ランニング",     category:"フィットネス" },
+  { id:"s4",  url: UNS("1549060279-7e168fcee0c2"),    label:"ヨガ",           category:"フィットネス" },
+  // 美容・ウェルネス
+  { id:"w1",  url: UNS("1560750588-73207b1ef5b8"),    label:"美容サロン",     category:"美容・ウェルネス" },
+  { id:"w2",  url: UNS("1516975080664-ed2fc6a32937"), label:"スパ・リラクゼーション", category:"美容・ウェルネス" },
+  { id:"w3",  url: UNS("1487412947147-5cebf100d293"), label:"エステ",         category:"美容・ウェルネス" },
+  // 自然・風景
+  { id:"n1",  url: UNS("1506905925346-21bda4d32df4"), label:"山・自然",       category:"自然・風景" },
+  { id:"n2",  url: UNS("1501854140801-50d01698950b"), label:"森・緑",         category:"自然・風景" },
+  { id:"n3",  url: UNS("1464822759023-fed622ff2c3b"), label:"空・青空",       category:"自然・風景" },
+  { id:"n4",  url: UNS("1523348837708-15d4a09cfac2"), label:"海・波",         category:"自然・風景" },
+  // テクノロジー・IT
+  { id:"t1",  url: UNS("1518770660439-4636190af475"), label:"PC・デスク",     category:"テクノロジー" },
+  { id:"t2",  url: UNS("1461749280684-dccba630e2f6"), label:"プログラミング", category:"テクノロジー" },
+  { id:"t3",  url: UNS("1519389950473-47ba0277781c"), label:"チーム開発",     category:"テクノロジー" },
+  { id:"t4",  url: UNS("1563986768609-322da13575f3"), label:"スマートフォン", category:"テクノロジー" },
+  // 建物・空間
+  { id:"r1",  url: UNS("1560185007-cde9f3bbbecd"),    label:"モダン建築",     category:"建物・空間" },
+  { id:"r2",  url: UNS("1558618666-fcd25c85cd64"),    label:"インテリア",     category:"建物・空間" },
+  { id:"r3",  url: UNS("1486325212027-8081e485255e"), label:"ビル外観",       category:"建物・空間" },
+  { id:"r4",  url: UNS("1493809842364-781f0d5d0b0e"), label:"住宅・不動産",   category:"建物・空間" },
+];
+
+const IMG_CATEGORIES = ["すべて", ...Array.from(new Set(STOCK_IMAGES.map(i => i.category)))];
+
+// ══════════════════════════════════════════════════════════════
 // BLOCK TEMPLATES
 // ══════════════════════════════════════════════════════════════
 type BlockCategory = "ヒーロー" | "コンテンツ" | "実績・声" | "CTA・その他";
@@ -181,6 +255,88 @@ const BLOCK_TEMPLATES: BlockTemplate[] = [
       mkEl("text", 340, y+594, 200, 60, { html: "<span style='font-size:28px;font-weight:900;color:#FF6B6B'>98%</span> <span style='font-size:11px;color:rgba(255,255,255,0.55)'>顧客満足度</span>", zIndex: 4, style: { lineHeight: 1.6 } }),
       mkEl("rect", 580, y+580, 240, 80, { zIndex: 3, style: { backgroundColor: "rgba(255,255,255,0.07)", borderRadius: 12, border: "1px solid rgba(255,255,255,0.12)" } }),
       mkEl("text", 600, y+594, 200, 60, { html: "<span style='font-size:28px;font-weight:900;color:#45B7D1'>24h</span> <span style='font-size:11px;color:rgba(255,255,255,0.55)'>サポート対応</span>", zIndex: 4, style: { lineHeight: 1.6 } }),
+    ],
+  },
+  // ── Hero: 全面写真（教育系・sorajuku風）──
+  {
+    id: "hero-fullbleed-edu", name: "ヒーロー（全面写真・教育）", desc: "写真フル+グラデオーバーレイ", category: "ヒーロー", emoji: "📸",
+    thumb: { bg: "#1E3A5F", accent: "#FCD34D", layout: "image-bg" },
+    create: (y, CW) => [
+      mkEl("rect", 0, y, CW, 680, { zIndex: 0, style: { backgroundColor: "#1a2535", backgroundImage: UNS("1503676260728-1c00da094a0b", 1200, 680), backgroundSize: "cover", backgroundPosition: "center" } }),
+      mkEl("rect", 0, y, CW, 680, { zIndex: 1, style: { backgroundColor: "rgba(15,30,60,0.65)" } }),
+      mkEl("rect", 0, y+580, CW, 100, { zIndex: 1, style: { backgroundColor: "rgba(15,30,60,0.4)" } }),
+      mkEl("text", Math.round(CW/2-240), y+110, 480, 34, { html: `<div style='display:inline-flex;align-items:center;gap:8px;background:rgba(252,211,77,0.18);border:1px solid rgba(252,211,77,0.5);border-radius:999px;padding:6px 18px;font-size:11px;font-weight:700;color:#FCD34D;letter-spacing:0.2em'>★ 業界実績No.1</div>`, zIndex: 3, style: { textAlign: "center" } }),
+      mkEl("text", 80, y+160, CW-160, 160, { html: "「わかる」を「できる」へ<br>最高の学びを、あなたに。", zIndex: 3, style: { fontSize: 58, color: "#FFFFFF", fontWeight: "900", textAlign: "center", lineHeight: 1.22 } }),
+      mkEl("text", 200, y+340, CW-400, 72, { html: "現役プロ講師による完全個別指導。目標に合わせた学習計画で、確実に成果を出します。", zIndex: 3, style: { fontSize: 16, color: "rgba(255,255,255,0.85)", textAlign: "center", lineHeight: 1.85 } }),
+      mkEl("button", Math.round(CW/2)-220, y+442, 210, 60, { html: "無料体験を申し込む", href: "#", zIndex: 3, style: { fontSize: 15, fontWeight: "bold", color: "#1a2535", backgroundColor: "#FCD34D", borderRadius: 999, textAlign: "center" } }),
+      mkEl("button", Math.round(CW/2)+10, y+442, 190, 60, { html: "詳しく見る", href: "#", zIndex: 3, style: { fontSize: 14, fontWeight: "600", color: "#FFFFFF", backgroundColor: "transparent", borderRadius: 999, textAlign: "center", border: "1.5px solid rgba(255,255,255,0.4)" } }),
+      mkEl("text", 60, y+556, 260, 80, { html: `<div style='text-align:center'><div style='font-size:34px;font-weight:900;color:#FCD34D;line-height:1'>10万+</div><div style='font-size:11px;color:rgba(255,255,255,0.65);margin-top:4px'>累計受講者数</div></div>`, zIndex: 3, style: {} }),
+      mkEl("text", 370, y+556, 260, 80, { html: `<div style='text-align:center'><div style='font-size:34px;font-weight:900;color:#FCD34D;line-height:1'>89%</div><div style='font-size:11px;color:rgba(255,255,255,0.65);margin-top:4px'>成績向上率</div></div>`, zIndex: 3, style: {} }),
+      mkEl("text", 680, y+556, 260, 80, { html: `<div style='text-align:center'><div style='font-size:34px;font-weight:900;color:#FCD34D;line-height:1'>3日</div><div style='font-size:11px;color:rgba(255,255,255,0.65);margin-top:4px'>で効果を実感</div></div>`, zIndex: 3, style: {} }),
+      mkEl("text", 960, y+556, 200, 80, { html: `<div style='text-align:center'><div style='font-size:34px;font-weight:900;color:#FCD34D;line-height:1'>24h</div><div style='font-size:11px;color:rgba(255,255,255,0.65);margin-top:4px'>サポート対応</div></div>`, zIndex: 3, style: {} }),
+    ],
+  },
+  // ── Hero: 白背景クリーン（ペライチ風）──
+  {
+    id: "hero-clean-white", name: "ヒーロー（クリーン白）", desc: "白地+写真+シンプルテキスト", category: "ヒーロー", emoji: "🤍",
+    thumb: { bg: "#FFFFFF", accent: "#2563EB", layout: "split-left" },
+    create: (y, CW) => [
+      mkEl("rect", 0, y, CW, 640, { zIndex: 0, style: { backgroundColor: "#FFFFFF" } }),
+      mkEl("rect", 0, y, CW, 640, { zIndex: 0, style: { backgroundColor: "#EFF6FF" } }),
+      mkEl("rect", 600, y, 600, 640, { zIndex: 1, style: { backgroundColor: "#DBEAFE", backgroundImage: UNS("1434030216411-0b793f4b4173", 600, 640), backgroundSize: "cover", backgroundPosition: "center top", borderRadius: 0 } }),
+      mkEl("rect", 0, y, 80, 640, { zIndex: 2, style: { backgroundColor: "#EFF6FF" } }),
+      mkEl("rect", 560, y, 120, 640, { zIndex: 2, style: { backgroundColor: "#EFF6FF", borderRadius: "0 60px 60px 0" } }),
+      mkEl("text", 80, y+100, 420, 28, { html: `<span style='background:#DBEAFE;color:#2563EB;padding:5px 16px;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:0.18em'>完全無料体験実施中</span>`, zIndex: 3, style: {} }),
+      mkEl("text", 80, y+148, 480, 180, { html: "成績アップを<br>あなたに。", zIndex: 3, style: { fontSize: 58, color: "#0F172A", fontWeight: "900", lineHeight: 1.2 } }),
+      mkEl("text", 80, y+346, 460, 80, { html: "一人ひとりに合ったマンツーマン指導で、苦手を克服。全国どこからでもオンラインで受講可能です。", zIndex: 3, style: { fontSize: 15, color: "#475569", lineHeight: 1.88 } }),
+      mkEl("button", 80, y+456, 220, 58, { html: "無料体験を申し込む", href: "#", zIndex: 3, style: { fontSize: 14, fontWeight: "bold", color: "#FFFFFF", backgroundColor: "#2563EB", borderRadius: 8, textAlign: "center" } }),
+      mkEl("button", 312, y+456, 160, 58, { html: "詳しく見る", href: "#", zIndex: 3, style: { fontSize: 14, fontWeight: "600", color: "#2563EB", backgroundColor: "transparent", borderRadius: 8, textAlign: "center", border: "1.5px solid #93C5FD" } }),
+      mkEl("text", 80, y+556, 440, 48, { html: `<div style='display:flex;gap:24px'><span><b style='font-size:22px;color:#2563EB'>10万+</b> <span style='font-size:11px;color:#94A3B8'>受講者</span></span><span><b style='font-size:22px;color:#2563EB'>98%</b> <span style='font-size:11px;color:#94A3B8'>満足度</span></span><span><b style='font-size:22px;color:#2563EB'>創業15年</b> <span style='font-size:11px;color:#94A3B8'>の実績</span></span></div>`, zIndex: 3, style: {} }),
+    ],
+  },
+  // ── Hero: 斜め分割（ダイナミック）──
+  {
+    id: "hero-diagonal", name: "ヒーロー（斜め分割）", desc: "ダイナミック・斜め構図", category: "ヒーロー", emoji: "⚡",
+    thumb: { bg: "#1E40AF", accent: "#F59E0B", layout: "split-right" },
+    create: (y, CW) => [
+      mkEl("rect", 0, y, CW, 680, { zIndex: 0, style: { backgroundColor: "#1E3A8A" } }),
+      mkEl("rect", Math.round(CW*0.42), y, Math.round(CW*0.58), 680, { zIndex: 1, style: { backgroundColor: "#DBEAFE", backgroundImage: UNS("1522071820081-009f0129c71c", 700, 680), backgroundSize: "cover", backgroundPosition: "center" } }),
+      mkEl("text", 64, y+108, 500, 28, { html: "PROFESSIONAL SERVICE", zIndex: 3, style: { fontSize: 10, color: "#93C5FD", letterSpacing: "0.3em", fontWeight: "700" } }),
+      mkEl("text", 64, y+150, 520, 200, { html: "プロが支える<br>あなたの成功。", zIndex: 3, style: { fontSize: 60, color: "#FFFFFF", fontWeight: "900", lineHeight: 1.18 } }),
+      mkEl("text", 64, y+368, 460, 80, { html: "業界トップクラスの専門家チームが、あなたのビジネスを最速で成長させます。まずは無料でご相談ください。", zIndex: 3, style: { fontSize: 15, color: "#BFDBFE", lineHeight: 1.88 } }),
+      mkEl("button", 64, y+472, 220, 58, { html: "無料相談を予約", href: "#", zIndex: 3, style: { fontSize: 15, fontWeight: "bold", color: "#1E3A8A", backgroundColor: "#F59E0B", borderRadius: 8, textAlign: "center" } }),
+      mkEl("button", 296, y+472, 170, 58, { html: "実績を見る", href: "#", zIndex: 3, style: { fontSize: 14, fontWeight: "600", color: "#FFFFFF", backgroundColor: "transparent", borderRadius: 8, textAlign: "center", border: "1.5px solid rgba(255,255,255,0.3)" } }),
+      mkEl("text", 64, y+574, 420, 60, { html: `<div style='display:flex;gap:28px'><div><div style='font-size:28px;font-weight:900;color:#F59E0B'>500社+</div><div style='font-size:10px;color:#93C5FD;margin-top:2px'>導入実績</div></div><div><div style='font-size:28px;font-weight:900;color:#F59E0B'>99%</div><div style='font-size:10px;color:#93C5FD;margin-top:2px'>継続率</div></div><div><div style='font-size:28px;font-weight:900;color:#F59E0B'>10年+</div><div style='font-size:10px;color:#93C5FD;margin-top:2px'>業界実績</div></div></div>`, zIndex: 3, style: {} }),
+    ],
+  },
+  // ── Hero: マガジン風（大見出し）──
+  {
+    id: "hero-magazine", name: "ヒーロー（マガジン風）", desc: "超大文字・オーバーラップ", category: "ヒーロー", emoji: "📰",
+    thumb: { bg: "#F8FAFC", accent: "#DC2626", layout: "split-right" },
+    create: (y, CW) => [
+      mkEl("rect", 0, y, CW, 700, { zIndex: 0, style: { backgroundColor: "#F8FAFC" } }),
+      mkEl("rect", Math.round(CW*0.5), y+40, Math.round(CW*0.46), 560, { zIndex: 1, style: { borderRadius: 20, backgroundColor: "#E2E8F0", backgroundImage: UNS("1560472354-b33ff0ad50a0", 560, 560), backgroundSize: "cover", backgroundPosition: "center" } }),
+      mkEl("text", 60, y+72, CW*0.52, 240, { html: "あなたの課題を<br>解決する。", zIndex: 3, style: { fontSize: 72, color: "#0F172A", fontWeight: "900", lineHeight: 1.08, letterSpacing: "-0.02em" } }),
+      mkEl("rect", 60, y+328, 56, 6, { zIndex: 3, style: { backgroundColor: "#DC2626", borderRadius: 3 } }),
+      mkEl("text", 60, y+354, 440, 80, { html: "業界最高水準のサービスで、お客様のビジネスを次のステージへ。まずは気軽にお問い合わせください。", zIndex: 3, style: { fontSize: 15, color: "#475569", lineHeight: 1.88 } }),
+      mkEl("button", 60, y+458, 220, 58, { html: "無料相談はこちら", href: "#", zIndex: 3, style: { fontSize: 15, fontWeight: "bold", color: "#FFFFFF", backgroundColor: "#DC2626", borderRadius: 8, textAlign: "center" } }),
+      mkEl("button", 292, y+458, 170, 58, { html: "サービス一覧", href: "#", zIndex: 3, style: { fontSize: 14, fontWeight: "600", color: "#DC2626", backgroundColor: "transparent", borderRadius: 8, textAlign: "center", border: "1.5px solid #FECACA" } }),
+      mkEl("text", 60, y+562, 500, 80, { html: `<div style='display:flex;gap:32px;align-items:center'><div style='width:1px;height:44px;background:#E2E8F0'></div><div><div style='font-size:26px;font-weight:900;color:#DC2626'>1,200社+</div><div style='font-size:10px;color:#94A3B8;margin-top:2px'>累計支援実績</div></div><div style='width:1px;height:44px;background:#E2E8F0'></div><div><div style='font-size:26px;font-weight:900;color:#DC2626'>97%</div><div style='font-size:10px;color:#94A3B8;margin-top:2px'>顧客満足度</div></div><div style='width:1px;height:44px;background:#E2E8F0'></div><div><div style='font-size:26px;font-weight:900;color:#DC2626'>20年</div><div style='font-size:10px;color:#94A3B8;margin-top:2px'>の専門実績</div></div></div>`, zIndex: 3, style: {} }),
+    ],
+  },
+  // ── Hero: 明るい（医療・士業・士師系）──
+  {
+    id: "hero-bright-trust", name: "ヒーロー（信頼・明るい）", desc: "爽やか白+青・士業/医療向け", category: "ヒーロー", emoji: "🏥",
+    thumb: { bg: "#EFF6FF", accent: "#0EA5E9", layout: "split-left" },
+    create: (y, CW) => [
+      mkEl("rect", 0, y, CW, 640, { zIndex: 0, style: { backgroundColor: "#F0F9FF" } }),
+      mkEl("rect", 0, y, 540, 640, { zIndex: 1, style: { backgroundImage: UNS("1576091160399-112ba8d25d1d", 540, 640), backgroundSize: "cover", backgroundPosition: "center", borderRadius: "0 40px 40px 0" } }),
+      mkEl("rect", 580, y+60, 560, 520, { zIndex: 2, style: { backgroundColor: "#FFFFFF", borderRadius: 20, boxShadow: "0 20px 60px rgba(0,0,0,0.08)" } }),
+      mkEl("text", 616, y+100, 500, 28, { html: `<span style='background:#E0F2FE;color:#0284C7;padding:5px 16px;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:0.15em'>初回相談無料</span>`, zIndex: 3, style: {} }),
+      mkEl("text", 616, y+150, 500, 160, { html: "安心と信頼の<br>専門家サービス", zIndex: 3, style: { fontSize: 48, color: "#0F172A", fontWeight: "900", lineHeight: 1.22 } }),
+      mkEl("text", 616, y+330, 460, 80, { html: "豊富な経験を持つ専門家が、あなたの悩みに真摯に向き合います。お気軽にご相談ください。", zIndex: 3, style: { fontSize: 14, color: "#475569", lineHeight: 1.9 } }),
+      mkEl("button", 616, y+434, 220, 56, { html: "無料相談を予約する", href: "#", zIndex: 3, style: { fontSize: 14, fontWeight: "bold", color: "#FFFFFF", backgroundColor: "#0EA5E9", borderRadius: 8, textAlign: "center" } }),
+      mkEl("text", 616, y+524, 460, 48, { html: `<div style='display:flex;gap:24px'><span><b style='font-size:20px;color:#0EA5E9'>2,000+</b> <span style='font-size:10px;color:#94A3B8'>相談実績</span></span><span><b style='font-size:20px;color:#0EA5E9'>98%</b> <span style='font-size:10px;color:#94A3B8'>満足度</span></span><span><b style='font-size:20px;color:#0EA5E9'>即日</b> <span style='font-size:10px;color:#94A3B8'>対応可能</span></span></div>`, zIndex: 3, style: {} }),
     ],
   },
   // ── Features: 3カラム ──
@@ -543,7 +699,8 @@ export default function CanvasEditor({ config, onChange }: Props) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [editingId,  setEditingId]  = useState<string | null>(null);
   const [drag,       setDrag]       = useState<DragState | null>(null);
-  const [leftTab,    setLeftTab]    = useState<"elements" | "blocks">("blocks");
+  const [leftTab,    setLeftTab]    = useState<"elements" | "blocks" | "images">("blocks");
+  const [imgCategory, setImgCategory] = useState<string>("すべて");
   const [blockModal, setBlockModal] = useState(false);
   const canvasRef = useRef<HTMLDivElement>(null);
 
@@ -696,23 +853,64 @@ export default function CanvasEditor({ config, onChange }: Props) {
       <div style={{ width: 240, background: "#FFFFFF", borderRight: "1px solid #E2E8F0", display: "flex", flexDirection: "column", flexShrink: 0, overflow: "hidden" }}>
         {/* Tabs */}
         <div style={{ display: "flex", borderBottom: "1px solid #E2E8F0", flexShrink: 0 }}>
-          {(["blocks", "elements"] as const).map(tab => (
+          {(["blocks", "elements", "images"] as const).map(tab => (
             <button key={tab} onClick={() => setLeftTab(tab)}
               style={{
-                flex: 1, padding: "10px 0", fontSize: 12, fontWeight: 600,
+                flex: 1, padding: "9px 0", fontSize: 11, fontWeight: 600,
                 color: leftTab === tab ? "#4F46E5" : "#94A3B8",
-                borderBottom: leftTab === tab ? "2px solid #4F46E5" : "2px solid transparent",
                 background: "none", border: "none", borderBottomWidth: 2,
                 borderBottomStyle: "solid", borderBottomColor: leftTab === tab ? "#4F46E5" : "transparent",
                 cursor: "pointer", transition: "all 0.15s",
               }}>
-              {tab === "blocks" ? "ブロック" : "要素"}
+              {tab === "blocks" ? "ブロック" : tab === "elements" ? "要素" : "素材"}
             </button>
           ))}
         </div>
 
         <div style={{ flex: 1, overflowY: "auto", padding: "12px 10px" }}>
-          {leftTab === "elements" ? (
+          {leftTab === "images" ? (
+            /* ── Stock image library ── */
+            <div>
+              <p style={{ fontSize: 10, color: "#94A3B8", fontWeight: 700, letterSpacing: "0.1em", marginBottom: 8, paddingLeft: 2 }}>クリックでキャンバスに追加</p>
+              {/* カテゴリフィルタ */}
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 10 }}>
+                {IMG_CATEGORIES.map(cat => (
+                  <button key={cat} onClick={() => setImgCategory(cat)}
+                    style={{ fontSize: 9, padding: "3px 8px", borderRadius: 999, border: "1px solid #E2E8F0",
+                      background: imgCategory === cat ? "#4F46E5" : "#F9FAFB",
+                      color: imgCategory === cat ? "#FFFFFF" : "#6B7280",
+                      cursor: "pointer", fontWeight: imgCategory === cat ? 700 : 400 }}>
+                    {cat}
+                  </button>
+                ))}
+              </div>
+              {/* 画像グリッド */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
+                {STOCK_IMAGES.filter(img => imgCategory === "すべて" || img.category === imgCategory).map(img => (
+                  <button key={img.id}
+                    onClick={() => {
+                      const el: Omit<CanvasElement, "id"> = {
+                        type: "image", x: 100, y: 100, width: 400, height: 280,
+                        src: img.url, alt: img.label,
+                        style: { borderRadius: 12, objectFit: "cover" },
+                        zIndex: 5,
+                      };
+                      onChange({ ...config, elements: [...(config.elements ?? []), { id: uid(), ...el }] });
+                    }}
+                    style={{ padding: 0, border: "2px solid transparent", borderRadius: 8, overflow: "hidden", cursor: "pointer", background: "none", transition: "border-color 0.15s" }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "#4F46E5"; }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "transparent"; }}
+                    title={img.label}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={img.url} alt={img.label}
+                      style={{ width: "100%", aspectRatio: "4/3", objectFit: "cover", display: "block" }}
+                      loading="lazy" />
+                    <div style={{ fontSize: 9, color: "#6B7280", padding: "2px 4px", background: "#F9FAFB", textAlign: "left" }}>{img.label}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : leftTab === "elements" ? (
             /* ── Basic elements ── */
             <div>
               <p style={{ fontSize: 10, color: "#94A3B8", fontWeight: 700, letterSpacing: "0.1em", marginBottom: 10, paddingLeft: 4 }}>基本要素を追加</p>
@@ -1098,7 +1296,7 @@ function RightPanel({ element: el, onUpdateStyle, onUpdateEl, onDelete, onDelete
         {/* Border radius (rect + button) */}
         {(el.type === "rect" || el.type === "button") && (
           <PropRow label="角丸">
-            <NumberInput value={s.borderRadius ?? 0} onChange={v => onUpdateStyle({ borderRadius: v })} min={0} max={999} unit="px" />
+            <NumberInput value={typeof s.borderRadius === "number" ? s.borderRadius : parseInt(String(s.borderRadius ?? 0)) || 0} onChange={v => onUpdateStyle({ borderRadius: v })} min={0} max={999} unit="px" />
           </PropRow>
         )}
 

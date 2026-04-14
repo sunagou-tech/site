@@ -685,7 +685,7 @@ export interface CanvasElementStyle {
   backgroundSize?: string;
   backgroundPosition?: string;
   backgroundRepeat?: string;
-  borderRadius?: number;
+  borderRadius?: number | string;
   paddingX?: number;
   paddingY?: number;
   border?: string;
