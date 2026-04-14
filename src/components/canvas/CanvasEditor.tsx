@@ -141,7 +141,7 @@ const IMG_CATEGORIES = ["すべて", ...Array.from(new Set(STOCK_IMAGES.map(i =>
 // ══════════════════════════════════════════════════════════════
 // BLOCK TEMPLATES
 // ══════════════════════════════════════════════════════════════
-type BlockCategory = "ヒーロー" | "コンテンツ" | "実績・声" | "CTA・その他";
+type BlockCategory = "ヒーロー" | "コンテンツ" | "実績・声" | "CTA・その他" | "パーツ";
 
 interface BlockTemplate {
   id: string;
@@ -152,7 +152,7 @@ interface BlockTemplate {
   thumb: {
     bg: string;
     accent: string;
-    layout: "center" | "split-left" | "split-right" | "image-bg" | "minimal" | "cards";
+    layout: "center" | "split-left" | "split-right" | "image-bg" | "minimal" | "cards" | "neon" | "badge" | "stats-row";
   };
   create: (baseY: number, CW: number) => CanvasElement[];
 }
@@ -596,96 +596,414 @@ const BLOCK_TEMPLATES: BlockTemplate[] = [
       mkEl("text", 80, y+224, CW-160, 32, { html: "© 2024 Company Name. All rights reserved.", zIndex: 2, style: { fontSize: 12, color: "#475569", textAlign: "center" } }),
     ],
   },
+
+  // ════════════════════════════════════════════════════════
+  // ── 追加ヒーロー ─────────────────────────────────────────
+  // ════════════════════════════════════════════════════════
+
+  // ── Hero: ネオン・テック ──
+  {
+    id: "hero-neon", name: "ヒーロー（ネオン）", desc: "ダーク+グラデーション輝き", category: "ヒーロー", emoji: "💜",
+    thumb: { bg: "#070B14", accent: "#7C3AED", layout: "neon" },
+    create: (y, CW) => [
+      mkEl("rect", 0, y, CW, 700, { zIndex: 0, style: { backgroundColor: "#070B14" } }),
+      mkEl("rect", -100, y-80, 480, 480, { zIndex: 1, style: { backgroundColor: "#7C3AED", borderRadius: 999, opacity: 0.15 } }),
+      mkEl("rect", CW-180, y+240, 400, 400, { zIndex: 1, style: { backgroundColor: "#0EA5E9", borderRadius: 999, opacity: 0.12 } }),
+      mkEl("rect", Math.round(CW/2)-280, y+460, 560, 280, { zIndex: 1, style: { backgroundColor: "#7C3AED", borderRadius: 999, opacity: 0.07 } }),
+      mkEl("text", Math.round(CW/2)-240, y+100, 480, 44, {
+        html: `<div style='text-align:center'><span style='border:1px solid rgba(124,58,237,0.5);background:rgba(124,58,237,0.18);padding:8px 22px;border-radius:999px;font-size:12px;color:#A78BFA;font-weight:700;letter-spacing:0.1em;display:inline-block'>✦ 最先端AIソリューション</span></div>`,
+        zIndex: 3, style: {},
+      }),
+      mkEl("text", Math.round(CW/2)-440, y+168, 880, 220, {
+        html: `<span style='background:linear-gradient(135deg,#E879F9 0%,#7C3AED 45%,#38BDF8 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text'>未来のビジネスは<br>AIから始まる</span>`,
+        zIndex: 3, style: { fontSize: 68, color: "#FFFFFF", fontWeight: "900", textAlign: "center", lineHeight: 1.1 },
+      }),
+      mkEl("text", Math.round(CW/2)-300, y+408, 600, 80, {
+        html: "最先端のAI技術で、あなたのビジネスの可能性を無限に広げます。今すぐ無料で体験してください。",
+        zIndex: 3, style: { fontSize: 16, color: "#94A3B8", textAlign: "center", lineHeight: 1.9 },
+      }),
+      mkEl("button", Math.round(CW/2)-230, y+514, 210, 58, {
+        html: "無料で始める", href: "#", zIndex: 3,
+        style: { fontSize: 15, fontWeight: "bold", color: "#FFFFFF", backgroundColor: "#7C3AED", borderRadius: 8, textAlign: "center" },
+      }),
+      mkEl("button", Math.round(CW/2)+0, y+514, 200, 58, {
+        html: "デモを見る →", href: "#", zIndex: 3,
+        style: { fontSize: 15, fontWeight: "600", color: "#A78BFA", backgroundColor: "transparent", borderRadius: 8, textAlign: "center", border: "1px solid rgba(167,139,250,0.4)" },
+      }),
+    ],
+  },
+
+  // ── Hero: ナチュラル・エコ ──
+  {
+    id: "hero-natural", name: "ヒーロー（ナチュラル）", desc: "アース系・自然・ウェルネス向け", category: "ヒーロー", emoji: "🌿",
+    thumb: { bg: "#FEFCE8", accent: "#65A30D", layout: "split-right" },
+    create: (y, CW) => [
+      mkEl("rect", 0, y, CW, 660, { zIndex: 0, style: { backgroundColor: "#FEFCE8" } }),
+      mkEl("rect", -80, y+380, 280, 280, { zIndex: 1, style: { backgroundColor: "#A3E635", borderRadius: 999, opacity: 0.22 } }),
+      mkEl("rect", 60, y+60, Math.round(CW*0.42), 540, { zIndex: 2, style: { backgroundImage: UNS("1518531933037-91b0d8e86de7", 500, 540), backgroundSize: "cover", backgroundPosition: "center", borderRadius: "0 200px 0 0" } }),
+      mkEl("text", Math.round(CW*0.52), y+80, 120, 22, { html: "NATURAL", zIndex: 3, style: { fontSize: 10, color: "#65A30D", letterSpacing: "0.35em", fontWeight: "700" } }),
+      mkEl("text", Math.round(CW*0.52), y+118, Math.round(CW*0.44), 200, { html: "自然の力で<br>あなたを癒す", zIndex: 3, style: { fontSize: 60, color: "#1A2E05", fontWeight: "900", lineHeight: 1.15 } }),
+      mkEl("text", Math.round(CW*0.52), y+340, Math.round(CW*0.44), 90, { html: "自然由来の素材だけを使用した、体に優しいオーガニック製品。毎日の習慣を、もっと豊かに。", zIndex: 3, style: { fontSize: 16, color: "#3F6212", lineHeight: 1.9 } }),
+      mkEl("button", Math.round(CW*0.52), y+456, 200, 56, { html: "詳しく見る", href: "#", zIndex: 3, style: { fontSize: 15, fontWeight: "bold", color: "#FFFFFF", backgroundColor: "#4D7C0F", borderRadius: 999, textAlign: "center" } }),
+      mkEl("button", Math.round(CW*0.52)+216, y+456, 160, 56, { html: "商品を見る →", href: "#", zIndex: 3, style: { fontSize: 14, color: "#4D7C0F", backgroundColor: "transparent", borderRadius: 999, border: "2px solid #86EFAC", textAlign: "center" } }),
+      mkEl("text", Math.round(CW*0.52), y+556, Math.round(CW*0.44), 64, {
+        html: `<div style='display:flex;gap:32px'><div><b style='font-size:26px;color:#4D7C0F'>15年</b><br><span style='font-size:11px;color:#6B7280'>の実績</span></div><div><b style='font-size:26px;color:#4D7C0F'>100%</b><br><span style='font-size:11px;color:#6B7280'>オーガニック</span></div><div><b style='font-size:26px;color:#4D7C0F'>5万+</b><br><span style='font-size:11px;color:#6B7280'>利用者</span></div></div>`,
+        zIndex: 3, style: {},
+      }),
+    ],
+  },
+
+  // ── Hero: パステル・かわいい ──
+  {
+    id: "hero-pastel", name: "ヒーロー（パステル）", desc: "かわいい・やわらか・ファッション系", category: "ヒーロー", emoji: "🎀",
+    thumb: { bg: "#FDF2F8", accent: "#EC4899", layout: "center" },
+    create: (y, CW) => [
+      mkEl("rect", 0, y, CW, 660, { zIndex: 0, style: { backgroundColor: "#FDF2F8" } }),
+      mkEl("rect", -60, y-60, 240, 240, { zIndex: 1, style: { backgroundColor: "#FBCFE8", borderRadius: 999, opacity: 0.55 } }),
+      mkEl("rect", CW-120, y+300, 280, 280, { zIndex: 1, style: { backgroundColor: "#DDD6FE", borderRadius: 999, opacity: 0.45 } }),
+      mkEl("rect", 100, y+460, 160, 160, { zIndex: 1, style: { backgroundColor: "#FDE68A", borderRadius: 999, opacity: 0.45 } }),
+      mkEl("text", Math.round(CW/2)-200, y+100, 400, 44, {
+        html: `<div style='text-align:center'><span style='background:#FCE7F3;color:#BE185D;padding:7px 20px;border-radius:999px;font-size:12px;font-weight:700;display:inline-block'>✨ 期間限定キャンペーン実施中</span></div>`,
+        zIndex: 3, style: {},
+      }),
+      mkEl("rect", Math.round(CW*0.60), y+76, 210, 210, { zIndex: 2, style: { backgroundImage: UNS("1516914028945-4a66bf45b9d1", 210, 210), backgroundSize: "cover", backgroundPosition: "center", borderRadius: 20 } }),
+      mkEl("rect", Math.round(CW*0.60)+230, y+76, 170, 170, { zIndex: 2, style: { backgroundImage: UNS("1492462543947-040389b4a10e", 170, 170), backgroundSize: "cover", backgroundPosition: "center", borderRadius: 16 } }),
+      mkEl("rect", Math.round(CW*0.60)+80, y+310, 190, 190, { zIndex: 2, style: { backgroundImage: UNS("1556760544-1191a0aa4a54", 190, 190), backgroundSize: "cover", backgroundPosition: "center", borderRadius: 95 } }),
+      mkEl("text", 80, y+158, Math.round(CW*0.52), 220, { html: "あなたの毎日を<br>もっとかわいく♡", zIndex: 3, style: { fontSize: 58, color: "#831843", fontWeight: "900", lineHeight: 1.2 } }),
+      mkEl("text", 80, y+390, Math.round(CW*0.48), 80, { html: "トレンドを先取りした最新コレクション。あなたにぴったりのアイテムが必ず見つかります。", zIndex: 3, style: { fontSize: 16, color: "#9D174D", lineHeight: 1.9 } }),
+      mkEl("button", 80, y+492, 220, 58, { html: "新作を見る →", href: "#", zIndex: 3, style: { fontSize: 15, fontWeight: "bold", color: "#FFFFFF", backgroundColor: "#EC4899", borderRadius: 999, textAlign: "center" } }),
+      mkEl("button", 316, y+492, 160, 58, { html: "セール中", href: "#", zIndex: 3, style: { fontSize: 15, fontWeight: "600", color: "#EC4899", backgroundColor: "#FCE7F3", borderRadius: 999, textAlign: "center" } }),
+    ],
+  },
+
+  // ── Hero: ラグジュアリー ──
+  {
+    id: "hero-luxury", name: "ヒーロー（ラグジュアリー）", desc: "高級感・上品・ダーク+ゴールド", category: "ヒーロー", emoji: "👑",
+    thumb: { bg: "#0B0D11", accent: "#C9A84C", layout: "image-bg" },
+    create: (y, CW) => [
+      mkEl("rect", 0, y, CW, 700, { zIndex: 0, style: { backgroundColor: "#0B0D11" } }),
+      mkEl("rect", Math.round(CW/2), y, Math.round(CW/2), 700, { zIndex: 1, style: { backgroundImage: UNS("1540555700478-4be290a3b2e5", 600, 700), backgroundSize: "cover", backgroundPosition: "center", opacity: 0.72 } }),
+      mkEl("rect", Math.round(CW/2)-100, y, 260, 700, { zIndex: 2, style: { backgroundColor: "#0B0D11", opacity: 0.88 } }),
+      mkEl("rect", 80, y+120, 3, 200, { zIndex: 3, style: { backgroundColor: "#C9A84C" } }),
+      mkEl("text", 104, y+80, 260, 22, { html: "LUXURY · PREMIUM", zIndex: 3, style: { fontSize: 10, color: "#C9A84C", letterSpacing: "0.4em", fontWeight: "600" } }),
+      mkEl("text", 104, y+120, Math.round(CW*0.42), 260, { html: "至高の<br>体験を<br>あなたに", zIndex: 3, style: { fontSize: 78, color: "#F5EDD3", fontWeight: "900", lineHeight: 1.05 } }),
+      mkEl("text", 104, y+400, Math.round(CW*0.42), 90, { html: "一流の素材と職人の技が融合した、特別な空間。非日常的なひとときをお愉しみください。", zIndex: 3, style: { fontSize: 15, color: "#A89060", lineHeight: 2.0 } }),
+      mkEl("button", 104, y+518, 220, 58, { html: "ご予約はこちら", href: "#", zIndex: 3, style: { fontSize: 14, fontWeight: "bold", color: "#0B0D11", backgroundColor: "#C9A84C", borderRadius: 0, textAlign: "center" } }),
+      mkEl("text", 104, y+614, 400, 40, { html: `<span style='font-size:12px;color:#6B5B3E;letter-spacing:0.2em'>— Established 2003 —</span>`, zIndex: 3, style: {} }),
+    ],
+  },
+
+  // ── Hero: 数字インパクト型 ──
+  {
+    id: "hero-big-number", name: "ヒーロー（数字インパクト）", desc: "大きな実績数字でインパクト", category: "ヒーロー", emoji: "📈",
+    thumb: { bg: "#F8FAFC", accent: "#6366F1", layout: "minimal" },
+    create: (y, CW) => [
+      mkEl("rect", 0, y, CW, 660, { zIndex: 0, style: { backgroundColor: "#F8FAFC" } }),
+      mkEl("rect", 0, y, 6, 660, { zIndex: 1, style: { backgroundColor: "#6366F1" } }),
+      mkEl("text", 80, y+80, 640, 36, { html: "COMPANY · サービス名", zIndex: 2, style: { fontSize: 11, color: "#94A3B8", letterSpacing: "0.3em", fontWeight: "700" } }),
+      mkEl("text", 80, y+134, 700, 180, { html: `<span style='font-size:130px;font-weight:900;color:#0F172A;line-height:1;letter-spacing:-0.03em'>98<span style='font-size:72px'>%</span></span>`, zIndex: 2, style: {} }),
+      mkEl("text", 80, y+332, 620, 56, { html: "業界最高水準の顧客満足度を達成。2万社以上が選んだ実績があります。", zIndex: 2, style: { fontSize: 22, color: "#475569", fontWeight: "600", lineHeight: 1.5 } }),
+      mkEl("text", 80, y+408, 620, 60, { html: "あなたのビジネスにも、同じ結果を。まずは無料でお試しください。", zIndex: 2, style: { fontSize: 16, color: "#94A3B8", lineHeight: 1.8 } }),
+      mkEl("button", 80, y+502, 240, 60, { html: "無料で始める →", href: "#", zIndex: 2, style: { fontSize: 15, fontWeight: "bold", color: "#FFFFFF", backgroundColor: "#0F172A", borderRadius: 4, textAlign: "center" } }),
+      mkEl("text", Math.round(CW*0.62), y+60, Math.round(CW*0.32), 560, {
+        html: `<div style='display:flex;flex-direction:column;gap:16px;height:100%'>
+          <div style='background:#FFFFFF;border:1px solid #E2E8F0;border-radius:12px;padding:20px 24px'>
+            <div style='font-size:11px;color:#94A3B8;font-weight:600;letter-spacing:0.1em'>導入企業数</div>
+            <div style='font-size:42px;font-weight:900;color:#0F172A;line-height:1.2'>20,000+</div>
+          </div>
+          <div style='background:#FFFFFF;border:1px solid #E2E8F0;border-radius:12px;padding:20px 24px'>
+            <div style='font-size:11px;color:#94A3B8;font-weight:600;letter-spacing:0.1em'>平均削減コスト</div>
+            <div style='font-size:42px;font-weight:900;color:#6366F1;line-height:1.2'>¥2.8M</div>
+          </div>
+          <div style='background:#6366F1;border-radius:12px;padding:20px 24px'>
+            <div style='font-size:11px;color:#A5B4FC;font-weight:600;letter-spacing:0.1em'>業界平均との比較</div>
+            <div style='font-size:42px;font-weight:900;color:#FFFFFF;line-height:1.2'>3.2x</div>
+          </div>
+        </div>`,
+        zIndex: 2, style: {},
+      }),
+    ],
+  },
+
+  // ════════════════════════════════════════════════════════
+  // ── パーツ（装飾・追加素材）──────────────────────────────
+  // ════════════════════════════════════════════════════════
+
+  // ── パーツ: 星評価バッジ ──
+  {
+    id: "part-rating", name: "評価バッジ ★5", desc: "満足度・口コミ件数付き", category: "パーツ", emoji: "⭐",
+    thumb: { bg: "#FFFBEB", accent: "#F59E0B", layout: "badge" },
+    create: (y, CW) => [
+      mkEl("rect", Math.round(CW/2)-260, y, 520, 88, { zIndex: 5, style: { backgroundColor: "#FFFBEB", borderRadius: 16, boxShadow: "0 6px 24px rgba(245,158,11,0.18)", border: "1px solid #FDE68A" } }),
+      mkEl("text", Math.round(CW/2)-238, y+20, 476, 50, {
+        html: `<div style='display:flex;align-items:center;gap:14px'>
+          <span style='font-size:28px;color:#F59E0B;letter-spacing:3px;line-height:1'>★★★★★</span>
+          <span style='font-size:32px;font-weight:900;color:#92400E;line-height:1'>4.9</span>
+          <span style='font-size:14px;color:#92400E;opacity:0.65'>/ 5.0（2,847件の口コミ）</span>
+        </div>`,
+        zIndex: 6, style: {},
+      }),
+    ],
+  },
+
+  // ── パーツ: 実績数字バー ──
+  {
+    id: "part-stats", name: "実績数字バー", desc: "横3列の実績数値", category: "パーツ", emoji: "📊",
+    thumb: { bg: "#EEF2FF", accent: "#4F46E5", layout: "stats-row" },
+    create: (y, CW) => [
+      mkEl("rect", Math.round(CW/2)-460, y, 920, 112, { zIndex: 5, style: { backgroundColor: "#EEF2FF", borderRadius: 20, border: "1px solid #C7D2FE" } }),
+      mkEl("text", Math.round(CW/2)-440, y+14, 880, 84, {
+        html: `<div style='display:flex;align-items:center;justify-content:space-around'>
+          <div style='text-align:center'>
+            <div style='font-size:36px;font-weight:900;color:#3730A3;line-height:1.1'>10,000+</div>
+            <div style='font-size:13px;color:#6366F1;font-weight:600;margin-top:4px'>利用者数</div>
+          </div>
+          <div style='width:1px;height:52px;background:#C7D2FE'></div>
+          <div style='text-align:center'>
+            <div style='font-size:36px;font-weight:900;color:#3730A3;line-height:1.1'>98%</div>
+            <div style='font-size:13px;color:#6366F1;font-weight:600;margin-top:4px'>顧客満足度</div>
+          </div>
+          <div style='width:1px;height:52px;background:#C7D2FE'></div>
+          <div style='text-align:center'>
+            <div style='font-size:36px;font-weight:900;color:#3730A3;line-height:1.1'>創業20年</div>
+            <div style='font-size:13px;color:#6366F1;font-weight:600;margin-top:4px'>の実績</div>
+          </div>
+        </div>`,
+        zIndex: 6, style: {},
+      }),
+    ],
+  },
+
+  // ── パーツ: 利用者カウンター ──
+  {
+    id: "part-social-proof", name: "利用者カウンター", desc: "アバター+○○人が利用中", category: "パーツ", emoji: "👥",
+    thumb: { bg: "#F0FDF4", accent: "#16A34A", layout: "badge" },
+    create: (y, CW) => [
+      mkEl("rect", Math.round(CW/2)-240, y, 480, 76, { zIndex: 5, style: { backgroundColor: "#FFFFFF", borderRadius: 999, boxShadow: "0 8px 32px rgba(0,0,0,0.12)", border: "1px solid #E2E8F0" } }),
+      mkEl("text", Math.round(CW/2)-218, y+14, 436, 48, {
+        html: `<div style='display:flex;align-items:center;gap:12px'>
+          <div style='display:flex'>
+            ${["1503590672324-3eaf5bcc6f1c","1438761681033-6461ffad8d80","1494790108377-be9c29b29330"].map(id =>
+              `<img src='https://images.unsplash.com/photo-${id}?w=44&h=44&fit=crop&auto=format&q=80' style='width:36px;height:36px;border-radius:50%;border:2px solid #fff;margin-left:-10px;object-fit:cover;display:inline-block'>`
+            ).join("")}
+          </div>
+          <span style='font-size:16px;font-weight:700;color:#111827'>12,480人が利用中</span>
+          <span style='background:#D1FAE5;color:#059669;padding:4px 12px;border-radius:999px;font-size:12px;font-weight:700;white-space:nowrap'>✓ 今月500人増</span>
+        </div>`,
+        zIndex: 6, style: {},
+      }),
+    ],
+  },
+
+  // ── パーツ: 口コミミニカード ──
+  {
+    id: "part-testimonial", name: "口コミミニカード", desc: "一言口コミ+アバター+星", category: "パーツ", emoji: "💬",
+    thumb: { bg: "#FFFFFF", accent: "#F59E0B", layout: "badge" },
+    create: (y, CW) => [
+      mkEl("rect", Math.round(CW/2)-320, y, 640, 130, { zIndex: 5, style: { backgroundColor: "#FFFFFF", borderRadius: 20, boxShadow: "0 8px 40px rgba(0,0,0,0.12)", border: "1px solid #F0F0F0" } }),
+      mkEl("text", Math.round(CW/2)-292, y+20, 584, 96, {
+        html: `<div style='display:flex;align-items:flex-start;gap:16px'>
+          <img src='https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=60&h=60&fit=crop&auto=format&q=80' style='width:52px;height:52px;border-radius:50%;flex-shrink:0;object-fit:cover'>
+          <div>
+            <div style='font-size:14px;color:#111827;line-height:1.7'>「導入後3ヶ月で売上が1.8倍に！<br>サポートも丁寧で大満足です。」</div>
+            <div style='display:flex;align-items:center;gap:10px;margin-top:8px'>
+              <span style='font-size:14px;color:#F59E0B'>★★★★★</span>
+              <span style='font-size:12px;color:#9CA3AF'>田中さん / 株式会社〇〇</span>
+            </div>
+          </div>
+        </div>`,
+        zIndex: 6, style: {},
+      }),
+    ],
+  },
+
+  // ── パーツ: 告知バー ──
+  {
+    id: "part-announce", name: "告知バー", desc: "期間限定・キャンペーン告知", category: "パーツ", emoji: "📣",
+    thumb: { bg: "#7C3AED", accent: "#FCD34D", layout: "badge" },
+    create: (y, CW) => [
+      mkEl("rect", 0, y, CW, 64, { zIndex: 5, style: { backgroundColor: "#7C3AED" } }),
+      mkEl("text", 0, y, CW, 64, {
+        html: `<div style='display:flex;align-items:center;justify-content:center;gap:14px;height:64px'>
+          <span style='background:#FCD34D;color:#78350F;padding:3px 12px;border-radius:4px;font-size:12px;font-weight:800'>🎉 期間限定</span>
+          <span style='font-size:15px;color:#FFFFFF;font-weight:600'>今なら30日間無料！通常プランが初月50%OFF</span>
+          <span style='background:rgba(255,255,255,0.2);color:#FFFFFF;padding:5px 16px;border-radius:4px;font-size:13px;font-weight:700;cursor:pointer;border:1px solid rgba(255,255,255,0.3)'>今すぐ →</span>
+        </div>`,
+        zIndex: 6, style: {},
+      }),
+    ],
+  },
+
+  // ── パーツ: 信頼バッジ群 ──
+  {
+    id: "part-trust", name: "信頼バッジ群", desc: "認定・受賞・メディア掲載ロゴ", category: "パーツ", emoji: "🏅",
+    thumb: { bg: "#F8FAFC", accent: "#64748B", layout: "stats-row" },
+    create: (y, CW) => [
+      mkEl("rect", Math.round(CW/2)-460, y, 920, 100, { zIndex: 5, style: { backgroundColor: "#F8FAFC", borderRadius: 14, border: "1px solid #E2E8F0" } }),
+      mkEl("text", Math.round(CW/2)-440, y+12, 880, 76, {
+        html: `<div style='display:flex;align-items:center;justify-content:center;gap:28px;opacity:0.55'>
+          <div style='text-align:center'><div style='font-size:22px;font-weight:800;color:#334155'>日経BP</div><div style='font-size:10px;color:#64748B'>掲載</div></div>
+          <div style='width:1px;height:36px;background:#CBD5E1'></div>
+          <div style='text-align:center'><div style='font-size:22px;font-weight:800;color:#334155'>Forbes</div><div style='font-size:10px;color:#64748B'>掲載</div></div>
+          <div style='width:1px;height:36px;background:#CBD5E1'></div>
+          <div style='text-align:center'><div style='font-size:22px;font-weight:800;color:#334155'>ISO27001</div><div style='font-size:10px;color:#64748B'>認定取得</div></div>
+          <div style='width:1px;height:36px;background:#CBD5E1'></div>
+          <div style='text-align:center'><div style='font-size:22px;font-weight:800;color:#334155'>G-Mark</div><div style='font-size:10px;color:#64748B'>グッドデザイン賞</div></div>
+          <div style='width:1px;height:36px;background:#CBD5E1'></div>
+          <div style='text-align:center'><div style='font-size:22px;font-weight:800;color:#334155'>TechAward</div><div style='font-size:10px;color:#64748B'>受賞</div></div>
+        </div>`,
+        zIndex: 6, style: {},
+      }),
+    ],
+  },
+
+  // ── パーツ: 緊急性バッジ ──
+  {
+    id: "part-urgency", name: "緊急性バッジ", desc: "残りX席・期間限定", category: "パーツ", emoji: "⏰",
+    thumb: { bg: "#FEF2F2", accent: "#EF4444", layout: "badge" },
+    create: (y, CW) => [
+      mkEl("rect", Math.round(CW/2)-280, y, 560, 88, { zIndex: 5, style: { backgroundColor: "#FEF2F2", borderRadius: 14, border: "2px solid #FECACA" } }),
+      mkEl("text", Math.round(CW/2)-258, y+16, 516, 58, {
+        html: `<div style='display:flex;align-items:center;gap:14px'>
+          <span style='font-size:26px'>⏰</span>
+          <div>
+            <div style='font-size:16px;font-weight:800;color:#B91C1C'>残り3名様のみ受付中！</div>
+            <div style='font-size:13px;color:#EF4444;font-weight:500'>無料体験の募集は今月末まで</div>
+          </div>
+          <span style='margin-left:auto;background:#EF4444;color:#fff;padding:8px 18px;border-radius:8px;font-size:13px;font-weight:700;white-space:nowrap'>今すぐ申込</span>
+        </div>`,
+        zIndex: 6, style: {},
+      }),
+    ],
+  },
 ];
 
-const BLOCK_CATEGORIES: BlockCategory[] = ["ヒーロー", "コンテンツ", "実績・声", "CTA・その他"];
+const BLOCK_CATEGORIES: BlockCategory[] = ["ヒーロー", "コンテンツ", "実績・声", "CTA・その他", "パーツ"];
 
 // ══════════════════════════════════════════════════════════════
-// THUMBNAIL PREVIEW
+// THUMBNAIL PREVIEW  (fully proportional to W/H)
 // ══════════════════════════════════════════════════════════════
-function ThumbnailPreview({ thumb, size = { w: 180, h: 110 } }: {
+function ThumbnailPreview({ thumb, size = { w: 96, h: 58 } }: {
   thumb: BlockTemplate["thumb"];
   size?: { w: number; h: number };
 }) {
   const { bg, accent, layout } = thumb;
-  const s = { width: size.w, height: size.h, position: "relative" as const, overflow: "hidden", borderRadius: 8, backgroundColor: bg };
+  const W = size.w;
+  const H = size.h;
+  const s: React.CSSProperties = { width: W, height: H, position: "relative", overflow: "hidden", borderRadius: 6, backgroundColor: bg, flexShrink: 0 };
+  const LIGHT_BACKGROUNDS = ["#FFFFFF","#F8FAFC","#FEFCE8","#FDF2F8","#F9FAFB","#F0F9FF","#FFFBEB","#F0FDF4","#FEF2F2","#EFF6FF","#F0F4FF"];
+  const isDarkBg = !LIGHT_BACKGROUNDS.includes(bg);
+  const tc = isDarkBg ? "#FFFFFF" : "#1E293B";
 
-  if (layout === "image-bg") {
-    return (
-      <div style={s}>
-        <div style={{ position: "absolute", inset: 0, background: `linear-gradient(135deg, ${bg}dd, ${bg}88)` }} />
-        <div style={{ position: "absolute", left: 16, top: 20, width: 4, height: 16, backgroundColor: accent, borderRadius: 2 }} />
-        <div style={{ position: "absolute", left: 24, top: 18, width: 80, height: 8, backgroundColor: "#fff", borderRadius: 2, opacity: 0.9 }} />
-        <div style={{ position: "absolute", left: 24, top: 34, width: 110, height: 6, backgroundColor: "#fff", borderRadius: 2, opacity: 0.7 }} />
-        <div style={{ position: "absolute", left: 24, top: 48, width: 95, height: 6, backgroundColor: "#fff", borderRadius: 2, opacity: 0.7 }} />
-        <div style={{ position: "absolute", left: 24, top: 68, width: 70, height: 20, backgroundColor: accent, borderRadius: 4 }} />
-        <div style={{ position: "absolute", right: 16, top: 16, width: 56, height: 36, backgroundColor: "rgba(255,255,255,0.15)", borderRadius: 6, border: "1px solid rgba(255,255,255,0.25)" }} />
-        <div style={{ position: "absolute", right: 16, top: 58, width: 56, height: 36, backgroundColor: "rgba(255,255,255,0.15)", borderRadius: 6, border: "1px solid rgba(255,255,255,0.25)" }} />
+  if (layout === "neon") return (
+    <div style={s}>
+      <div style={{ position:"absolute", top:0, left:0, right:0, bottom:0, background:`radial-gradient(ellipse at 30% 50%, ${accent}30, transparent 60%)` }} />
+      <div style={{ position:"absolute", bottom:0, right:0, width:W*0.5, height:H*0.9, background:"#0EA5E920", borderRadius:"50% 0 0 50%" }} />
+      <div style={{ position:"absolute", left:"50%", top:H*0.16, transform:"translateX(-50%)", width:W*0.65, height:H*0.16, background:`linear-gradient(90deg,#E879F9,#7C3AED,#38BDF8)`, borderRadius:2 }} />
+      <div style={{ position:"absolute", left:"50%", top:H*0.38, transform:"translateX(-50%)", width:W*0.8, height:H*0.14, backgroundColor:"rgba(255,255,255,0.22)", borderRadius:2 }} />
+      <div style={{ position:"absolute", left:"50%", top:H*0.58, transform:"translateX(-50%)", width:W*0.6, height:H*0.12, backgroundColor:"rgba(255,255,255,0.14)", borderRadius:2 }} />
+      <div style={{ position:"absolute", left:"50%", top:H*0.78, transform:"translateX(-50%)", width:W*0.42, height:H*0.17, backgroundColor:accent, borderRadius:4, opacity:0.85 }} />
+    </div>
+  );
+
+  if (layout === "badge") return (
+    <div style={{ ...s, display:"flex", alignItems:"center", justifyContent:"center" }}>
+      <div style={{ position:"absolute", inset:0, backgroundColor:accent, opacity:0.08 }} />
+      <div style={{ position:"relative", display:"flex", alignItems:"center", gap:W*0.04 }}>
+        <div style={{ width:W*0.08, height:W*0.08, borderRadius:999, backgroundColor:accent }} />
+        <div style={{ width:W*0.42, height:H*0.17, backgroundColor:accent, borderRadius:2, opacity:0.85 }} />
+        <div style={{ width:W*0.26, height:H*0.13, backgroundColor:"#94A3B8", borderRadius:2, opacity:0.5 }} />
       </div>
-    );
-  }
+    </div>
+  );
+
+  if (layout === "stats-row") return (
+    <div style={{ ...s, display:"flex", alignItems:"center", justifyContent:"space-around", padding:`0 ${W*0.05}px` }}>
+      {[0,1,2].map(i => (
+        <div key={i} style={{ textAlign:"center" }}>
+          <div style={{ width:W*0.2, height:H*0.3, backgroundColor:accent, borderRadius:2, margin:"0 auto", opacity:0.75+i*0.08 }} />
+          <div style={{ width:W*0.15, height:H*0.13, backgroundColor:"#94A3B8", borderRadius:2, margin:`${H*0.06}px auto 0`, opacity:0.5 }} />
+        </div>
+      ))}
+    </div>
+  );
+
+  if (layout === "image-bg") return (
+    <div style={s}>
+      <div style={{ position:"absolute", inset:0, background:`linear-gradient(135deg, ${bg}ee 0%, ${bg}66 100%)` }} />
+      <div style={{ position:"absolute", left:W*0.1, top:H*0.16, width:W*0.5, height:H*0.15, backgroundColor:"#fff", borderRadius:2, opacity:0.9 }} />
+      <div style={{ position:"absolute", left:W*0.1, top:H*0.36, width:W*0.65, height:H*0.12, backgroundColor:"#fff", borderRadius:2, opacity:0.7 }} />
+      <div style={{ position:"absolute", left:W*0.1, top:H*0.54, width:W*0.55, height:H*0.11, backgroundColor:"#fff", borderRadius:2, opacity:0.6 }} />
+      <div style={{ position:"absolute", left:W*0.1, top:H*0.72, width:W*0.38, height:H*0.18, backgroundColor:accent, borderRadius:3, opacity:0.9 }} />
+      <div style={{ position:"absolute", right:W*0.05, top:H*0.1, width:W*0.22, height:H*0.78, backgroundColor:"rgba(255,255,255,0.12)", borderRadius:5, border:"1px solid rgba(255,255,255,0.22)" }} />
+    </div>
+  );
+
   if (layout === "split-left") {
+    const panelBg = isDarkBg ? "#0F172A" : "#CBD5E1";
     return (
       <div style={s}>
-        <div style={{ position: "absolute", left: 0, top: 0, width: "48%", height: "100%", backgroundColor: bg === "#F8FAFC" ? "#CBD5E1" : "#1E293B", opacity: 0.8 }} />
-        <div style={{ position: "absolute", right: 12, top: 18, width: 80, height: 8, backgroundColor: accent, borderRadius: 2, opacity: 0.9 }} />
-        <div style={{ position: "absolute", right: 12, top: 34, width: 72, height: 6, backgroundColor: "#fff", borderRadius: 2, opacity: 0.6 }} />
-        <div style={{ position: "absolute", right: 12, top: 48, width: 60, height: 6, backgroundColor: "#fff", borderRadius: 2, opacity: 0.5 }} />
-        <div style={{ position: "absolute", right: 12, top: 68, width: 54, height: 18, backgroundColor: accent, borderRadius: 4 }} />
+        <div style={{ position:"absolute", left:0, top:0, width:"46%", height:"100%", backgroundColor:panelBg }} />
+        <div style={{ position:"absolute", right:W*0.06, top:H*0.17, width:W*0.43, height:H*0.15, backgroundColor:accent, borderRadius:2, opacity:0.9 }} />
+        <div style={{ position:"absolute", right:W*0.06, top:H*0.37, width:W*0.38, height:H*0.12, backgroundColor:tc, borderRadius:2, opacity:0.65 }} />
+        <div style={{ position:"absolute", right:W*0.06, top:H*0.54, width:W*0.3, height:H*0.11, backgroundColor:tc, borderRadius:2, opacity:0.5 }} />
+        <div style={{ position:"absolute", right:W*0.06, top:H*0.73, width:W*0.28, height:H*0.18, backgroundColor:accent, borderRadius:3 }} />
       </div>
     );
   }
+
   if (layout === "split-right") {
-    const isDark = bg === "#F8FAFC" || bg === "#FFFFFF";
+    const bg2 = isDarkBg ? bg : "#F1F5F9";
+    const tc2 = isDarkBg ? "#fff" : "#334155";
     return (
-      <div style={{ ...s, backgroundColor: isDark ? "#F1F5F9" : bg }}>
-        <div style={{ position: "absolute", left: 12, top: 18, width: 80, height: 8, backgroundColor: isDark ? "#334155" : "#fff", borderRadius: 2, opacity: 0.85 }} />
-        <div style={{ position: "absolute", left: 12, top: 34, width: 64, height: 6, backgroundColor: isDark ? "#334155" : "#fff", borderRadius: 2, opacity: 0.6 }} />
-        <div style={{ position: "absolute", left: 12, top: 48, width: 52, height: 6, backgroundColor: isDark ? "#334155" : "#fff", borderRadius: 2, opacity: 0.5 }} />
-        <div style={{ position: "absolute", left: 12, top: 68, width: 52, height: 18, backgroundColor: accent, borderRadius: 4 }} />
-        <div style={{ position: "absolute", right: 0, top: 0, width: "44%", height: "100%", backgroundColor: accent, opacity: 0.2, borderRadius: "0 8px 8px 0" }} />
-        <div style={{ position: "absolute", right: 10, top: 16, width: "38%", height: "78%", backgroundColor: accent, opacity: 0.5, borderRadius: 8 }} />
+      <div style={{ ...s, backgroundColor:bg2 }}>
+        <div style={{ position:"absolute", left:W*0.07, top:H*0.17, width:W*0.42, height:H*0.15, backgroundColor:tc2, borderRadius:2, opacity:0.85 }} />
+        <div style={{ position:"absolute", left:W*0.07, top:H*0.37, width:W*0.34, height:H*0.12, backgroundColor:tc2, borderRadius:2, opacity:0.6 }} />
+        <div style={{ position:"absolute", left:W*0.07, top:H*0.54, width:W*0.27, height:H*0.11, backgroundColor:tc2, borderRadius:2, opacity:0.5 }} />
+        <div style={{ position:"absolute", left:W*0.07, top:H*0.73, width:W*0.27, height:H*0.18, backgroundColor:accent, borderRadius:3 }} />
+        <div style={{ position:"absolute", right:0, top:0, width:"40%", height:"100%", backgroundColor:accent, opacity:0.2, borderRadius:"0 6px 6px 0" }} />
+        <div style={{ position:"absolute", right:W*0.05, top:H*0.1, width:"34%", height:"80%", backgroundColor:accent, opacity:0.45, borderRadius:5 }} />
       </div>
     );
   }
+
   if (layout === "cards") {
-    const isDark2 = bg === "#FFFFFF" || bg === "#F8FAFC" || bg === "#F9FAFB" || bg === "#F0F4FF";
+    const cardBg = isDarkBg ? "rgba(255,255,255,0.12)" : "#E2E8F0";
     return (
-      <div style={{ ...s, backgroundColor: bg }}>
-        <div style={{ position: "absolute", left: "50%", top: 12, transform: "translateX(-50%)", width: 80, height: 7, backgroundColor: accent, borderRadius: 2, opacity: 0.8 }} />
-        <div style={{ position: "absolute", left: 10, top: 34, right: 10, display: "flex", gap: 6 }}>
+      <div style={s}>
+        <div style={{ position:"absolute", left:"50%", top:H*0.12, transform:"translateX(-50%)", width:W*0.5, height:H*0.14, backgroundColor:accent, borderRadius:2, opacity:0.8 }} />
+        <div style={{ position:"absolute", left:W*0.05, top:H*0.34, right:W*0.05, bottom:H*0.08, display:"flex", gap:W*0.03 }}>
           {[0,1,2].map(i => (
-            <div key={i} style={{ flex: 1, height: 60, backgroundColor: isDark2 ? "#E2E8F0" : "rgba(255,255,255,0.1)", borderRadius: 6 }}>
-              <div style={{ height: 4, backgroundColor: accent, borderRadius: "6px 6px 0 0", opacity: 0.7 + i * 0.1 }} />
+            <div key={i} style={{ flex:1, backgroundColor:cardBg, borderRadius:4, overflow:"hidden" }}>
+              <div style={{ height:3, backgroundColor:accent, opacity:0.65+i*0.12 }} />
             </div>
           ))}
         </div>
       </div>
     );
   }
+
   if (layout === "minimal") {
-    const isDark3 = bg === "#FFFFFF" || bg === "#F8FAFC";
-    const tc = isDark3 ? "#334155" : "#fff";
     return (
       <div style={s}>
-        <div style={{ position: "absolute", left: 20, top: 24, width: 100, height: 8, backgroundColor: tc, borderRadius: 2, opacity: 0.85 }} />
-        <div style={{ position: "absolute", left: 20, top: 40, width: 80, height: 6, backgroundColor: tc, borderRadius: 2, opacity: 0.55 }} />
-        <div style={{ position: "absolute", left: 20, top: 58, width: 120, height: 6, backgroundColor: tc, borderRadius: 2, opacity: 0.45 }} />
-        <div style={{ position: "absolute", left: 20, top: 74, width: 100, height: 6, backgroundColor: tc, borderRadius: 2, opacity: 0.45 }} />
-        <div style={{ position: "absolute", left: 20, top: 92, width: 60, height: 2, backgroundColor: accent, borderRadius: 1 }} />
+        <div style={{ position:"absolute", left:W*0.12, top:H*0.18, width:W*0.55, height:H*0.15, backgroundColor:tc, borderRadius:2, opacity:0.85 }} />
+        <div style={{ position:"absolute", left:W*0.12, top:H*0.38, width:W*0.44, height:H*0.12, backgroundColor:tc, borderRadius:2, opacity:0.55 }} />
+        <div style={{ position:"absolute", left:W*0.12, top:H*0.55, width:W*0.65, height:H*0.11, backgroundColor:tc, borderRadius:2, opacity:0.45 }} />
+        <div style={{ position:"absolute", left:W*0.12, top:H*0.72, width:W*0.5, height:H*0.11, backgroundColor:tc, borderRadius:2, opacity:0.4 }} />
+        <div style={{ position:"absolute", left:W*0.12, bottom:H*0.08, width:W*0.28, height:2, backgroundColor:accent, borderRadius:1 }} />
       </div>
     );
   }
+
   // "center" (default)
   return (
     <div style={s}>
-      <div style={{ position: "absolute", right: -30, top: -30, width: 100, height: 100, backgroundColor: accent, borderRadius: 999, opacity: 0.18 }} />
-      <div style={{ position: "absolute", left: -20, bottom: -20, width: 80, height: 80, backgroundColor: accent, borderRadius: 999, opacity: 0.12 }} />
-      <div style={{ position: "absolute", left: "50%", top: 20, transform: "translateX(-50%)", width: 90, height: 7, backgroundColor: accent, borderRadius: 2, opacity: 0.8 }} />
-      <div style={{ position: "absolute", left: "50%", top: 36, transform: "translateX(-50%)", width: 120, height: 9, backgroundColor: "#fff", borderRadius: 2, opacity: 0.85 }} />
-      <div style={{ position: "absolute", left: "50%", top: 53, transform: "translateX(-50%)", width: 100, height: 9, backgroundColor: "#fff", borderRadius: 2, opacity: 0.85 }} />
-      <div style={{ position: "absolute", left: "50%", top: 72, transform: "translateX(-50%)", width: 70, height: 6, backgroundColor: "rgba(255,255,255,0.55)", borderRadius: 2 }} />
-      <div style={{ position: "absolute", left: "50%", top: 88, transform: "translateX(-50%)", width: 76, height: 18, backgroundColor: accent, borderRadius: 4 }} />
+      <div style={{ position:"absolute", right:-W*0.1, top:-H*0.2, width:W*0.46, height:W*0.46, backgroundColor:accent, borderRadius:999, opacity:0.18 }} />
+      <div style={{ position:"absolute", left:-W*0.08, bottom:-H*0.2, width:W*0.38, height:W*0.38, backgroundColor:accent, borderRadius:999, opacity:0.12 }} />
+      <div style={{ position:"absolute", left:"50%", top:H*0.16, transform:"translateX(-50%)", width:W*0.48, height:H*0.14, backgroundColor:accent, borderRadius:2, opacity:0.82 }} />
+      <div style={{ position:"absolute", left:"50%", top:H*0.36, transform:"translateX(-50%)", width:W*0.72, height:H*0.16, backgroundColor:tc, borderRadius:2, opacity:0.82 }} />
+      <div style={{ position:"absolute", left:"50%", top:H*0.57, transform:"translateX(-50%)", width:W*0.6, height:H*0.14, backgroundColor:tc, borderRadius:2, opacity:0.65 }} />
+      <div style={{ position:"absolute", left:"50%", top:H*0.77, transform:"translateX(-50%)", width:W*0.42, height:H*0.19, backgroundColor:accent, borderRadius:4 }} />
     </div>
   );
 }
@@ -699,9 +1017,10 @@ export default function CanvasEditor({ config, onChange }: Props) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [editingId,  setEditingId]  = useState<string | null>(null);
   const [drag,       setDrag]       = useState<DragState | null>(null);
-  const [leftTab,    setLeftTab]    = useState<"elements" | "blocks" | "images">("blocks");
-  const [imgCategory, setImgCategory] = useState<string>("すべて");
-  const [blockModal, setBlockModal] = useState(false);
+  const [leftTab,       setLeftTab]       = useState<"elements" | "blocks" | "images">("blocks");
+  const [imgCategory,   setImgCategory]   = useState<string>("すべて");
+  const [blockCategory, setBlockCategory] = useState<string>("すべて");
+  const [blockModal,    setBlockModal]    = useState(false);
   const canvasRef = useRef<HTMLDivElement>(null);
 
   const CW       = config.canvasWidth ?? 1200;
@@ -934,30 +1253,48 @@ export default function CanvasEditor({ config, onChange }: Props) {
             </div>
           ) : (
             /* ── Block templates ── */
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <div>
+              {/* カテゴリフィルタ */}
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 10 }}>
+                {["すべて", ...BLOCK_CATEGORIES].map(cat => (
+                  <button key={cat} onClick={() => setBlockCategory(cat)}
+                    style={{ fontSize: 9, padding: "3px 8px", borderRadius: 999, border: "1px solid #E2E8F0",
+                      background: blockCategory === cat ? "#4F46E5" : "#F9FAFB",
+                      color: blockCategory === cat ? "#FFFFFF" : "#6B7280",
+                      cursor: "pointer", fontWeight: blockCategory === cat ? 700 : 400, whiteSpace: "nowrap" }}>
+                    {cat}
+                  </button>
+                ))}
+              </div>
+              {/* 全ブロック表示ボタン */}
               <button
                 onClick={() => setBlockModal(true)}
-                style={{ display: "flex", alignItems: "center", gap: 8, padding: "12px 14px", borderRadius: 10, border: "1.5px dashed #C7D2FE", background: "#EEF2FF", cursor: "pointer", color: "#4F46E5", fontWeight: 600, fontSize: 13, justifyContent: "center", transition: "all 0.12s" }}
+                style={{ display: "flex", alignItems: "center", gap: 6, padding: "10px 14px", borderRadius: 8, border: "1.5px dashed #C7D2FE", background: "#EEF2FF", cursor: "pointer", color: "#4F46E5", fontWeight: 600, fontSize: 12, justifyContent: "center", transition: "all 0.12s", width: "100%", marginBottom: 10 }}
                 onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "#E0E7FF"; }}
                 onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "#EEF2FF"; }}>
-                <span style={{ fontSize: 18 }}>+</span>
-                ブロックを追加
+                <span style={{ fontSize: 16 }}>+</span>
+                すべてのブロックを見る
               </button>
-              <p style={{ fontSize: 10, color: "#94A3B8", fontWeight: 700, letterSpacing: "0.1em", marginTop: 8, marginBottom: 4 }}>よく使うブロック</p>
-              {BLOCK_TEMPLATES.filter(t => t.category === "ヒーロー").map(tpl => (
-                <button key={tpl.id} onClick={() => addBlock(tpl)}
-                  style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 10px", borderRadius: 8, border: "1px solid #E2E8F0", background: "#FAFAFA", cursor: "pointer", textAlign: "left", transition: "all 0.12s" }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "#EEF2FF"; (e.currentTarget as HTMLElement).style.borderColor = "#C7D2FE"; }}
-                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "#FAFAFA"; (e.currentTarget as HTMLElement).style.borderColor = "#E2E8F0"; }}>
-                  <div style={{ width: 44, height: 28, borderRadius: 4, overflow: "hidden", flexShrink: 0 }}>
-                    <ThumbnailPreview thumb={tpl.thumb} size={{ w: 44, h: 28 }} />
-                  </div>
-                  <div>
-                    <p style={{ fontSize: 11, fontWeight: 600, color: "#374151", margin: 0 }}>{tpl.name}</p>
-                    <p style={{ fontSize: 10, color: "#94A3B8", margin: 0 }}>{tpl.desc}</p>
-                  </div>
-                </button>
-              ))}
+              {/* 2カラムグリッド */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
+                {BLOCK_TEMPLATES
+                  .filter(t => blockCategory === "すべて" || t.category === blockCategory)
+                  .map(tpl => (
+                    <button key={tpl.id} onClick={() => addBlock(tpl)}
+                      style={{ padding: 0, border: "1.5px solid #E2E8F0", borderRadius: 8, background: "#FFFFFF", cursor: "pointer", textAlign: "left", overflow: "hidden", transition: "all 0.14s", display: "flex", flexDirection: "column" }}
+                      onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.borderColor = "#818CF8"; el.style.boxShadow = "0 4px 16px rgba(79,70,229,0.15)"; el.style.transform = "translateY(-1px)"; }}
+                      onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.borderColor = "#E2E8F0"; el.style.boxShadow = "none"; el.style.transform = "translateY(0)"; }}
+                      title={tpl.desc}>
+                      <div style={{ overflow: "hidden", borderRadius: "6px 6px 0 0", flexShrink: 0 }}>
+                        <ThumbnailPreview thumb={tpl.thumb} size={{ w: 96, h: 58 }} />
+                      </div>
+                      <div style={{ padding: "5px 6px 6px" }}>
+                        <p style={{ fontSize: 10, fontWeight: 700, color: "#374151", margin: 0, lineHeight: 1.3 }}>{tpl.name.replace(/ヒーロー\（/, "").replace(/\）$/, "")}</p>
+                        <p style={{ fontSize: 9, color: "#94A3B8", margin: "2px 0 0", lineHeight: 1.3 }}>{tpl.category === "パーツ" ? "⚡ パーツ" : tpl.desc.slice(0, 14)}</p>
+                      </div>
+                    </button>
+                  ))}
+              </div>
             </div>
           )}
         </div>
