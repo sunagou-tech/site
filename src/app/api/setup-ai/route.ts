@@ -215,24 +215,41 @@ type SectionData = {
   };
 };
 
+// ── Color utility ────────────────────────────────────────────
+/** true if hex is a light color (luminance > 0.45) */
+function isLight(hex: string): boolean {
+  if (!hex?.startsWith("#") || hex.length < 7) return false;
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.45;
+}
+
+/** Return a guaranteed-dark color (falls back to deep navy) */
+function toDark(hex: string, fallback = "#1E3A5F"): string {
+  return isLight(hex) ? fallback : hex;
+}
+
 // Design token resolver — merges AI content with Design DNA
 function resolveTokens(data: SectionData, dna?: GlobalStyle) {
   const primary  = dna?.primaryColor  || data.primaryColor  || "#1E40AF";
   const accent   = dna?.accentColor   || data.accentColor   || "#EA580C";
-  const heroBg   = dna?.heroBgColor   || data.hero.bgColor  || primary;
+  const rawHeroBg = dna?.heroBgColor  || data.hero.bgColor  || primary;
+  // heroBg: use as-is.  heroBgDark: ALWAYS a dark color for dark-text templates
+  const heroBg     = rawHeroBg;
+  const heroBgDark = toDark(rawHeroBg, isLight(primary) ? "#1E3A5F" : primary);
   const pageBg   = dna?.bgColor       || "#FFFFFF";
   const cardBg   = dna?.cardBgColor   || "#F9FAFB";
   const textMain = dna?.textColor     || "#111827";
   const textMid  = "#6B7280";
-  const btnBg    = dna?.buttonBgColor || accent;
+  const btnBg    = isLight(dna?.buttonBgColor || accent) ? (isLight(accent) ? "#1E40AF" : accent) : (dna?.buttonBgColor || accent);
   const btnText  = dna?.buttonTextColor || "#FFFFFF";
   const btnR     = parseInt(dna?.buttonRadius || "31") || 31;
   const cardR    = parseInt(dna?.cardBorderRadius || "16") || 16;
   const secPad   = parseInt(dna?.sectionPaddingY || "80") || 80;
-  // label color (eyebrow / section tags)
   const labelColor = dna?.accentColor || dna?.primaryColor || primary;
 
-  return { primary, accent, heroBg, pageBg, cardBg, textMain, textMid, btnBg, btnText, btnR, cardR, secPad, labelColor };
+  return { primary, accent, heroBg, heroBgDark, pageBg, cardBg, textMain, textMid, btnBg, btnText, btnR, cardR, secPad, labelColor };
 }
 
 // ── Hero templates ───────────────────────────────────────────
@@ -242,7 +259,7 @@ type AddFn = (el: Omit<CanvasElement, "id">) => void;
 
 function heroSplit(data: SectionData, tk: Tk, dna: GlobalStyle | undefined, y0: number, CW: number, add: AddFn) {
   const H = 700;
-  add({ type: "rect", x: 0, y: y0, width: CW, height: H, style: { backgroundColor: tk.heroBg }, zIndex: 1 });
+  add({ type: "rect", x: 0, y: y0, width: CW, height: H, style: { backgroundColor: tk.heroBgDark }, zIndex: 1 });
   // Gradient glow blobs
   add({ type: "rect", x: -160, y: y0 + 260, width: 480, height: 480, style: { backgroundColor: tk.accent, borderRadius: 999, opacity: 0.12 }, zIndex: 1 });
   add({ type: "rect", x: CW - 80, y: y0 - 80, width: 340, height: 340, style: { backgroundColor: tk.primary, borderRadius: 999, opacity: 0.1 }, zIndex: 1 });
@@ -311,7 +328,7 @@ function heroSplit(data: SectionData, tk: Tk, dna: GlobalStyle | undefined, y0: 
 function heroCentered(data: SectionData, tk: Tk, dna: GlobalStyle | undefined, y0: number, CW: number, add: AddFn) {
   const H = 720;
   // Background + gradient glow blobs (NOT rings — rings look like wireframes)
-  add({ type: "rect", x: 0, y: y0, width: CW, height: H, style: { backgroundColor: tk.heroBg }, zIndex: 1 });
+  add({ type: "rect", x: 0, y: y0, width: CW, height: H, style: { backgroundColor: tk.heroBgDark }, zIndex: 1 });
   add({ type: "rect", x: -120, y: y0 + 80, width: 520, height: 520, style: { backgroundColor: tk.primary, borderRadius: 999, opacity: 0.14 }, zIndex: 1 });
   add({ type: "rect", x: CW - 300, y: y0 + 180, width: 440, height: 440, style: { backgroundColor: tk.accent, borderRadius: 999, opacity: 0.11 }, zIndex: 1 });
   add({ type: "rect", x: CW / 2 - 180, y: y0 - 60, width: 360, height: 360, style: { backgroundColor: tk.accent, borderRadius: 999, opacity: 0.07 }, zIndex: 1 });
@@ -376,7 +393,7 @@ function heroCentered(data: SectionData, tk: Tk, dna: GlobalStyle | undefined, y
 
 function heroTypographic(data: SectionData, tk: Tk, dna: GlobalStyle | undefined, y0: number, CW: number, add: AddFn) {
   const H = 700;
-  add({ type: "rect", x: 0, y: y0, width: CW, height: H, style: { backgroundColor: tk.heroBg }, zIndex: 1 });
+  add({ type: "rect", x: 0, y: y0, width: CW, height: H, style: { backgroundColor: tk.heroBgDark }, zIndex: 1 });
   // Background blobs (fill, not rings)
   add({ type: "rect", x: CW - 440, y: y0 - 140, width: 520, height: 520, style: { backgroundColor: tk.accent, borderRadius: 999, opacity: 0.1 }, zIndex: 1 });
   add({ type: "rect", x: CW - 280, y: y0 + 300, width: 320, height: 320, style: { backgroundColor: tk.primary, borderRadius: 999, opacity: 0.08 }, zIndex: 1 });
@@ -499,18 +516,33 @@ function buildCanvasFromSections(data: SectionData, dna?: GlobalStyle): CanvasEl
   const CW = 1200;
   let y = 0;
 
-  // ── HERO: 参考サイトのheroLayout → designStyle の順で選択 ───
+  // ── HERO template selection ──────────────────────────────────
+  // Priority: heroLayout from URL analysis → designStyle → fallback
+  // Color safety: dark-text templates (split/centered/typographic) need dark heroBg.
+  //   If heroBg is light AND no dark alternative exists, fall back to heroLight.
+  const heroBgWillBeDark = !isLight(tk.heroBgDark); // heroBgDark is always dark by design
   const tpl: HeroTpl = (() => {
-    // URL解析で取得したheroLayoutを最優先
-    if (dna?.heroLayout && ["split","centered","typographic","light"].includes(dna.heroLayout)) {
-      return dna.heroLayout as HeroTpl;
+    const style  = dna?.designStyle?.toLowerCase() ?? "";
+    const notes  = (dna?.designNotes ?? "").toLowerCase();
+    const layout = dna?.heroLayout ?? "";
+
+    // URL解析のheroLayoutが有効なら従う（ただし色安全を優先）
+    if (layout && ["split","centered","typographic","light"].includes(layout)) {
+      const hl = layout as HeroTpl;
+      // heroBgが明るすぎ + darkにできない場合はlightテンプレートへ
+      if (hl !== "light" && !heroBgWillBeDark) return "light";
+      return hl;
     }
-    // designStyleからフォールバック
-    const s = dna?.designStyle?.toLowerCase() ?? "";
-    if (s === "minimal" || s === "corporate") return "light";
-    if (s === "elegant")                       return "typographic";
-    if (s === "bold" || s === "playful")       return "centered";
-    return "split";
+
+    // designStyleから推定
+    if (style === "minimal" || style === "corporate") return "light";
+    if (style === "elegant" || notes.includes("上品") || notes.includes("高級")) return "typographic";
+    if (style === "bold" || style === "playful" || notes.includes("ポップ") || notes.includes("かわいい")) return "centered";
+
+    // 参考URLなしの場合: designNotesのキーワードで分岐、なければsplit
+    if (notes.includes("シンプル") || notes.includes("清潔")) return "light";
+    if (notes.includes("モダン") || notes.includes("スタイリッシュ")) return "typographic";
+    return "split"; // safe default (always has dark bg via heroBgDark)
   })();
 
   if      (tpl === "centered")    y += heroCentered(data, tk, dna, y, CW, add);
