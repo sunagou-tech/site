@@ -243,42 +243,66 @@ type AddFn = (el: Omit<CanvasElement, "id">) => void;
 function heroSplit(data: SectionData, tk: Tk, dna: GlobalStyle | undefined, y0: number, CW: number, add: AddFn) {
   const H = 700;
   add({ type: "rect", x: 0, y: y0, width: CW, height: H, style: { backgroundColor: tk.heroBg }, zIndex: 1 });
-  add({ type: "rect", x: -140, y: y0 + 300, width: 440, height: 440, style: { backgroundColor: tk.primary, borderRadius: 999, opacity: 0.1 }, zIndex: 1 });
-  add({ type: "rect", x: CW - 100, y: y0 - 100, width: 320, height: 320, style: { backgroundColor: tk.accent, borderRadius: 999, opacity: 0.08 }, zIndex: 1 });
+  // Gradient glow blobs
+  add({ type: "rect", x: -160, y: y0 + 260, width: 480, height: 480, style: { backgroundColor: tk.accent, borderRadius: 999, opacity: 0.12 }, zIndex: 1 });
+  add({ type: "rect", x: CW - 80, y: y0 - 80, width: 340, height: 340, style: { backgroundColor: tk.primary, borderRadius: 999, opacity: 0.1 }, zIndex: 1 });
+
   const hf = dna?.headingFont ? { fontFamily: `'${dna.headingFont}'` } : {};
   const bf = dna?.bodyFont    ? { fontFamily: `'${dna.bodyFont}'`    } : {};
-  add({ type: "text", x: 64, y: y0 + 88, width: 520, height: 26, html: data.hero.eyebrow,
+
+  // Left accent bar
+  add({ type: "rect", x: 64, y: y0 + 88, width: 3, height: 32, style: { backgroundColor: tk.accent, borderRadius: 2 }, zIndex: 3 });
+  add({ type: "text", x: 76, y: y0 + 88, width: 520, height: 28, html: data.hero.eyebrow,
     style: { fontSize: 11, color: tk.labelColor, textAlign: "left", letterSpacing: "0.22em", fontWeight: "700", ...hf }, zIndex: 3 });
-  add({ type: "text", x: 64, y: y0 + 128, width: 580, height: 170, html: (data.hero.heading ?? "").replace(/\\n/g, "<br>"),
-    style: { fontSize: parseInt(dna?.h1Size || "52") || 52, fontWeight: dna?.headingWeight ?? 900, color: "#FFFFFF", textAlign: "left", lineHeight: dna?.headingLineHeight ?? 1.2, ...hf }, zIndex: 3 });
-  add({ type: "text", x: 64, y: y0 + 316, width: 520, height: 80, html: data.hero.body,
-    style: { fontSize: 15, color: "rgba(255,255,255,0.82)", textAlign: "left", lineHeight: 1.85, ...bf }, zIndex: 3 });
-  add({ type: "button", x: 64, y: y0 + 418, width: 240, height: 56, html: data.hero.ctaText, href: data.hero.ctaHref,
+  add({ type: "text", x: 64, y: y0 + 136, width: 565, height: 175,
+    html: (data.hero.heading ?? "").replace(/\\n/g, "<br>"),
+    style: { fontSize: parseInt(dna?.h1Size || "54") || 54, fontWeight: dna?.headingWeight ?? 900, color: "#FFFFFF", textAlign: "left", lineHeight: dna?.headingLineHeight ?? 1.18, ...hf }, zIndex: 3 });
+  add({ type: "text", x: 64, y: y0 + 326, width: 510, height: 80, html: data.hero.body,
+    style: { fontSize: 15, color: "rgba(255,255,255,0.80)", textAlign: "left", lineHeight: 1.88, ...bf }, zIndex: 3 });
+  add({ type: "button", x: 64, y: y0 + 428, width: 242, height: 58, html: data.hero.ctaText, href: data.hero.ctaHref,
     style: { fontSize: 15, fontWeight: "bold", color: tk.btnText, backgroundColor: tk.btnBg, borderRadius: tk.btnR, textAlign: "center" }, zIndex: 3 });
-  add({ type: "button", x: 316, y: y0 + 418, width: 180, height: 56, html: "詳しく見る", href: "#features",
+  add({ type: "button", x: 320, y: y0 + 428, width: 176, height: 58, html: "詳しく見る", href: "#features",
     style: { fontSize: 14, fontWeight: "600", color: "#FFFFFF", backgroundColor: "transparent", borderRadius: tk.btnR, textAlign: "center", border: "1.5px solid rgba(255,255,255,0.35)" }, zIndex: 3 });
+
+  // Stats row with separator lines
   (data.hero.stats ?? []).slice(0, 3).forEach((s, i) => {
-    if (i > 0) add({ type: "rect", x: 64 + i * 162 - 10, y: y0 + 510, width: 1, height: 44, style: { backgroundColor: "rgba(255,255,255,0.18)" }, zIndex: 3 });
-    add({ type: "text", x: 64 + i * 162, y: y0 + 502, width: 155, height: 70,
-      html: `<div style="font-size:28px;font-weight:900;color:#FFFFFF;line-height:1.1">${s.value}</div><div style="font-size:10px;letter-spacing:0.08em;color:rgba(255,255,255,0.58);margin-top:4px">${s.label}</div>`,
+    if (i > 0) add({ type: "rect", x: 64 + i * 162 - 12, y: y0 + 516, width: 1, height: 42, style: { backgroundColor: "rgba(255,255,255,0.2)" }, zIndex: 3 });
+    add({ type: "text", x: 64 + i * 162, y: y0 + 508, width: 154, height: 68,
+      html: `<div style="font-size:30px;font-weight:900;color:#FFFFFF;line-height:1.1">${s.value}</div><div style="font-size:10px;letter-spacing:0.08em;color:rgba(255,255,255,0.55);margin-top:5px">${s.label}</div>`,
       style: { textAlign: "left" }, zIndex: 3 });
   });
-  // Right: image or card grid
-  const GX = 640, GY = y0 + 36;
+
+  // ── Right: image or styled feature card grid ──────────────────
+  const GX = 652, GY = y0 + 32;
   if (data.hero.imageUrl) {
-    add({ type: "image", x: GX, y: GY, width: 544, height: 610, style: { borderRadius: 18, objectFit: "cover" }, src: data.hero.imageUrl, zIndex: 2 });
+    add({ type: "image", x: GX, y: GY, width: 526, height: 618, style: { borderRadius: 20, objectFit: "cover" }, src: data.hero.imageUrl, zIndex: 2 });
   } else {
-    const GC = [[tk.primary, tk.accent], [tk.accent, "#7C3AED"], ["#7C3AED", tk.primary], [tk.accent, tk.primary], [tk.primary, "#059669"], ["#2563EB", tk.accent]];
-    const CW2 = 264, CH2 = 186, GAP = 12;
+    const GC = [
+      { bg: tk.primary,  acc: tk.accent   },
+      { bg: tk.accent,   acc: "#FFFFFF"   },
+      { bg: "#7C3AED",   acc: tk.primary  },
+      { bg: tk.accent,   acc: tk.primary  },
+      { bg: "#0F172A",   acc: tk.accent   },
+      { bg: tk.primary,  acc: "#7C3AED"   },
+    ];
+    const CW2 = 258, CH2 = 188, GAP = 10;
     (data.features?.items ?? []).slice(0, 6).forEach((item, i) => {
       const cx = GX + (i % 2) * (CW2 + GAP), cy = GY + Math.floor(i / 2) * (CH2 + GAP);
-      const [c1, c2] = GC[i];
-      add({ type: "rect", x: cx, y: cy, width: CW2, height: CH2, style: { backgroundColor: c1, borderRadius: 14, opacity: 0.92 }, zIndex: 2 });
-      add({ type: "rect", x: cx + CW2 - 55, y: cy - 28, width: 90, height: 90, style: { backgroundColor: c2, borderRadius: 999, opacity: 0.26 }, zIndex: 2 });
-      add({ type: "text", x: cx + 16, y: cy + 38, width: CW2 - 32, height: 70, html: item.title.slice(0, 22),
-        style: { fontSize: 15, fontWeight: "bold", color: "#FFFFFF", lineHeight: 1.38 }, zIndex: 3 });
-      add({ type: "text", x: cx + 16, y: cy + 116, width: CW2 - 32, height: 44, html: item.desc.slice(0, 34) + "…",
-        style: { fontSize: 10, color: "rgba(255,255,255,0.72)", lineHeight: 1.5 }, zIndex: 3 });
+      const { bg: c1, acc: c2 } = GC[i];
+      // Card background
+      add({ type: "rect", x: cx, y: cy, width: CW2, height: CH2, style: { backgroundColor: c1, borderRadius: 16 }, zIndex: 2 });
+      // Decorative blob
+      add({ type: "rect", x: cx + CW2 - 50, y: cy - 25, width: 88, height: 88, style: { backgroundColor: c2, borderRadius: 999, opacity: 0.22 }, zIndex: 2 });
+      // Number badge
+      add({ type: "rect", x: cx + 16, y: cy + 16, width: 36, height: 36, style: { backgroundColor: "rgba(255,255,255,0.15)", borderRadius: 8 }, zIndex: 3 });
+      add({ type: "text", x: cx + 16, y: cy + 17, width: 36, height: 34,
+        html: `0${i+1}`, style: { fontSize: 14, fontWeight: "900", color: "#FFFFFF", textAlign: "center" }, zIndex: 4 });
+      // Title + desc
+      add({ type: "text", x: cx + 16, y: cy + 68, width: CW2 - 32, height: 56,
+        html: item.title.slice(0, 24), style: { fontSize: 15, fontWeight: "bold", color: "#FFFFFF", lineHeight: 1.35 }, zIndex: 3 });
+      add({ type: "text", x: cx + 16, y: cy + 128, width: CW2 - 32, height: 44,
+        html: item.desc.slice(0, 38) + (item.desc.length > 38 ? "…" : ""),
+        style: { fontSize: 11, color: "rgba(255,255,255,0.68)", lineHeight: 1.5 }, zIndex: 3 });
     });
   }
   return H;
@@ -286,99 +310,181 @@ function heroSplit(data: SectionData, tk: Tk, dna: GlobalStyle | undefined, y0: 
 
 function heroCentered(data: SectionData, tk: Tk, dna: GlobalStyle | undefined, y0: number, CW: number, add: AddFn) {
   const H = 720;
+  // Background + gradient glow blobs (NOT rings — rings look like wireframes)
   add({ type: "rect", x: 0, y: y0, width: CW, height: H, style: { backgroundColor: tk.heroBg }, zIndex: 1 });
-  // Large decorative rings
-  add({ type: "rect", x: CW / 2 - 340, y: y0 - 120, width: 680, height: 680, style: { backgroundColor: "transparent", borderRadius: 999, border: `1px solid ${tk.accent}30` }, zIndex: 1 });
-  add({ type: "rect", x: CW / 2 - 220, y: y0 - 20, width: 440, height: 440, style: { backgroundColor: tk.primary, borderRadius: 999, opacity: 0.07 }, zIndex: 1 });
-  add({ type: "rect", x: CW / 2 - 160, y: y0 + 40, width: 320, height: 320, style: { backgroundColor: tk.accent, borderRadius: 999, opacity: 0.07 }, zIndex: 1 });
+  add({ type: "rect", x: -120, y: y0 + 80, width: 520, height: 520, style: { backgroundColor: tk.primary, borderRadius: 999, opacity: 0.14 }, zIndex: 1 });
+  add({ type: "rect", x: CW - 300, y: y0 + 180, width: 440, height: 440, style: { backgroundColor: tk.accent, borderRadius: 999, opacity: 0.11 }, zIndex: 1 });
+  add({ type: "rect", x: CW / 2 - 180, y: y0 - 60, width: 360, height: 360, style: { backgroundColor: tk.accent, borderRadius: 999, opacity: 0.07 }, zIndex: 1 });
+
   const hf = dna?.headingFont ? { fontFamily: `'${dna.headingFont}'` } : {};
   const bf = dna?.bodyFont    ? { fontFamily: `'${dna.bodyFont}'`    } : {};
-  // Eyebrow pill
-  add({ type: "rect", x: CW / 2 - 160, y: y0 + 90, width: 320, height: 34, style: { backgroundColor: tk.accent + "28", borderRadius: 999 }, zIndex: 3 });
-  add({ type: "text", x: CW / 2 - 160, y: y0 + 92, width: 320, height: 30, html: data.hero.eyebrow,
-    style: { fontSize: 11, color: tk.accent, textAlign: "center", letterSpacing: "0.18em", fontWeight: "700", ...hf }, zIndex: 4 });
-  add({ type: "text", x: 80, y: y0 + 148, width: CW - 160, height: 180, html: (data.hero.heading ?? "").replace(/\\n/g, "<br>"),
-    style: { fontSize: parseInt(dna?.h1Size || "60") || 60, fontWeight: dna?.headingWeight ?? 900, color: "#FFFFFF", textAlign: "center", lineHeight: 1.2, ...hf }, zIndex: 3 });
-  add({ type: "text", x: 200, y: y0 + 346, width: CW - 400, height: 80, html: data.hero.body,
-    style: { fontSize: 16, color: "rgba(255,255,255,0.78)", textAlign: "center", lineHeight: 1.88, ...bf }, zIndex: 3 });
-  add({ type: "button", x: CW / 2 - 220, y: y0 + 450, width: 210, height: 58, html: data.hero.ctaText, href: data.hero.ctaHref,
-    style: { fontSize: 16, fontWeight: "bold", color: tk.btnText, backgroundColor: tk.btnBg, borderRadius: tk.btnR, textAlign: "center" }, zIndex: 3 });
-  add({ type: "button", x: CW / 2 + 10, y: y0 + 450, width: 190, height: 58, html: "詳しく見る", href: "#features",
-    style: { fontSize: 14, fontWeight: "600", color: "#FFFFFF", backgroundColor: "transparent", borderRadius: tk.btnR, textAlign: "center", border: "1.5px solid rgba(255,255,255,0.38)" }, zIndex: 3 });
-  // Stats row
+
+  // ── Floating stat cards (left side) ──────────────────────────
   const stats = (data.hero.stats ?? []).slice(0, 3);
-  const sw = 260, sx0 = CW / 2 - (sw * stats.length + 24 * (stats.length - 1)) / 2;
-  stats.forEach((s, i) => {
-    add({ type: "rect", x: sx0 + i * (sw + 24), y: y0 + 558, width: sw, height: 76, style: { backgroundColor: "rgba(255,255,255,0.06)", borderRadius: 12 }, zIndex: 3 });
-    add({ type: "text", x: sx0 + i * (sw + 24), y: y0 + 566, width: sw, height: 60,
-      html: `<div style="font-size:30px;font-weight:900;color:#FFFFFF;line-height:1.1">${s.value}</div><div style="font-size:10px;letter-spacing:0.08em;color:rgba(255,255,255,0.55);margin-top:4px">${s.label}</div>`,
-      style: { textAlign: "center" }, zIndex: 4 });
-  });
+  if (stats[0]) {
+    add({ type: "text", x: 40, y: y0 + 260, width: 200, height: 96,
+      html: `<div style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.22);border-radius:16px;padding:18px 20px;backdrop-filter:blur(8px)">
+        <div style="font-size:32px;font-weight:900;color:#FFFFFF;line-height:1">${stats[0].value}</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.62);margin-top:5px;letter-spacing:0.05em">${stats[0].label}</div>
+      </div>`, style: {}, zIndex: 3 });
+  }
+  if (stats[1]) {
+    add({ type: "text", x: CW - 240, y: y0 + 190, width: 200, height: 96,
+      html: `<div style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.22);border-radius:16px;padding:18px 20px;backdrop-filter:blur(8px)">
+        <div style="font-size:32px;font-weight:900;color:#FFFFFF;line-height:1">${stats[1].value}</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.62);margin-top:5px;letter-spacing:0.05em">${stats[1].label}</div>
+      </div>`, style: {}, zIndex: 3 });
+  }
+  if (stats[2]) {
+    add({ type: "text", x: CW - 230, y: y0 + 440, width: 190, height: 96,
+      html: `<div style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.22);border-radius:16px;padding:18px 20px;backdrop-filter:blur(8px)">
+        <div style="font-size:32px;font-weight:900;color:#FFFFFF;line-height:1">${stats[2].value}</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.62);margin-top:5px;letter-spacing:0.05em">${stats[2].label}</div>
+      </div>`, style: {}, zIndex: 3 });
+  }
+
+  // ── Center content ────────────────────────────────────────────
+  // Eyebrow badge
+  add({ type: "rect", x: CW / 2 - 170, y: y0 + 88, width: 340, height: 36, style: { backgroundColor: tk.accent + "2A", borderRadius: 999, border: `1px solid ${tk.accent}45` }, zIndex: 3 });
+  add({ type: "text", x: CW / 2 - 158, y: y0 + 92, width: 316, height: 28, html: data.hero.eyebrow,
+    style: { fontSize: 11, color: tk.accent, textAlign: "center", letterSpacing: "0.18em", fontWeight: "700", ...hf }, zIndex: 4 });
+
+  // Heading
+  add({ type: "text", x: 80, y: y0 + 148, width: CW - 160, height: 190,
+    html: (data.hero.heading ?? "").replace(/\\n/g, "<br>"),
+    style: { fontSize: parseInt(dna?.h1Size || "62") || 62, fontWeight: dna?.headingWeight ?? 900, color: "#FFFFFF", textAlign: "center", lineHeight: 1.15, ...hf }, zIndex: 3 });
+
+  // Body
+  add({ type: "text", x: 220, y: y0 + 352, width: CW - 440, height: 72, html: data.hero.body,
+    style: { fontSize: 16, color: "rgba(255,255,255,0.76)", textAlign: "center", lineHeight: 1.9, ...bf }, zIndex: 3 });
+
+  // CTA buttons
+  add({ type: "button", x: CW / 2 - 224, y: y0 + 448, width: 214, height: 58, html: data.hero.ctaText, href: data.hero.ctaHref,
+    style: { fontSize: 16, fontWeight: "bold", color: tk.btnText, backgroundColor: tk.btnBg, borderRadius: tk.btnR, textAlign: "center" }, zIndex: 3 });
+  add({ type: "button", x: CW / 2 + 10, y: y0 + 448, width: 190, height: 58, html: "詳しく見る", href: "#features",
+    style: { fontSize: 14, fontWeight: "600", color: "#FFFFFF", backgroundColor: "transparent", borderRadius: tk.btnR, textAlign: "center", border: "1.5px solid rgba(255,255,255,0.36)" }, zIndex: 3 });
+
+  // Bottom subtle separator + trust text
+  add({ type: "rect", x: CW / 2 - 220, y: y0 + H - 70, width: 440, height: 1, style: { backgroundColor: "rgba(255,255,255,0.1)" }, zIndex: 2 });
+  add({ type: "text", x: CW / 2 - 280, y: y0 + H - 58, width: 560, height: 36,
+    html: `<div style="display:flex;align-items:center;justify-content:center;gap:32px">
+      ${stats.map(s => `<span style="font-size:12px;color:rgba(255,255,255,0.5)"><b style="color:rgba(255,255,255,0.85)">${s.value}</b> ${s.label}</span>`).join('<span style="color:rgba(255,255,255,0.2)">|</span>')}
+    </div>`, style: {}, zIndex: 3 });
+
   return H;
 }
 
 function heroTypographic(data: SectionData, tk: Tk, dna: GlobalStyle | undefined, y0: number, CW: number, add: AddFn) {
-  const H = 680;
+  const H = 700;
   add({ type: "rect", x: 0, y: y0, width: CW, height: H, style: { backgroundColor: tk.heroBg }, zIndex: 1 });
-  // Large hollow circle (purely decorative)
-  add({ type: "rect", x: CW - 480, y: y0 - 200, width: 600, height: 600, style: { backgroundColor: "transparent", borderRadius: 999, border: `2px solid ${tk.accent}22` }, zIndex: 1 });
-  add({ type: "rect", x: CW - 360, y: y0 - 80, width: 360, height: 360, style: { backgroundColor: tk.accent, borderRadius: 999, opacity: 0.06 }, zIndex: 1 });
+  // Background blobs (fill, not rings)
+  add({ type: "rect", x: CW - 440, y: y0 - 140, width: 520, height: 520, style: { backgroundColor: tk.accent, borderRadius: 999, opacity: 0.1 }, zIndex: 1 });
+  add({ type: "rect", x: CW - 280, y: y0 + 300, width: 320, height: 320, style: { backgroundColor: tk.primary, borderRadius: 999, opacity: 0.08 }, zIndex: 1 });
+
   const hf = dna?.headingFont ? { fontFamily: `'${dna.headingFont}'` } : {};
   const bf = dna?.bodyFont    ? { fontFamily: `'${dna.bodyFont}'`    } : {};
-  // Vertical accent bar left
-  add({ type: "rect", x: 64, y: y0 + 80, width: 4, height: 280, style: { backgroundColor: tk.accent, borderRadius: 2 }, zIndex: 2 });
-  add({ type: "text", x: 88, y: y0 + 80, width: 740, height: 220, html: (data.hero.heading ?? "").replace(/\\n/g, "<br>"),
-    style: { fontSize: parseInt(dna?.h1Size || "68") || 68, fontWeight: 900, color: "#FFFFFF", textAlign: "left", lineHeight: 1.12, ...hf }, zIndex: 3 });
-  // Accent underline
-  add({ type: "rect", x: 88, y: y0 + 308, width: 200, height: 5, style: { backgroundColor: tk.accent, borderRadius: 2 }, zIndex: 3 });
-  add({ type: "text", x: 88, y: y0 + 86, width: 320, height: 22, html: data.hero.eyebrow,
+
+  // Vertical accent bar + eyebrow
+  add({ type: "rect", x: 64, y: y0 + 80, width: 4, height: 300, style: { backgroundColor: tk.accent, borderRadius: 2 }, zIndex: 2 });
+  add({ type: "text", x: 88, y: y0 + 82, width: 360, height: 22, html: data.hero.eyebrow,
     style: { fontSize: 10, color: tk.labelColor, letterSpacing: "0.28em", fontWeight: "700", ...hf }, zIndex: 4 });
-  // Right: body + CTA
-  add({ type: "text", x: 860, y: y0 + 120, width: 300, height: 160, html: data.hero.body,
-    style: { fontSize: 14, color: "rgba(255,255,255,0.75)", lineHeight: 1.9, ...bf }, zIndex: 3 });
-  add({ type: "button", x: 860, y: y0 + 300, width: 240, height: 54, html: data.hero.ctaText, href: data.hero.ctaHref,
+
+  // Large heading
+  add({ type: "text", x: 88, y: y0 + 116, width: 730, height: 240,
+    html: (data.hero.heading ?? "").replace(/\\n/g, "<br>"),
+    style: { fontSize: parseInt(dna?.h1Size || "66") || 66, fontWeight: 900, color: "#FFFFFF", textAlign: "left", lineHeight: 1.1, ...hf }, zIndex: 3 });
+
+  // Accent underline
+  add({ type: "rect", x: 88, y: y0 + 362, width: 220, height: 5, style: { backgroundColor: tk.accent, borderRadius: 2 }, zIndex: 3 });
+
+  // Right column: body + CTA + mini stat cards
+  add({ type: "text", x: 850, y: y0 + 110, width: 300, height: 160, html: data.hero.body,
+    style: { fontSize: 14, color: "rgba(255,255,255,0.74)", lineHeight: 1.9, ...bf }, zIndex: 3 });
+  add({ type: "button", x: 850, y: y0 + 290, width: 242, height: 56, html: data.hero.ctaText, href: data.hero.ctaHref,
     style: { fontSize: 15, fontWeight: "bold", color: tk.btnText, backgroundColor: tk.btnBg, borderRadius: tk.btnR, textAlign: "center" }, zIndex: 3 });
-  // Bottom stats — horizontal strip
-  add({ type: "rect", x: 0, y: y0 + H - 100, width: CW, height: 1, style: { backgroundColor: "rgba(255,255,255,0.08)" }, zIndex: 2 });
-  (data.hero.stats ?? []).slice(0, 3).forEach((s, i) => {
-    add({ type: "text", x: 88 + i * 260, y: y0 + H - 84, width: 240, height: 68,
-      html: `<div style="font-size:32px;font-weight:900;color:#FFFFFF;line-height:1">${s.value}</div><div style="font-size:10px;letter-spacing:0.1em;color:rgba(255,255,255,0.5);margin-top:6px">${s.label}</div>`,
+  add({ type: "button", x: 850, y: y0 + 360, width: 242, height: 50, html: "詳しく見る", href: "#features",
+    style: { fontSize: 14, color: "#FFFFFF", backgroundColor: "transparent", borderRadius: tk.btnR, textAlign: "center", border: "1.5px solid rgba(255,255,255,0.3)" }, zIndex: 3 });
+
+  // Right: 3 mini stat cards stacked
+  const stats = (data.hero.stats ?? []).slice(0, 3);
+  stats.forEach((s, i) => {
+    add({ type: "text", x: 850, y: y0 + 434 + i * 74, width: 300, height: 64,
+      html: `<div style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:12px;padding:12px 18px;display:flex;align-items:center;gap:14px">
+        <span style="font-size:26px;font-weight:900;color:#FFFFFF;line-height:1">${s.value}</span>
+        <span style="font-size:11px;color:rgba(255,255,255,0.55);letter-spacing:0.04em">${s.label}</span>
+      </div>`, style: {}, zIndex: 3 });
+  });
+
+  // Bottom stats strip
+  add({ type: "rect", x: 0, y: y0 + H - 94, width: CW, height: 1, style: { backgroundColor: "rgba(255,255,255,0.08)" }, zIndex: 2 });
+  stats.forEach((s, i) => {
+    add({ type: "text", x: 88 + i * 256, y: y0 + H - 78, width: 234, height: 64,
+      html: `<div style="font-size:30px;font-weight:900;color:#FFFFFF;line-height:1">${s.value}</div><div style="font-size:10px;letter-spacing:0.1em;color:rgba(255,255,255,0.48);margin-top:6px">${s.label}</div>`,
       style: { textAlign: "left" }, zIndex: 3 });
   });
   return H;
 }
 
 function heroLight(data: SectionData, tk: Tk, dna: GlobalStyle | undefined, y0: number, CW: number, add: AddFn) {
-  const H = 680;
-  const lightBg = "#F8FAFC";
-  add({ type: "rect", x: 0, y: y0, width: CW, height: H, style: { backgroundColor: lightBg }, zIndex: 1 });
-  // Subtle top-right color blob
-  add({ type: "rect", x: CW - 300, y: y0 - 150, width: 500, height: 500, style: { backgroundColor: tk.primary, borderRadius: 999, opacity: 0.06 }, zIndex: 1 });
+  const H = 700;
+  // Background: very light with subtle accent blob
+  add({ type: "rect", x: 0, y: y0, width: CW, height: H, style: { backgroundColor: "#F8FAFC" }, zIndex: 1 });
+  add({ type: "rect", x: CW - 360, y: y0 - 120, width: 560, height: 560, style: { backgroundColor: tk.primary, borderRadius: 999, opacity: 0.07 }, zIndex: 1 });
+  add({ type: "rect", x: -80, y: y0 + 400, width: 280, height: 280, style: { backgroundColor: tk.accent, borderRadius: 999, opacity: 0.07 }, zIndex: 1 });
+
   const hf = dna?.headingFont ? { fontFamily: `'${dna.headingFont}'` } : {};
   const bf = dna?.bodyFont    ? { fontFamily: `'${dna.bodyFont}'`    } : {};
-  // LEFT text
-  add({ type: "text", x: 80, y: y0 + 100, width: 500, height: 24, html: data.hero.eyebrow,
-    style: { fontSize: 11, color: tk.primary, letterSpacing: "0.2em", fontWeight: "700", ...hf }, zIndex: 3 });
-  add({ type: "text", x: 80, y: y0 + 138, width: 560, height: 180, html: (data.hero.heading ?? "").replace(/\\n/g, "<br>"),
-    style: { fontSize: parseInt(dna?.h1Size || "50") || 50, fontWeight: dna?.headingWeight ?? 900, color: "#0F172A", textAlign: "left", lineHeight: 1.22, ...hf }, zIndex: 3 });
-  add({ type: "text", x: 80, y: y0 + 332, width: 500, height: 80, html: data.hero.body,
-    style: { fontSize: 15, color: "#475569", textAlign: "left", lineHeight: 1.88, ...bf }, zIndex: 3 });
-  add({ type: "button", x: 80, y: y0 + 430, width: 230, height: 56, html: data.hero.ctaText, href: data.hero.ctaHref,
+
+  // ── LEFT: text content ────────────────────────────────────────
+  // Eyebrow tag
+  add({ type: "rect", x: 80, y: y0 + 96, width: 240, height: 30, style: { backgroundColor: tk.primary + "18", borderRadius: 6 }, zIndex: 3 });
+  add({ type: "text", x: 84, y: y0 + 99, width: 232, height: 24, html: data.hero.eyebrow,
+    style: { fontSize: 11, color: tk.primary, letterSpacing: "0.18em", fontWeight: "700", ...hf }, zIndex: 4 });
+
+  // Heading
+  add({ type: "text", x: 80, y: y0 + 144, width: 560, height: 200,
+    html: (data.hero.heading ?? "").replace(/\\n/g, "<br>"),
+    style: { fontSize: parseInt(dna?.h1Size || "52") || 52, fontWeight: dna?.headingWeight ?? 900, color: "#0F172A", textAlign: "left", lineHeight: 1.2, ...hf }, zIndex: 3 });
+
+  // Body
+  add({ type: "text", x: 80, y: y0 + 358, width: 500, height: 80, html: data.hero.body,
+    style: { fontSize: 15, color: "#475569", textAlign: "left", lineHeight: 1.9, ...bf }, zIndex: 3 });
+
+  // CTA buttons
+  add({ type: "button", x: 80, y: y0 + 458, width: 230, height: 58, html: data.hero.ctaText, href: data.hero.ctaHref,
     style: { fontSize: 15, fontWeight: "bold", color: "#FFFFFF", backgroundColor: tk.primary, borderRadius: tk.btnR, textAlign: "center" }, zIndex: 3 });
-  add({ type: "button", x: 322, y: y0 + 430, width: 160, height: 56, html: "詳しく見る", href: "#features",
-    style: { fontSize: 14, fontWeight: "600", color: tk.primary, backgroundColor: "transparent", borderRadius: tk.btnR, textAlign: "center", border: `1.5px solid ${tk.primary}60` }, zIndex: 3 });
-  // RIGHT: big stat card
-  const rx = 700, ry = y0 + 60, rw = 420, rh = 420;
-  add({ type: "rect", x: rx, y: ry, width: rw, height: rh, style: { backgroundColor: tk.primary, borderRadius: 24 }, zIndex: 2 });
-  add({ type: "rect", x: rx + rw - 120, y: ry - 60, width: 200, height: 200, style: { backgroundColor: tk.accent, borderRadius: 999, opacity: 0.2 }, zIndex: 2 });
-  add({ type: "rect", x: rx - 40, y: ry + rh - 100, width: 180, height: 180, style: { backgroundColor: "#FFFFFF", borderRadius: 999, opacity: 0.05 }, zIndex: 2 });
+  add({ type: "button", x: 326, y: y0 + 458, width: 162, height: 58, html: "詳しく見る", href: "#features",
+    style: { fontSize: 14, fontWeight: "600", color: tk.primary, backgroundColor: "transparent", borderRadius: tk.btnR, textAlign: "center", border: `1.5px solid ${tk.primary}55` }, zIndex: 3 });
+
+  // Small stats row (left-bottom)
   const stats = (data.hero.stats ?? []).slice(0, 3);
-  stats.forEach((s, i) => {
-    add({ type: "text", x: rx + 44, y: ry + 56 + i * 114, width: rw - 88, height: 96,
-      html: `<div style="font-size:42px;font-weight:900;color:#FFFFFF;line-height:1">${s.value}</div><div style="font-size:12px;letter-spacing:0.1em;color:rgba(255,255,255,0.62);margin-top:8px">${s.label}</div>`,
-      style: { textAlign: "left" }, zIndex: 3 });
-    if (i < 2) add({ type: "rect", x: rx + 44, y: ry + 150 + i * 114, width: rw - 88, height: 1, style: { backgroundColor: "rgba(255,255,255,0.12)" }, zIndex: 3 });
+  add({ type: "text", x: 80, y: y0 + H - 68, width: 480, height: 48,
+    html: `<div style="display:flex;gap:28px;align-items:center">
+      ${stats.map((s, i) => `${i > 0 ? '<span style="color:#E2E8F0;font-size:20px">|</span>' : ''}<div><span style="font-size:22px;font-weight:900;color:${tk.primary}">${s.value}</span> <span style="font-size:12px;color:#94A3B8">${s.label}</span></div>`).join("")}
+    </div>`, style: {}, zIndex: 3 });
+
+  // ── RIGHT: stacked feature cards ─────────────────────────────
+  const features = (data.features?.items ?? []).slice(0, 3);
+  const FEAT_COLORS = [tk.primary, tk.accent, "#7C3AED"];
+  const rx = 700, ry = y0 + 54;
+  features.forEach((item, i) => {
+    const cy = ry + i * 192;
+    add({ type: "text", x: rx, y: cy, width: 460, height: 178,
+      html: `<div style="background:#FFFFFF;border:1px solid #E2E8F0;border-radius:16px;box-shadow:0 4px 20px rgba(0,0,0,0.06);overflow:hidden;box-sizing:border-box;height:178px">
+        <div style="height:4px;background:${FEAT_COLORS[i]}"></div>
+        <div style="padding:20px 24px">
+          <div style="display:flex;align-items:flex-start;gap:14px">
+            <div style="min-width:42px;height:42px;border-radius:10px;background:${FEAT_COLORS[i]}15;border:1.5px solid ${FEAT_COLORS[i]}40;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;color:${FEAT_COLORS[i]};flex-shrink:0">0${i+1}</div>
+            <div>
+              <div style="font-size:16px;font-weight:700;color:#111827;line-height:1.3;margin-bottom:8px">${item.title}</div>
+              <div style="font-size:13px;color:#6B7280;line-height:1.75">${item.desc.slice(0, 60)}${item.desc.length > 60 ? "…" : ""}</div>
+            </div>
+          </div>
+        </div>
+      </div>`,
+      style: {}, zIndex: 2 });
   });
+
   return H;
 }
 
