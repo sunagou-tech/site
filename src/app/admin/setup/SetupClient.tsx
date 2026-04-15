@@ -10,7 +10,7 @@ import { EditingContext } from "@/contexts/EditingContext";
 type ChatMessage = { role: "user" | "assistant"; content: string };
 
 const NAVY = "#1A365D";
-type Phase = "form" | "generating" | "preview";
+type Phase = "form" | "generating" | "preview" | "html-preview";
 
 const GEN_STEPS = [
   { pct: 10,  text: "参考サイトのデザインを解析中..." },
@@ -63,7 +63,11 @@ export default function SetupClient() {
   const [target,       setTarget]       = useState("");
   const [strengths,    setStrengths]    = useState("");
 
-  // ─── チャットモード ──────────────────────────────────────────
+  // ─── HTMLモード ──────────────────────────────────────────────
+  const [genMode,        setGenMode]      = useState<"html" | "canvas">("html");
+  const [htmlContent,    setHtmlContent]  = useState<string>("");
+  const [blobUrl,        setBlobUrl]      = useState<string>("");
+
   const [inputMode,      setInputMode]    = useState<"form" | "chat">("form");
   const [chatMessages,   setChatMessages] = useState<ChatMessage[]>([]);
   const [chatInput,      setChatInput]    = useState("");
@@ -142,6 +146,51 @@ export default function SetupClient() {
     }
   }, [businessName, serviceDesc, target, strengths]);
 
+  // ─── HTML LP 生成 ──────────────────────────────────────────
+  const generateHtml = useCallback(async () => {
+    setPhase("generating");
+    setGenPct(0);
+    setGenText("AIがHTMLを設計中...");
+
+    const HTML_STEPS = [
+      { pct: 12, text: "デザインコンセプトを設計中..." },
+      { pct: 28, text: "ヒーローセクションを構築中..." },
+      { pct: 46, text: "各セクションをデザイン中..." },
+      { pct: 64, text: "アニメーション・インタラクションを追加中..." },
+      { pct: 80, text: "カラー・タイポグラフィを調整中..." },
+      { pct: 93, text: "最終仕上げ中..." },
+    ];
+    HTML_STEPS.forEach(({ pct, text }, i) => {
+      setTimeout(() => { setGenPct(pct); setGenText(text); }, i * 2200);
+    });
+
+    try {
+      const res = await fetch("/api/generate-html", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          businessName,
+          serviceDesc,
+          target,
+          strengths,
+          globalStyle: analysisResultRef.current ?? undefined,
+        }),
+      });
+      let data: { error?: string; html?: string };
+      try { data = await res.json(); } catch { throw new Error("サーバーエラーが発生しました。もう一度お試しください。"); }
+      if (!res.ok || data.error) throw new Error(data.error ?? "HTML生成に失敗しました");
+
+      setGenPct(100);
+      setTimeout(() => {
+        setHtmlContent(data.html!);
+        setPhase("html-preview");
+      }, 800);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "HTML生成に失敗しました");
+      setPhase("form");
+    }
+  }, [businessName, serviceDesc, target, strengths]);
+
   // ─── チャット: メッセージ送信 ────────────────────────────────
   const runChatGenerate = useCallback(async (msgs: ChatMessage[]) => {
     setPhase("generating");
@@ -216,6 +265,14 @@ export default function SetupClient() {
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chatMessages, isChatLoading]);
+
+  // HTMLコンテンツ → Blob URL
+  useEffect(() => {
+    if (!htmlContent) return;
+    const url = URL.createObjectURL(new Blob([htmlContent], { type: "text/html" }));
+    setBlobUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [htmlContent]);
 
   const startEditing = useCallback(() => {
     if (!generatedConfig) return;
@@ -369,6 +426,67 @@ export default function SetupClient() {
           </div>
 
         </EditingContext.Provider>
+      </div>
+    );
+  }
+
+  // ══════════════════════════════════════════════════════════
+  // PHASE: HTML-PREVIEW
+  // ══════════════════════════════════════════════════════════
+  if (phase === "html-preview" && htmlContent) {
+    const downloadHtml = () => {
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = `${(businessName || "landing-page").replace(/\s+/g, "-")}.html`;
+      a.click();
+    };
+
+    return (
+      <div style={{ height: "100vh", display: "flex", flexDirection: "column", background: "#0D0D0D", fontFamily: "'Noto Sans JP', sans-serif" }}>
+        <FontLinks />
+
+        {/* トップバー */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between",
+          padding: "10px 20px", background: "#18181B", borderBottom: "1px solid #27272A", flexShrink: 0, gap: 12 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo.png" alt="ツクリエ" style={{ width: 28, height: 28, borderRadius: 8, objectFit: "cover" }} />
+            <div>
+              <p className="text-sm font-bold" style={{ color: "#FFFFFF" }}>LPが完成しました</p>
+              <p className="text-xs" style={{ color: "#71717A" }}>{businessName}</p>
+            </div>
+          </div>
+
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <button onClick={reset}
+              className="flex items-center gap-1.5 text-xs px-3 py-2 rounded-lg transition-colors"
+              style={{ color: "#A1A1AA", border: "1px solid #3F3F46", background: "transparent" }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "#27272A"; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}>
+              <MsIcon name="refresh" size={14} color="#A1A1AA" />
+              やり直す
+            </button>
+            <button onClick={downloadHtml}
+              className="flex items-center gap-2 text-sm font-semibold px-4 py-2 rounded-xl transition-all"
+              style={{ background: "#FFFFFF", color: "#111827" }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "#F3F4F6"; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "#FFFFFF"; }}>
+              <MsIcon name="download" size={16} color="#111827" />
+              HTMLをダウンロード
+            </button>
+          </div>
+        </div>
+
+        {/* iframeプレビュー */}
+        <div style={{ flex: 1, position: "relative", overflow: "hidden" }}>
+          {blobUrl && (
+            <iframe
+              src={blobUrl}
+              style={{ width: "100%", height: "100%", border: "none", display: "block" }}
+              title="生成されたLP"
+            />
+          )}
+        </div>
       </div>
     );
   }
@@ -656,14 +774,43 @@ export default function SetupClient() {
                   style={{ border: "1.5px solid #E2E8F0", background: "#FFFFFF", color: "#111827" }} />
               </div>
 
-              <button onClick={generateSite} disabled={!canGenerate}
+              {/* 生成モード選択 */}
+              <div style={{ background: "#F3F4F6", borderRadius: 16, padding: 14 }}>
+                <p className="text-xs font-semibold mb-3" style={{ color: "#374151" }}>生成モードを選択</p>
+                <div className="flex gap-2">
+                  {([
+                    ["html", "HTMLページ生成", "code", "一流LPを1枚のHTMLで即出力", true],
+                    ["canvas", "キャンバス編集", "grid_view", "ブロックを自由に編集できる形式", false],
+                  ] as const).map(([mode, label, icon, desc, recommended]) => (
+                    <button key={mode} onClick={() => setGenMode(mode)}
+                      className="flex-1 text-left p-3 rounded-xl transition-all"
+                      style={{
+                        background: genMode === mode ? "#FFFFFF" : "transparent",
+                        border: `2px solid ${genMode === mode ? NAVY : "transparent"}`,
+                        boxShadow: genMode === mode ? "0 2px 8px rgba(0,0,0,0.08)" : "none",
+                      }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
+                        <MsIcon name={icon} size={14} color={genMode === mode ? NAVY : "#9CA3AF"} />
+                        <span className="text-xs font-semibold" style={{ color: genMode === mode ? "#111827" : "#6B7280" }}>{label}</span>
+                        {recommended && (
+                          <span className="text-[9px] px-1.5 py-0.5 rounded-full font-bold"
+                            style={{ background: "#FEF3C7", color: "#92400E" }}>推奨</span>
+                        )}
+                      </div>
+                      <p className="text-[11px] leading-snug" style={{ color: "#9CA3AF" }}>{desc}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <button onClick={genMode === "html" ? generateHtml : generateSite} disabled={!canGenerate}
                 className="w-full flex items-center justify-center gap-3 font-bold text-base py-4 rounded-2xl text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                 style={{
                   background: canGenerate ? `linear-gradient(135deg, ${NAVY}, #2B6CB0)` : "#CBD5E1",
                   boxShadow: canGenerate ? "0 4px 20px rgba(26,54,93,0.3)" : "none",
                 }}>
                 <MsIcon name="auto_awesome" size={20} color="#FFFFFF" />
-                このデザインでサイトを生成する
+                {genMode === "html" ? "一流LPのHTMLを生成する" : "キャンバスでサイトを生成する"}
               </button>
 
               {!canGenerate && (
