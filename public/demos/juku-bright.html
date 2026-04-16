@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>まなびや学習塾 | 小学生・中学生・高校生の個別指導</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Noto+Serif+JP:wght@700;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--red:#DC2626;--red-light:#FEE2E2;--dark:#111827;--mid:#6B7280}
+body{background:#fff;color:var(--dark);font-family:'Noto Sans JP',sans-serif;overflow-x:hidden}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;background:#fff;border-bottom:3px solid var(--red)}
+.nav-top{background:#111827;display:flex;justify-content:flex-end;padding:6px 40px;gap:20px}
+.nav-top a{color:rgba(255,255,255,.7);font-size:12px;text-decoration:none}
+.nav-main{display:flex;align-items:center;justify-content:space-between;padding:0 40px;height:68px}
+.logo{display:flex;align-items:center;gap:10px}
+.logo-mark{width:44px;height:44px;background:var(--red);border-radius:12px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:18px}
+.logo-text{font-weight:900;font-size:20px;color:var(--dark)}
+.logo-text span{color:var(--red)}
+nav ul{display:flex;list-style:none;gap:28px}
+nav a{color:#374151;text-decoration:none;font-size:14px;font-weight:500;transition:.2s}
+nav a:hover{color:var(--red)}
+.nav-cta{display:flex;gap:10px}
+.btn-free{background:var(--red);color:#fff;padding:10px 24px;font-weight:700;font-size:14px;border-radius:0}
+.btn-doc{background:#fff;color:var(--dark);padding:10px 24px;font-weight:700;font-size:14px;border:2px solid #E5E7EB;border-radius:0}
+
+/* HERO */
+.hero{margin-top:95px;background:#fff;display:grid;grid-template-columns:1fr 1fr;min-height:580px;position:relative;overflow:hidden}
+.hero-left{padding:60px 40px 60px 60px;display:flex;flex-direction:column;justify-content:center}
+.grade-tabs{display:flex;gap:0;margin-bottom:32px}
+.tab{padding:10px 28px;font-size:14px;font-weight:700;border:2px solid #E5E7EB;cursor:pointer;transition:.2s;color:#6B7280}
+.tab.active{background:var(--red);border-color:var(--red);color:#fff}
+.tab:not(.active):hover{border-color:var(--red);color:var(--red)}
+.hero-label{font-size:13px;color:var(--red);font-weight:700;letter-spacing:.1em;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.hero-label::before{content:'';display:block;width:20px;height:2px;background:var(--red)}
+h1{font-family:'Noto Serif JP',serif;font-weight:900;font-size:clamp(2rem,4.5vw,3.6rem);line-height:1.25;letter-spacing:-.02em;color:var(--dark);margin-bottom:24px}
+h1 em{color:var(--red);font-style:normal}
+.hero-sub{font-size:15px;line-height:1.9;color:var(--mid);margin-bottom:40px;max-width:420px}
+.hero-btns{display:flex;flex-wrap:wrap;gap:12px}
+.btn-primary{display:inline-flex;align-items:center;gap:10px;background:var(--red);color:#fff;font-weight:700;font-size:15px;padding:16px 36px;border:none;cursor:pointer;transition:.3s}
+.btn-primary:hover{background:#B91C1C;transform:translateY(-1px);box-shadow:0 4px 16px rgba(220,38,38,.3)}
+.btn-secondary{display:inline-flex;align-items:center;gap:10px;background:#fff;color:var(--dark);font-weight:700;font-size:15px;padding:16px 36px;border:2px solid #E5E7EB;cursor:pointer;transition:.3s}
+.btn-secondary:hover{border-color:var(--red);color:var(--red)}
+.hero-right{position:relative;overflow:hidden}
+.hero-img{width:100%;height:100%;object-fit:cover}
+.hero-photo{width:100%;height:100%;background:linear-gradient(135deg,#F3F4F6 0%,#E5E7EB 100%);display:flex;align-items:center;justify-content:center;min-height:580px;position:relative;overflow:hidden}
+.photo-scene{width:100%;height:100%;position:relative}
+/* CSS illustration of classroom */
+.classroom-bg{position:absolute;inset:0;background:linear-gradient(180deg,#FEF9F0 0%,#FEF3E2 100%)}
+.desk-row{position:absolute;display:flex;gap:20px}
+.student{width:80px;text-align:center}
+.student-head{width:44px;height:44px;border-radius:50%;margin:0 auto 6px;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.1)}
+.student-body{width:60px;height:50px;border-radius:8px 8px 0 0;margin:0 auto}
+.desk{width:80px;height:10px;background:#D4A373;border-radius:3px}
+.badge-floating{position:absolute;background:#fff;border-radius:12px;padding:10px 16px;box-shadow:0 4px 20px rgba(0,0,0,.12);display:flex;align-items:center;gap:8px;white-space:nowrap}
+.badge-dot{width:10px;height:10px;border-radius:50%;background:var(--red);flex-shrink:0}
+
+/* CAMPAIGN */
+.campaign{background:var(--red);padding:28px 60px;display:flex;align-items:center;justify-content:space-between}
+.campaign-text{color:#fff}
+.campaign-label{font-size:12px;font-weight:700;letter-spacing:.15em;opacity:.85;margin-bottom:6px}
+.campaign-title{font-size:26px;font-weight:900;letter-spacing:-.01em}
+.campaign-btn{display:inline-flex;align-items:center;gap:10px;background:#fff;color:var(--red);font-weight:700;font-size:15px;padding:14px 36px;flex-shrink:0}
+
+/* MERIT */
+.merit{background:#F9FAFB;padding:80px 60px}
+.section-label{font-size:11px;letter-spacing:.2em;color:var(--red);text-transform:uppercase;font-weight:700;margin-bottom:10px}
+.section-title{font-family:'Noto Serif JP',serif;font-size:clamp(1.5rem,3vw,2.4rem);font-weight:700;letter-spacing:-.02em;margin-bottom:48px;line-height:1.4}
+.merit-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+.merit-card{background:#fff;border-radius:0;padding:36px 28px;border-top:4px solid var(--red);box-shadow:0 1px 8px rgba(0,0,0,.06)}
+.merit-num{font-size:48px;font-weight:900;color:var(--red);opacity:.2;line-height:1;margin-bottom:12px;font-family:'Noto Serif JP',serif}
+.merit-card h3{font-size:18px;font-weight:700;margin-bottom:10px}
+.merit-card p{font-size:14px;line-height:1.8;color:var(--mid)}
+
+/* SPLIT SECTIONS */
+.split{padding:80px 60px;display:grid;gap:0}
+.split-inner{display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center}
+.split-inner.reverse{direction:rtl}
+.split-inner.reverse > *{direction:ltr}
+.split-photo{border-radius:0;overflow:hidden;aspect-ratio:4/3;position:relative}
+.photo-placeholder{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:14px;color:#9CA3AF;letter-spacing:.05em}
+.split-content{}
+.split-tag{display:inline-block;background:var(--red-light);color:var(--red);font-size:12px;font-weight:700;padding:4px 14px;margin-bottom:16px;letter-spacing:.05em}
+.split-content h2{font-family:'Noto Serif JP',serif;font-size:clamp(1.4rem,2.5vw,2rem);font-weight:700;margin-bottom:16px;line-height:1.4}
+.split-content p{font-size:15px;line-height:1.9;color:var(--mid);margin-bottom:24px}
+.point-list{display:flex;flex-direction:column;gap:10px;margin-bottom:28px}
+.point{display:flex;align-items:flex-start;gap:10px;font-size:14px}
+.point-check{width:20px;height:20px;background:var(--red);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700;flex-shrink:0;margin-top:1px}
+
+/* STATS */
+.stats{background:var(--dark);padding:60px;display:grid;grid-template-columns:repeat(4,1fr);text-align:center}
+.stat{padding:10px;border-right:1px solid rgba(255,255,255,.1)}
+.stat:last-child{border-right:none}
+.stat-num{font-family:'Noto Serif JP',serif;font-size:52px;font-weight:900;color:var(--red);letter-spacing:-.04em;line-height:1}
+.stat-unit{font-size:18px}
+.stat-label{font-size:12px;color:rgba(255,255,255,.5);margin-top:8px;letter-spacing:.05em}
+
+/* VOICE */
+.voices{background:#fff;padding:80px 60px}
+.voice-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.voice-card{background:#F9FAFB;padding:28px;border-radius:0;border-left:4px solid var(--red)}
+.voice-quote{font-size:15px;line-height:1.8;color:var(--dark);margin-bottom:16px}
+.voice-meta{display:flex;align-items:center;gap:12px}
+.voice-avatar{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--red-light),#FCA5A5);display:flex;align-items:center;justify-content:center;font-size:18px}
+.voice-name{font-size:13px;font-weight:700;color:var(--dark)}
+.voice-role{font-size:11px;color:var(--mid);margin-top:2px}
+
+/* FLOW */
+.flow{background:#F9FAFB;padding:80px 60px}
+.flow-list{display:flex;gap:0;margin-top:48px;position:relative}
+.flow-list::before{content:'';position:absolute;top:28px;left:28px;right:28px;height:2px;background:linear-gradient(90deg,var(--red),#FCA5A5)}
+.flow-item{flex:1;text-align:center;padding:0 12px}
+.flow-step{width:56px;height:56px;background:var(--red);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:16px;margin:0 auto 16px;position:relative;z-index:1}
+.flow-item h3{font-size:15px;font-weight:700;margin-bottom:8px}
+.flow-item p{font-size:13px;color:var(--mid);line-height:1.7}
+
+/* CTA */
+.cta-section{background:var(--red);padding:80px 60px;text-align:center}
+.cta-section h2{font-family:'Noto Serif JP',serif;font-size:clamp(1.8rem,3.5vw,2.8rem);font-weight:900;color:#fff;margin-bottom:16px;letter-spacing:-.02em}
+.cta-section p{font-size:17px;color:rgba(255,255,255,.85);margin-bottom:40px;line-height:1.8}
+.cta-btns{display:flex;justify-content:center;gap:16px;flex-wrap:wrap}
+.btn-white{display:inline-flex;align-items:center;gap:10px;background:#fff;color:var(--red);font-weight:700;font-size:16px;padding:18px 52px;cursor:pointer;border:none;transition:.3s}
+.btn-white:hover{background:#F9FAFB;transform:translateY(-2px);box-shadow:0 6px 24px rgba(0,0,0,.15)}
+.btn-outline-w{display:inline-flex;align-items:center;gap:10px;background:transparent;color:#fff;font-weight:700;font-size:16px;padding:18px 52px;border:2px solid rgba(255,255,255,.6);cursor:pointer;transition:.3s}
+.btn-outline-w:hover{background:rgba(255,255,255,.1);border-color:#fff}
+
+footer{background:var(--dark);color:rgba(255,255,255,.6);padding:40px 60px;display:flex;justify-content:space-between;align-items:center;font-size:13px}
+.footer-logo{color:#fff;font-weight:700;font-size:16px}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-top">
+    <a href="#">保護者の方へ</a>
+    <a href="#">教室一覧</a>
+    <a href="#">よくある質問</a>
+    <a href="#">お問い合わせ</a>
+  </div>
+  <div class="nav-main">
+    <div class="logo">
+      <div class="logo-mark">ま</div>
+      <div class="logo-text">まなびや<span>学習塾</span></div>
+    </div>
+    <ul>
+      <li><a href="#">コース紹介</a></li>
+      <li><a href="#">実績・合格校</a></li>
+      <li><a href="#">講師紹介</a></li>
+      <li><a href="#">教室・料金</a></li>
+    </ul>
+    <div class="nav-cta">
+      <button class="btn-doc">資料請求</button>
+      <button class="btn-free">無料体験申込</button>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-left">
+    <div class="grade-tabs">
+      <div class="tab active">小学生</div>
+      <div class="tab">中学生</div>
+      <div class="tab">高校生</div>
+    </div>
+    <p class="hero-label">新学期開講キャンペーン実施中</p>
+    <h1>「わかる」喜びが、<br><em>やる気</em>になる。</h1>
+    <p class="hero-sub">一人ひとりの学力・個性に合わせたオーダーメイド指導で、苦手を得意に変えます。小学生から高校生まで、全学年対応。</p>
+    <div class="hero-btns">
+      <button class="btn-primary">無料体験を申し込む</button>
+      <button class="btn-secondary">教室を探す</button>
+    </div>
+  </div>
+  <div class="hero-right">
+    <div class="hero-photo">
+      <div class="classroom-bg"></div>
+      <!-- CSS-drawn classroom scene -->
+      <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;padding:40px">
+        <div style="display:flex;gap:24px;align-items:flex-end">
+          <!-- Student 1 -->
+          <div style="text-align:center">
+            <div style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#FED7AA,#FB923C);margin:0 auto 8px;border:3px solid #fff;box-shadow:0 2px 10px rgba(0,0,0,.1)"></div>
+            <div style="width:64px;height:60px;background:linear-gradient(180deg,#DBEAFE,#BFDBFE);border-radius:8px 8px 0 0;margin:0 auto"></div>
+            <div style="width:80px;height:10px;background:#D97706;border-radius:3px;margin:0 auto"></div>
+          </div>
+          <!-- Student 2 (taller) -->
+          <div style="text-align:center">
+            <div style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#FCA5A5,#F87171);margin:0 auto 8px;border:3px solid #fff;box-shadow:0 2px 10px rgba(0,0,0,.1)"></div>
+            <div style="width:64px;height:70px;background:linear-gradient(180deg,#FEF3C7,#FDE68A);border-radius:8px 8px 0 0;margin:0 auto"></div>
+            <div style="width:80px;height:10px;background:#D97706;border-radius:3px;margin:0 auto"></div>
+          </div>
+          <!-- Teacher -->
+          <div style="text-align:center">
+            <div style="width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#A7F3D0,#6EE7B7);margin:0 auto 8px;border:3px solid #fff;box-shadow:0 2px 10px rgba(0,0,0,.1)"></div>
+            <div style="width:70px;height:80px;background:linear-gradient(180deg,#DBEAFE,#93C5FD);border-radius:8px 8px 0 0;margin:0 auto"></div>
+            <div style="width:80px;height:10px;background:#D97706;border-radius:3px;margin:0 auto"></div>
+          </div>
+          <!-- Student 3 -->
+          <div style="text-align:center">
+            <div style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#C4B5FD,#A78BFA);margin:0 auto 8px;border:3px solid #fff;box-shadow:0 2px 10px rgba(0,0,0,.1)"></div>
+            <div style="width:64px;height:55px;background:linear-gradient(180deg,#FEE2E2,#FECACA);border-radius:8px 8px 0 0;margin:0 auto"></div>
+            <div style="width:80px;height:10px;background:#D97706;border-radius:3px;margin:0 auto"></div>
+          </div>
+        </div>
+        <!-- Whiteboard -->
+        <div style="width:320px;height:100px;background:#F0FDF4;border:3px solid #86EFAC;border-radius:8px;display:flex;align-items:center;justify-content:center;position:relative">
+          <div style="position:absolute;top:-14px;left:50%;transform:translateX(-50%);background:#16A34A;color:#fff;font-size:11px;font-weight:700;padding:2px 12px;border-radius:100px">講師</div>
+          <div style="text-align:center">
+            <div style="font-size:16px;font-weight:900;color:#15803D">y = 2x + 3</div>
+            <div style="font-size:12px;color:#6B7280;margin-top:6px">一次関数をやさしく解説中</div>
+          </div>
+        </div>
+      </div>
+      <!-- Floating badges -->
+      <div class="badge-floating" style="top:20px;right:20px">
+        <div class="badge-dot"></div>
+        <div><div style="font-size:13px;font-weight:700;color:#111827">合格率</div><div style="font-size:22px;font-weight:900;color:#DC2626">95%</div></div>
+      </div>
+      <div class="badge-floating" style="bottom:80px;left:20px">
+        <div class="badge-dot" style="background:#16A34A"></div>
+        <div style="font-size:13px;font-weight:700;color:#111827">全国150教室</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CAMPAIGN BANNER -->
+<div class="campaign">
+  <div class="campaign-text">
+    <div class="campaign-label">🎉 期間限定キャンペーン</div>
+    <div class="campaign-title">新学期開講 無料体験実施中！入塾金0円</div>
+  </div>
+  <button class="campaign-btn">今すぐ申し込む →</button>
+</div>
+
+<!-- MERIT -->
+<section class="merit">
+  <p class="section-label">Why Choose Us</p>
+  <h2 class="section-title">まなびやが選ばれる理由</h2>
+  <div class="merit-grid">
+    <div class="merit-card">
+      <div class="merit-num">01</div>
+      <h3>完全個別対応の学習プラン</h3>
+      <p>入塾時の学力診断で現状を把握し、お子さまだけの最適な学習ロードマップを作成します。</p>
+    </div>
+    <div class="merit-card">
+      <div class="merit-num">02</div>
+      <h3>保護者との密な連携</h3>
+      <p>毎月の保護者面談と週次のアプリ報告で、ご家庭と塾が一体となって成績向上を目指します。</p>
+    </div>
+    <div class="merit-card">
+      <div class="merit-num">03</div>
+      <h3>自習室で安心のサポート体制</h3>
+      <p>授業がない日でも自習室を開放。わからない問題は常駐スタッフがすぐに対応します。</p>
+    </div>
+  </div>
+</section>
+
+<!-- SPLIT 1 -->
+<section class="split" style="background:#fff">
+  <div class="split-inner">
+    <div class="split-photo" style="background:linear-gradient(135deg,#DBEAFE 0%,#E0F2FE 50%,#F0FDF4 100%);min-height:320px;display:flex;align-items:center;justify-content:center">
+      <div style="text-align:center;padding:40px">
+        <div style="font-size:48px;margin-bottom:12px">📚</div>
+        <div style="font-size:16px;font-weight:700;color:#1E40AF">小・中・高 全学年対応</div>
+        <div style="font-size:13px;color:#6B7280;margin-top:8px">お子さまの成長に合わせて<br>ずっとサポートします</div>
+        <!-- Grade badges -->
+        <div style="display:flex;gap:8px;justify-content:center;margin-top:20px">
+          <span style="background:#DC2626;color:#fff;font-size:12px;font-weight:700;padding:4px 14px;border-radius:100px">小学生</span>
+          <span style="background:#1D4ED8;color:#fff;font-size:12px;font-weight:700;padding:4px 14px;border-radius:100px">中学生</span>
+          <span style="background:#065F46;color:#fff;font-size:12px;font-weight:700;padding:4px 14px;border-radius:100px">高校生</span>
+        </div>
+      </div>
+    </div>
+    <div class="split-content">
+      <span class="split-tag">小中高 全学年対応</span>
+      <h2 class="section-title" style="margin-bottom:16px">成長に合わせて<br>ずっと寄り添います</h2>
+      <p style="font-size:15px;line-height:1.9;color:#6B7280;margin-bottom:20px">小学校の基礎学力定着から、中学受験・高校受験・大学受験まで一貫してサポート。転塾の手間なく、お子さまの成長を長期的に見守ります。</p>
+      <div class="point-list">
+        <div class="point"><div class="point-check">✓</div><span>学年をまたいだ一貫カリキュラム</span></div>
+        <div class="point"><div class="point-check">✓</div><span>担任制で長期的な関係構築</span></div>
+        <div class="point"><div class="point-check">✓</div><span>兄弟・姉妹割引制度あり</span></div>
+      </div>
+      <button class="btn-primary">コース詳細を見る</button>
+    </div>
+  </div>
+</section>
+
+<!-- SPLIT 2 (reversed) -->
+<section class="split" style="background:#F9FAFB">
+  <div class="split-inner reverse">
+    <div class="split-photo" style="background:linear-gradient(135deg,#FFF7ED 0%,#FEF3C7 100%);min-height:320px;display:flex;align-items:center;justify-content:center">
+      <div style="text-align:center;padding:40px">
+        <div style="font-size:48px;margin-bottom:12px">📊</div>
+        <div style="font-size:60px;font-weight:900;color:#DC2626;line-height:1">+28<span style="font-size:28px">点</span></div>
+        <div style="font-size:14px;color:#6B7280;margin-top:8px">3ヶ月後の平均成績向上幅</div>
+        <div style="display:flex;gap:16px;justify-content:center;margin-top:20px">
+          <div style="text-align:center"><div style="font-size:24px;font-weight:900;color:#1D4ED8">92%</div><div style="font-size:12px;color:#6B7280">成績向上率</div></div>
+          <div style="text-align:center"><div style="font-size:24px;font-weight:900;color:#16A34A">95%</div><div style="font-size:12px;color:#6B7280">志望校合格率</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="split-content">
+      <span class="split-tag">データで証明する実績</span>
+      <h2 class="section-title" style="margin-bottom:16px">入塾3ヶ月で<br>平均28点アップ</h2>
+      <p style="font-size:15px;line-height:1.9;color:#6B7280;margin-bottom:20px">独自の学習管理システムで一人ひとりの進捗をデータ化。「なんとなく勉強した」から「確実に伸びる」学習習慣へ変えます。</p>
+      <div class="point-list">
+        <div class="point"><div class="point-check">✓</div><span>毎週の学習レポートで可視化</span></div>
+        <div class="point"><div class="point-check">✓</div><span>3ヶ月で成果が出なければ延長無料</span></div>
+        <div class="point"><div class="point-check">✓</div><span>過去15年の合格実績データベース活用</span></div>
+      </div>
+      <button class="btn-primary">実績・合格校を見る</button>
+    </div>
+  </div>
+</section>
+
+<!-- STATS -->
+<div class="stats">
+  <div class="stat"><div class="stat-num">95<span class="stat-unit">%</span></div><div class="stat-label">志望校合格率</div></div>
+  <div class="stat"><div class="stat-num">150<span style="font-size:20px">教室</span></div><div class="stat-label">全国展開中</div></div>
+  <div class="stat"><div class="stat-num">25<span style="font-size:20px">年</span></div><div class="stat-label">指導の実績</div></div>
+  <div class="stat"><div class="stat-num">4.8<span style="font-size:20px">/5</span></div><div class="stat-label">保護者満足度</div></div>
+</div>
+
+<!-- VOICES -->
+<section class="voices">
+  <p class="section-label">Voice</p>
+  <h2 class="section-title">保護者・生徒の声</h2>
+  <div class="voice-grid">
+    <div class="voice-card">
+      <p class="voice-quote">「先生がやさしく教えてくれるので、わからない問題も怖がらずに質問できます。算数が好きになりました！」</p>
+      <div class="voice-meta">
+        <div class="voice-avatar">😊</div>
+        <div><div class="voice-name">小学6年生・Aさん</div><div class="voice-role">中学受験コース</div></div>
+      </div>
+    </div>
+    <div class="voice-card">
+      <p class="voice-quote">「月次の面談で細かく状況を教えていただけるので、親として安心して任せられます。成績も3ヶ月で20点上がりました」</p>
+      <div class="voice-meta">
+        <div class="voice-avatar">👩</div>
+        <div><div class="voice-name">中学2年生の保護者</div><div class="voice-role">高校受験コース</div></div>
+      </div>
+    </div>
+    <div class="voice-card">
+      <p class="voice-quote">「志望校のデータをもとに作ってもらった専用カリキュラムのおかげで、第一志望に合格できました！」</p>
+      <div class="voice-meta">
+        <div class="voice-avatar">🎓</div>
+        <div><div class="voice-name">高校3年生・Bさん</div><div class="voice-role">大学受験コース</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FLOW -->
+<section class="flow" >
+  <p class="section-label">Process</p>
+  <h2 class="section-title">入塾までの4ステップ</h2>
+  <div class="flow-list">
+    <div class="flow-item"><div class="flow-step">01</div><h3>無料体験申込</h3><p>Webまたはお電話で受付。24時間以内にご連絡</p></div>
+    <div class="flow-item"><div class="flow-step">02</div><h3>学力診断</h3><p>現在の実力と課題を正確に把握します</p></div>
+    <div class="flow-item"><div class="flow-step">03</div><h3>カリキュラム提案</h3><p>目標・ペースに合わせた専用プランを設計</p></div>
+    <div class="flow-item"><div class="flow-step">04</div><h3>指導スタート</h3><p>週次レポートで着実に成績アップ</p></div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+  <h2>まず、無料体験から始めませんか？</h2>
+  <p>しつこい勧誘は一切なし。お子さまのペースで、ゆっくり検討いただけます。<br>新学期キャンペーン実施中！入塾金0円でスタートできます。</p>
+  <div class="cta-btns">
+    <button class="btn-white">無料体験を申し込む</button>
+    <button class="btn-outline-w">資料を請求する</button>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-logo">まなびや学習塾</div>
+  <div>© 2024 まなびや学習塾 All Rights Reserved.</div>
+</footer>
+</body>
+</html>

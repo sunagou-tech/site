@@ -90,6 +90,20 @@ const DEMO_TEMPLATES: DemoTemplate[] = [
       designNotes: "学習塾、プレミアム個別指導、高級感、深紺背景、水色アクセント、マンツーマン、成績保証",
     },
   },
+  {
+    id: "juku-bright",
+    name: "まなびや学習塾",
+    label: "ブライト × 家族向け",
+    desc: "白背景×赤アクセント。写真中心の明るいデザイン。小中高すべての学年に対応。",
+    thumb: { bg: "#FFFFFF", accent: "#DC2626", textColor: "#111827", subColor: "#6B7280" },
+    style: {
+      primaryColor: "#DC2626", accentColor: "#EF4444",
+      heroBgColor: "#FFFFFF", bgColor: "#FFFFFF",
+      cardBgColor: "#F9FAFB", buttonBgColor: "#DC2626",
+      designStyle: "bright-family",
+      designNotes: "学習塾、小中高全学年対応、明るい、白背景、赤アクセント、写真中心、家族向け、親しみやすい、キャンペーン訴求",
+    },
+  },
 ];
 
 // ── デモサムネイル（実際のHTMLをiframeで表示）────────────────
