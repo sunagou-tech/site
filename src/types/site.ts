@@ -725,6 +725,17 @@ export interface SiteConfig {
   navLinks: NavLink[];        // ナビゲーション
   blockStyles?: Record<string, BlockStyle>; // blockId → スタイルオーバーライド
   globalStyle?: GlobalStyle;  // 参考サイト解析 / AI 抽出デザインルール
+  siteFont?: string;          // サイト全体のフォント (Google Fonts name)
+  description?: string;       // サイト説明文 / meta description
+  favicon?: string;           // ファビコン URL
+  ogImage?: string;           // OGP 画像 URL
+  gaId?: string;              // Google Analytics 測定 ID
+  gscCode?: string;           // Search Console 確認コード
+  meoName?: string;
+  meoAddress?: string;
+  meoPhone?: string;
+  meoCategory?: string;
+  llmoFaq?: Array<{ q: string; a: string }>;
   // キャンバスエディタ用（ペライチ型）
   elements: CanvasElement[];
   canvasWidth: number;

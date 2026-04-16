@@ -1017,9 +1017,14 @@ export default function CanvasEditor({ config, onChange }: Props) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [editingId,  setEditingId]  = useState<string | null>(null);
   const [drag,       setDrag]       = useState<DragState | null>(null);
-  const [leftTab,       setLeftTab]       = useState<"elements" | "blocks" | "images">("blocks");
+  const [sidePanel,     setSidePanel]     = useState<"settings" | "blocks" | "images" | "elements" | "seo" | "ai-image">("blocks");
   const [imgCategory,   setImgCategory]   = useState<string>("すべて");
   const [blockCategory, setBlockCategory] = useState<string>("すべて");
+  const [aiImgPrompt,   setAiImgPrompt]   = useState<string>("");
+  const [aiImgRatio,    setAiImgRatio]    = useState<"1:1" | "4:3" | "16:9" | "3:4">("1:1");
+  const [aiImgLoading,  setAiImgLoading]  = useState(false);
+  const [aiImgError,    setAiImgError]    = useState("");
+  const [aiGenImages,   setAiGenImages]   = useState<string[]>([]);
   const [blockModal,    setBlockModal]    = useState(false);
   const canvasRef = useRef<HTMLDivElement>(null);
 
@@ -1063,6 +1068,49 @@ export default function CanvasEditor({ config, onChange }: Props) {
       ...(d.html ? { html: d.html } : {}),
       ...(d.href ? { href: d.href } : {}),
       style: d.style ?? {},
+    };
+    onChange({ ...config, elements: [...elements, el] });
+    setSelectedId(el.id);
+  }
+
+  // ── AI image generation ──────────────────────────────────
+  async function generateAiImage() {
+    if (!aiImgPrompt.trim()) return;
+    setAiImgLoading(true);
+    setAiImgError("");
+    try {
+      const res = await fetch("/api/generate-image", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: aiImgPrompt, aspectRatio: aiImgRatio }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "生成失敗");
+      const urls = (data.images as { dataUrl: string }[]).map(i => i.dataUrl);
+      setAiGenImages(prev => [...urls, ...prev]);
+    } catch (e) {
+      setAiImgError(e instanceof Error ? e.message : "生成に失敗しました");
+    } finally {
+      setAiImgLoading(false);
+    }
+  }
+
+  function addAiImageToCanvas(dataUrl: string) {
+    const RATIO_MAP: Record<string, { w: number; h: number }> = {
+      "1:1":  { w: 400, h: 400 },
+      "4:3":  { w: 400, h: 300 },
+      "16:9": { w: 480, h: 270 },
+      "3:4":  { w: 300, h: 400 },
+    };
+    const { w, h } = RATIO_MAP[aiImgRatio] ?? { w: 400, h: 400 };
+    const maxY = elements.length > 0 ? Math.max(...elements.map(e => e.y + e.height)) : 0;
+    const el: CanvasElement = {
+      id: uid(), type: "image",
+      x: Math.max(0, Math.round((CW - w) / 2)), y: maxY + 20,
+      width: w, height: h,
+      src: dataUrl, alt: "AI生成画像",
+      style: { objectFit: "cover", borderRadius: 12 },
+      zIndex: 5,
     };
     onChange({ ...config, elements: [...elements, el] });
     setSelectedId(el.id);
@@ -1117,6 +1165,19 @@ export default function CanvasEditor({ config, onChange }: Props) {
     onChange({ ...config, elements: [...moved, ...noBlock] });
   }, [config, onChange]);
 
+  // ── Google Fonts loader ──────────────────────────────────
+  const siteFont = config.siteFont ?? "Noto Sans JP";
+  useEffect(() => {
+    const encoded = siteFont.replace(/ /g, "+");
+    const href = `https://fonts.googleapis.com/css2?family=${encoded}:wght@400;500;700;900&display=swap`;
+    const existing = document.querySelector(`link[data-site-font]`);
+    if (existing) existing.remove();
+    const link = document.createElement("link");
+    link.rel = "stylesheet"; link.href = href;
+    link.setAttribute("data-site-font", "1");
+    document.head.appendChild(link);
+  }, [siteFont]);
+
   // ── Keyboard ─────────────────────────────────────────────
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -1168,120 +1229,138 @@ export default function CanvasEditor({ config, onChange }: Props) {
   return (
     <div style={{ display: "flex", flex: 1, overflow: "hidden", minHeight: 0, background: "#F1F5F9" }}>
 
-      {/* ═══ Left Panel ═══════════════════════════════════════ */}
-      <div style={{ width: 240, background: "#FFFFFF", borderRight: "1px solid #E2E8F0", display: "flex", flexDirection: "column", flexShrink: 0, overflow: "hidden" }}>
-        {/* Tabs */}
-        <div style={{ display: "flex", borderBottom: "1px solid #E2E8F0", flexShrink: 0 }}>
-          {(["blocks", "elements", "images"] as const).map(tab => (
-            <button key={tab} onClick={() => setLeftTab(tab)}
+      {/* ═══ Left Sidebar (icon rail + panel) ════════════════ */}
+      <div style={{ display: "flex", flexShrink: 0, height: "100%" }}>
+
+        {/* Icon rail */}
+        <div style={{ width: 56, background: "#0F172A", display: "flex", flexDirection: "column", alignItems: "center", paddingTop: 10, gap: 2, flexShrink: 0 }}>
+          {([
+            { id: "settings" as const, label: "設定",
+              icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> },
+            { id: "blocks" as const, label: "ブロック",
+              icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg> },
+            { id: "images" as const, label: "素材",
+              icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg> },
+            { id: "elements" as const, label: "要素",
+              icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg> },
+            { id: "seo" as const, label: "SEO",
+              icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> },
+            { id: "ai-image" as const, label: "AI画像",
+              icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9"/><path d="M16 3h5v5"/><path d="M21 3l-9 9"/></svg> },
+          ]).map(item => (
+            <button key={item.id} onClick={() => setSidePanel(item.id)}
               style={{
-                flex: 1, padding: "9px 0", fontSize: 11, fontWeight: 600,
-                color: leftTab === tab ? "#4F46E5" : "#94A3B8",
-                background: "none", border: "none", borderBottomWidth: 2,
-                borderBottomStyle: "solid", borderBottomColor: leftTab === tab ? "#4F46E5" : "transparent",
-                cursor: "pointer", transition: "all 0.15s",
-              }}>
-              {tab === "blocks" ? "ブロック" : tab === "elements" ? "要素" : "素材"}
+                width: 46, padding: "8px 0 6px", border: "none", borderRadius: 8,
+                background: sidePanel === item.id ? "rgba(99,102,241,0.18)" : "transparent",
+                color: sidePanel === item.id ? "#818CF8" : "#475569",
+                cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 3,
+                transition: "all 0.15s",
+              }}
+              onMouseEnter={e => { if (sidePanel !== item.id) (e.currentTarget as HTMLElement).style.color = "#94A3B8"; }}
+              onMouseLeave={e => { if (sidePanel !== item.id) (e.currentTarget as HTMLElement).style.color = "#475569"; }}>
+              {item.icon}
+              <span style={{ fontSize: 8, fontWeight: 600, letterSpacing: "0.02em" }}>{item.label}</span>
             </button>
           ))}
         </div>
 
-        <div style={{ flex: 1, overflowY: "auto", padding: "12px 10px" }}>
-          {leftTab === "images" ? (
-            /* ── Stock image library ── */
-            <div>
-              <p style={{ fontSize: 10, color: "#94A3B8", fontWeight: 700, letterSpacing: "0.1em", marginBottom: 8, paddingLeft: 2 }}>クリックでキャンバスに追加</p>
-              {/* カテゴリフィルタ */}
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 10 }}>
-                {IMG_CATEGORIES.map(cat => (
-                  <button key={cat} onClick={() => setImgCategory(cat)}
-                    style={{ fontSize: 9, padding: "3px 8px", borderRadius: 999, border: "1px solid #E2E8F0",
-                      background: imgCategory === cat ? "#4F46E5" : "#F9FAFB",
-                      color: imgCategory === cat ? "#FFFFFF" : "#6B7280",
-                      cursor: "pointer", fontWeight: imgCategory === cat ? 700 : 400 }}>
-                    {cat}
-                  </button>
-                ))}
+        {/* Panel content */}
+        <div style={{ width: 240, background: "#FFFFFF", borderRight: "1px solid #E2E8F0", display: "flex", flexDirection: "column", flexShrink: 0, overflow: "hidden" }}>
+          <div style={{ padding: "12px 14px 8px", borderBottom: "1px solid #F1F5F9", flexShrink: 0 }}>
+            <p style={{ fontSize: 11, fontWeight: 700, color: "#0F172A", margin: 0 }}>
+              {sidePanel === "settings" ? "サイト全体設定"
+                : sidePanel === "blocks" ? "ブロック編集"
+                : sidePanel === "images" ? "フリー素材"
+                : sidePanel === "elements" ? "要素"
+                : sidePanel === "seo" ? "SEO / 集客設定"
+                : "AI画像生成"}
+            </p>
+          </div>
+
+          <div style={{ flex: 1, overflowY: "auto", padding: "12px 12px" }}>
+
+            {/* ── 設定 ── */}
+            {sidePanel === "settings" && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                  <span style={{ fontSize: 10, fontWeight: 600, color: "#64748B" }}>サイト名</span>
+                  <input value={config.title} onChange={e => onChange({ ...config, title: e.target.value })}
+                    style={{ fontSize: 12, padding: "7px 10px", border: "1px solid #E2E8F0", borderRadius: 7, outline: "none", color: "#111" }} />
+                </label>
+                <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                  <span style={{ fontSize: 10, fontWeight: 600, color: "#64748B" }}>ディスクリプション</span>
+                  <textarea value={config.description ?? ""} onChange={e => onChange({ ...config, description: e.target.value })}
+                    rows={3} style={{ fontSize: 12, padding: "7px 10px", border: "1px solid #E2E8F0", borderRadius: 7, outline: "none", resize: "none", color: "#111", lineHeight: 1.6 }}
+                    placeholder="検索結果に表示される説明文 (120文字以内)" />
+                </label>
+                <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                  <span style={{ fontSize: 10, fontWeight: 600, color: "#64748B" }}>ファビコン URL</span>
+                  <input value={config.favicon ?? ""} onChange={e => onChange({ ...config, favicon: e.target.value })}
+                    style={{ fontSize: 11, padding: "7px 10px", border: "1px solid #E2E8F0", borderRadius: 7, outline: "none", color: "#111" }}
+                    placeholder="https://..." />
+                </label>
+                <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                  <span style={{ fontSize: 10, fontWeight: 600, color: "#64748B" }}>OGP 画像 URL</span>
+                  <input value={config.ogImage ?? ""} onChange={e => onChange({ ...config, ogImage: e.target.value })}
+                    style={{ fontSize: 11, padding: "7px 10px", border: "1px solid #E2E8F0", borderRadius: 7, outline: "none", color: "#111" }}
+                    placeholder="https://..." />
+                </label>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                  <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                    <span style={{ fontSize: 10, fontWeight: 600, color: "#64748B" }}>メインカラー</span>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, border: "1px solid #E2E8F0", borderRadius: 7, padding: "4px 8px" }}>
+                      <input type="color" value={config.primaryColor} onChange={e => onChange({ ...config, primaryColor: e.target.value })}
+                        style={{ width: 24, height: 24, border: "none", padding: 0, borderRadius: 4, cursor: "pointer" }} />
+                      <span style={{ fontSize: 10, color: "#64748B", fontFamily: "monospace" }}>{config.primaryColor}</span>
+                    </div>
+                  </label>
+                  <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                    <span style={{ fontSize: 10, fontWeight: 600, color: "#64748B" }}>アクセント</span>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, border: "1px solid #E2E8F0", borderRadius: 7, padding: "4px 8px" }}>
+                      <input type="color" value={config.accentColor} onChange={e => onChange({ ...config, accentColor: e.target.value })}
+                        style={{ width: 24, height: 24, border: "none", padding: 0, borderRadius: 4, cursor: "pointer" }} />
+                      <span style={{ fontSize: 10, color: "#64748B", fontFamily: "monospace" }}>{config.accentColor}</span>
+                    </div>
+                  </label>
+                </div>
+                <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                  <span style={{ fontSize: 10, fontWeight: 600, color: "#64748B" }}>フォント</span>
+                  <select value={siteFont} onChange={e => onChange({ ...config, siteFont: e.target.value })}
+                    style={{ fontSize: 11, padding: "7px 8px", border: "1px solid #E2E8F0", borderRadius: 7, outline: "none", color: "#111", background: "#fff", cursor: "pointer" }}>
+                    <option value="Noto Sans JP">Noto Sans JP（源ノ角ゴシック）</option>
+                    <option value="Noto Serif JP">Noto Serif JP（源ノ明朝）</option>
+                    <option value="M PLUS Rounded 1c">M PLUS Rounded 1c（まるもじ）</option>
+                    <option value="Zen Kaku Gothic New">Zen Kaku Gothic New（新ゴシック）</option>
+                    <option value="Shippori Mincho">Shippori Mincho（しっぽり明朝）</option>
+                  </select>
+                </label>
               </div>
-              {/* 画像グリッド */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
-                {STOCK_IMAGES.filter(img => imgCategory === "すべて" || img.category === imgCategory).map(img => (
-                  <button key={img.id}
-                    onClick={() => {
-                      const el: Omit<CanvasElement, "id"> = {
-                        type: "image", x: 100, y: 100, width: 400, height: 280,
-                        src: img.url, alt: img.label,
-                        style: { borderRadius: 12, objectFit: "cover" },
-                        zIndex: 5,
-                      };
-                      onChange({ ...config, elements: [...(config.elements ?? []), { id: uid(), ...el }] });
-                    }}
-                    style={{ padding: 0, border: "2px solid transparent", borderRadius: 8, overflow: "hidden", cursor: "pointer", background: "none", transition: "border-color 0.15s" }}
-                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "#4F46E5"; }}
-                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "transparent"; }}
-                    title={img.label}>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={img.url} alt={img.label}
-                      style={{ width: "100%", aspectRatio: "4/3", objectFit: "cover", display: "block" }}
-                      loading="lazy" />
-                    <div style={{ fontSize: 9, color: "#6B7280", padding: "2px 4px", background: "#F9FAFB", textAlign: "left" }}>{img.label}</div>
-                  </button>
-                ))}
-              </div>
-            </div>
-          ) : leftTab === "elements" ? (
-            /* ── Basic elements ── */
-            <div>
-              <p style={{ fontSize: 10, color: "#94A3B8", fontWeight: 700, letterSpacing: "0.1em", marginBottom: 10, paddingLeft: 4 }}>基本要素を追加</p>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-                {([
-                  { type: "text"   as const, label: "テキスト", emoji: "T",  bg: "#EEF2FF", color: "#4F46E5" },
-                  { type: "image"  as const, label: "画像",     emoji: "🖼", bg: "#F0FDF4", color: "#16A34A" },
-                  { type: "button" as const, label: "ボタン",   emoji: "⬛", bg: "#FFF7ED", color: "#EA580C" },
-                  { type: "rect"   as const, label: "図形/背景", emoji: "▭",  bg: "#FAF5FF", color: "#9333EA" },
-                ]).map(({ type, label, emoji, bg, color }) => (
-                  <button key={type} onClick={() => addElement(type)}
-                    style={{ background: bg, border: "none", borderRadius: 10, padding: "14px 8px", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 6, transition: "transform 0.1s" }}
-                    onMouseEnter={e => (e.currentTarget.style.transform = "scale(1.04)")}
-                    onMouseLeave={e => (e.currentTarget.style.transform = "scale(1)")}>
-                    <span style={{ fontSize: 22 }}>{emoji}</span>
-                    <span style={{ fontSize: 11, fontWeight: 600, color }}>{label}</span>
-                  </button>
-                ))}
-              </div>
-              <p style={{ fontSize: 10, color: "#94A3B8", marginTop: 16, textAlign: "center" }}>ダブルクリックでテキスト編集</p>
-            </div>
-          ) : (
-            /* ── Block templates ── */
-            <div>
-              {/* カテゴリフィルタ */}
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 10 }}>
-                {["すべて", ...BLOCK_CATEGORIES].map(cat => (
-                  <button key={cat} onClick={() => setBlockCategory(cat)}
-                    style={{ fontSize: 9, padding: "3px 8px", borderRadius: 999, border: "1px solid #E2E8F0",
-                      background: blockCategory === cat ? "#4F46E5" : "#F9FAFB",
-                      color: blockCategory === cat ? "#FFFFFF" : "#6B7280",
-                      cursor: "pointer", fontWeight: blockCategory === cat ? 700 : 400, whiteSpace: "nowrap" }}>
-                    {cat}
-                  </button>
-                ))}
-              </div>
-              {/* 全ブロック表示ボタン */}
-              <button
-                onClick={() => setBlockModal(true)}
-                style={{ display: "flex", alignItems: "center", gap: 6, padding: "10px 14px", borderRadius: 8, border: "1.5px dashed #C7D2FE", background: "#EEF2FF", cursor: "pointer", color: "#4F46E5", fontWeight: 600, fontSize: 12, justifyContent: "center", transition: "all 0.12s", width: "100%", marginBottom: 10 }}
-                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "#E0E7FF"; }}
-                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "#EEF2FF"; }}>
-                <span style={{ fontSize: 16 }}>+</span>
-                すべてのブロックを見る
-              </button>
-              {/* 2カラムグリッド */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
-                {BLOCK_TEMPLATES
-                  .filter(t => blockCategory === "すべて" || t.category === blockCategory)
-                  .map(tpl => (
+            )}
+
+            {/* ── ブロック ── */}
+            {sidePanel === "blocks" && (
+              <div>
+                <button onClick={() => setBlockModal(true)}
+                  style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, width: "100%", padding: "10px 0", borderRadius: 8, border: "1.5px dashed #C7D2FE", background: "#EEF2FF", cursor: "pointer", color: "#4F46E5", fontWeight: 700, fontSize: 12, marginBottom: 12, transition: "background 0.12s" }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "#E0E7FF"; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "#EEF2FF"; }}>
+                  <span style={{ fontSize: 15 }}>+</span> すべてのブロックを見る
+                </button>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 10 }}>
+                  {["すべて", ...BLOCK_CATEGORIES].map(cat => (
+                    <button key={cat} onClick={() => setBlockCategory(cat)}
+                      style={{ fontSize: 9, padding: "3px 8px", borderRadius: 999, border: "1px solid #E2E8F0",
+                        background: blockCategory === cat ? "#4F46E5" : "#F9FAFB",
+                        color: blockCategory === cat ? "#fff" : "#6B7280",
+                        cursor: "pointer", fontWeight: blockCategory === cat ? 700 : 400, whiteSpace: "nowrap" }}>
+                      {cat}
+                    </button>
+                  ))}
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
+                  {BLOCK_TEMPLATES.filter(t => blockCategory === "すべて" || t.category === blockCategory).map(tpl => (
                     <button key={tpl.id} onClick={() => addBlock(tpl)}
-                      style={{ padding: 0, border: "1.5px solid #E2E8F0", borderRadius: 8, background: "#FFFFFF", cursor: "pointer", textAlign: "left", overflow: "hidden", transition: "all 0.14s", display: "flex", flexDirection: "column" }}
+                      style={{ padding: 0, border: "1.5px solid #E2E8F0", borderRadius: 8, background: "#fff", cursor: "pointer", textAlign: "left", overflow: "hidden", transition: "all 0.14s", display: "flex", flexDirection: "column" }}
                       onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.borderColor = "#818CF8"; el.style.boxShadow = "0 4px 16px rgba(79,70,229,0.15)"; el.style.transform = "translateY(-1px)"; }}
                       onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.borderColor = "#E2E8F0"; el.style.boxShadow = "none"; el.style.transform = "translateY(0)"; }}
                       title={tpl.desc}>
@@ -1290,13 +1369,198 @@ export default function CanvasEditor({ config, onChange }: Props) {
                       </div>
                       <div style={{ padding: "5px 6px 6px" }}>
                         <p style={{ fontSize: 10, fontWeight: 700, color: "#374151", margin: 0, lineHeight: 1.3 }}>{tpl.name.replace(/ヒーロー\（/, "").replace(/\）$/, "")}</p>
-                        <p style={{ fontSize: 9, color: "#94A3B8", margin: "2px 0 0", lineHeight: 1.3 }}>{tpl.category === "パーツ" ? "⚡ パーツ" : tpl.desc.slice(0, 14)}</p>
+                        <p style={{ fontSize: 9, color: "#94A3B8", margin: "2px 0 0", lineHeight: 1.3 }}>{tpl.category === "パーツ" ? "パーツ" : tpl.desc.slice(0, 14)}</p>
                       </div>
                     </button>
                   ))}
+                </div>
               </div>
-            </div>
-          )}
+            )}
+
+            {/* ── 素材 ── */}
+            {sidePanel === "images" && (
+              <div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 10 }}>
+                  {IMG_CATEGORIES.map(cat => (
+                    <button key={cat} onClick={() => setImgCategory(cat)}
+                      style={{ fontSize: 9, padding: "3px 8px", borderRadius: 999, border: "1px solid #E2E8F0",
+                        background: imgCategory === cat ? "#4F46E5" : "#F9FAFB",
+                        color: imgCategory === cat ? "#fff" : "#6B7280",
+                        cursor: "pointer", fontWeight: imgCategory === cat ? 700 : 400 }}>
+                      {cat}
+                    </button>
+                  ))}
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 5 }}>
+                  {STOCK_IMAGES.filter(img => imgCategory === "すべて" || img.category === imgCategory).map(img => (
+                    <button key={img.id}
+                      onClick={() => {
+                        const maxY = elements.length > 0 ? Math.max(...elements.map(e => e.y + e.height)) : 0;
+                        const el: CanvasElement = {
+                          id: uid(), type: "image",
+                          x: Math.max(0, Math.round((CW - 400) / 2)), y: maxY + 20,
+                          width: 400, height: 400,
+                          src: img.url, alt: img.label,
+                          style: { borderRadius: 8, objectFit: "cover" }, zIndex: 5,
+                        };
+                        onChange({ ...config, elements: [...(config.elements ?? []), el] });
+                        setSelectedId(el.id);
+                      }}
+                      style={{ padding: 0, border: "2px solid transparent", borderRadius: 7, overflow: "hidden", cursor: "pointer", background: "none", transition: "border-color 0.15s" }}
+                      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "#4F46E5"; }}
+                      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "transparent"; }}
+                      title={img.label}>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={img.url} alt={img.label} style={{ width: "100%", aspectRatio: "1/1", objectFit: "cover", display: "block" }} loading="lazy" />
+                      <div style={{ fontSize: 9, color: "#6B7280", padding: "2px 4px", background: "#F9FAFB" }}>{img.label}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* ── 要素 ── */}
+            {sidePanel === "elements" && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                <p style={{ fontSize: 10, color: "#94A3B8", marginBottom: 6 }}>クリックでキャンバスに追加</p>
+                {([
+                  { type: "text"   as const, label: "テキスト",  desc: "見出し・本文",      color: "#4F46E5", bg: "#EEF2FF" },
+                  { type: "image"  as const, label: "画像",      desc: "URLで差し替え可",   color: "#059669", bg: "#ECFDF5" },
+                  { type: "button" as const, label: "ボタン",    desc: "CTAや行動喚起に",   color: "#EA580C", bg: "#FFF7ED" },
+                  { type: "rect"   as const, label: "図形・背景", desc: "区切りや装飾に",    color: "#9333EA", bg: "#FAF5FF" },
+                ]).map(({ type, label, desc, color, bg }) => (
+                  <button key={type} onClick={() => addElement(type)}
+                    style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", borderRadius: 8, border: "1px solid #E2E8F0", background: "#fff", cursor: "pointer", textAlign: "left", transition: "all 0.12s" }}
+                    onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.borderColor = color; el.style.background = bg; }}
+                    onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.borderColor = "#E2E8F0"; el.style.background = "#fff"; }}>
+                    <div style={{ width: 32, height: 32, borderRadius: 8, background: bg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <span style={{ fontSize: 13, fontWeight: 800, color }}>{type === "text" ? "T" : type === "image" ? "IMG" : type === "button" ? "BTN" : "□"}</span>
+                    </div>
+                    <div>
+                      <p style={{ fontSize: 12, fontWeight: 700, color: "#1E293B", margin: 0 }}>{label}</p>
+                      <p style={{ fontSize: 10, color: "#94A3B8", margin: 0 }}>{desc}</p>
+                    </div>
+                  </button>
+                ))}
+                <p style={{ fontSize: 10, color: "#CBD5E1", marginTop: 8, textAlign: "center" }}>ダブルクリックでテキスト編集</p>
+              </div>
+            )}
+
+            {/* ── SEO ── */}
+            {sidePanel === "seo" && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+                {/* Google Analytics */}
+                <div>
+                  <p style={{ fontSize: 10, fontWeight: 700, color: "#0F172A", marginBottom: 8, paddingBottom: 4, borderBottom: "1px solid #F1F5F9" }}>Google Analytics</p>
+                  <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                    <span style={{ fontSize: 10, color: "#64748B" }}>測定 ID (G-XXXXXXXXXX)</span>
+                    <input value={config.gaId ?? ""} onChange={e => onChange({ ...config, gaId: e.target.value })}
+                      style={{ fontSize: 11, padding: "7px 10px", border: "1px solid #E2E8F0", borderRadius: 7, outline: "none", fontFamily: "monospace" }}
+                      placeholder="G-XXXXXXXXXX" />
+                  </label>
+                </div>
+                {/* Search Console */}
+                <div>
+                  <p style={{ fontSize: 10, fontWeight: 700, color: "#0F172A", marginBottom: 8, paddingBottom: 4, borderBottom: "1px solid #F1F5F9" }}>Search Console</p>
+                  <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                    <span style={{ fontSize: 10, color: "#64748B" }}>確認コード（metaタグのcontent値）</span>
+                    <input value={config.gscCode ?? ""} onChange={e => onChange({ ...config, gscCode: e.target.value })}
+                      style={{ fontSize: 11, padding: "7px 10px", border: "1px solid #E2E8F0", borderRadius: 7, outline: "none", fontFamily: "monospace" }}
+                      placeholder="xxxxxxxxxxxxxxxxxxx" />
+                  </label>
+                </div>
+                {/* MEO */}
+                <div>
+                  <p style={{ fontSize: 10, fontWeight: 700, color: "#0F172A", marginBottom: 8, paddingBottom: 4, borderBottom: "1px solid #F1F5F9" }}>MEO（マップSEO）</p>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    {([
+                      { key: "meoName" as const, label: "ビジネス名", placeholder: "株式会社〇〇" },
+                      { key: "meoAddress" as const, label: "住所", placeholder: "東京都渋谷区..." },
+                      { key: "meoPhone" as const, label: "電話番号", placeholder: "03-XXXX-XXXX" },
+                      { key: "meoCategory" as const, label: "カテゴリ", placeholder: "学習塾 / 飲食店..." },
+                    ]).map(({ key, label, placeholder }) => (
+                      <label key={key} style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                        <span style={{ fontSize: 10, color: "#64748B" }}>{label}</span>
+                        <input value={(config[key] as string) ?? ""} onChange={e => onChange({ ...config, [key]: e.target.value })}
+                          style={{ fontSize: 11, padding: "6px 10px", border: "1px solid #E2E8F0", borderRadius: 7, outline: "none" }}
+                          placeholder={placeholder} />
+                      </label>
+                    ))}
+                  </div>
+                </div>
+                {/* LLMO */}
+                <div>
+                  <p style={{ fontSize: 10, fontWeight: 700, color: "#0F172A", marginBottom: 4, paddingBottom: 4, borderBottom: "1px solid #F1F5F9" }}>LLMO対策（AI検索最適化）</p>
+                  <p style={{ fontSize: 9, color: "#94A3B8", marginBottom: 8, lineHeight: 1.5 }}>FAQを設定するとAIが回答時に引用しやすい構造データになります</p>
+                  {(config.llmoFaq ?? []).map((faq, i) => (
+                    <div key={i} style={{ background: "#F8FAFC", borderRadius: 8, padding: "8px 10px", marginBottom: 6 }}>
+                      <input value={faq.q} onChange={e => {
+                          const faq2 = [...(config.llmoFaq ?? [])];
+                          faq2[i] = { ...faq2[i], q: e.target.value };
+                          onChange({ ...config, llmoFaq: faq2 });
+                        }}
+                        placeholder="質問" style={{ width: "100%", fontSize: 11, border: "none", background: "transparent", outline: "none", fontWeight: 600, marginBottom: 4 }} />
+                      <textarea value={faq.a} onChange={e => {
+                          const faq2 = [...(config.llmoFaq ?? [])];
+                          faq2[i] = { ...faq2[i], a: e.target.value };
+                          onChange({ ...config, llmoFaq: faq2 });
+                        }}
+                        placeholder="回答" rows={2} style={{ width: "100%", fontSize: 11, border: "none", background: "transparent", outline: "none", resize: "none", lineHeight: 1.5 }} />
+                      <button onClick={() => onChange({ ...config, llmoFaq: (config.llmoFaq ?? []).filter((_, j) => j !== i) })}
+                        style={{ fontSize: 9, color: "#EF4444", background: "none", border: "none", cursor: "pointer", marginTop: 2 }}>削除</button>
+                    </div>
+                  ))}
+                  <button onClick={() => onChange({ ...config, llmoFaq: [...(config.llmoFaq ?? []), { q: "", a: "" }] })}
+                    style={{ width: "100%", padding: "8px 0", border: "1.5px dashed #E2E8F0", borderRadius: 8, background: "#F9FAFB", color: "#64748B", fontSize: 11, cursor: "pointer", fontWeight: 600 }}>
+                    + FAQ を追加
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* ── AI画像 ── */}
+            {sidePanel === "ai-image" && (
+              <div>
+                <textarea value={aiImgPrompt} onChange={e => setAiImgPrompt(e.target.value)}
+                  placeholder="例: 笑顔の子どもと先生、明るい教室" rows={3}
+                  style={{ width: "100%", fontSize: 11, padding: "8px 10px", border: "1px solid #E2E8F0", borderRadius: 8, resize: "none", outline: "none", fontFamily: "inherit", lineHeight: 1.6, marginBottom: 8 }}
+                  onKeyDown={e => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) generateAiImage(); }} />
+                <div style={{ display: "flex", gap: 4, marginBottom: 10 }}>
+                  {(["1:1", "4:3", "16:9", "3:4"] as const).map(r => (
+                    <button key={r} onClick={() => setAiImgRatio(r)}
+                      style={{ flex: 1, fontSize: 10, padding: "5px 0", borderRadius: 6, border: "1px solid #E2E8F0",
+                        background: aiImgRatio === r ? "#4F46E5" : "#F9FAFB",
+                        color: aiImgRatio === r ? "#fff" : "#64748B",
+                        cursor: "pointer", fontWeight: aiImgRatio === r ? 700 : 400 }}>
+                      {r}
+                    </button>
+                  ))}
+                </div>
+                <button onClick={generateAiImage} disabled={aiImgLoading || !aiImgPrompt.trim()}
+                  style={{ width: "100%", padding: "10px 0", background: aiImgLoading || !aiImgPrompt.trim() ? "#C7D2FE" : "#4F46E5", color: "#fff", border: "none", borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: aiImgLoading || !aiImgPrompt.trim() ? "not-allowed" : "pointer", transition: "background 0.2s" }}>
+                  {aiImgLoading ? "生成中..." : "画像を生成する"}
+                </button>
+                {aiImgError && <p style={{ fontSize: 10, color: "#EF4444", marginTop: 6 }}>{aiImgError}</p>}
+                {aiGenImages.length > 0 && (
+                  <div style={{ marginTop: 14 }}>
+                    <p style={{ fontSize: 9, color: "#94A3B8", fontWeight: 700, marginBottom: 8 }}>クリックでキャンバスに追加</p>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 5 }}>
+                      {aiGenImages.map((url, i) => (
+                        <button key={i} onClick={() => addAiImageToCanvas(url)}
+                          style={{ padding: 0, border: "2px solid transparent", borderRadius: 6, overflow: "hidden", cursor: "pointer", background: "none", transition: "border-color 0.15s" }}
+                          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "#4F46E5"; }}
+                          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "transparent"; }}>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={url} alt={`AI ${i + 1}`} style={{ width: "100%", aspectRatio: "1/1", objectFit: "cover", display: "block" }} />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+          </div>
         </div>
       </div>
 
@@ -1308,12 +1572,10 @@ export default function CanvasEditor({ config, onChange }: Props) {
             クリック選択 &nbsp;·&nbsp; ドラッグ移動 &nbsp;·&nbsp; ハンドルでリサイズ &nbsp;·&nbsp; ダブルクリックで編集 &nbsp;·&nbsp; Del で削除
           </span>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <button
-              onClick={compactBlocks}
+            <button onClick={compactBlocks}
               style={{ fontSize: 11, color: "#6366F1", background: "#EEF2FF", border: "1px solid #C7D2FE", borderRadius: 6, padding: "3px 10px", cursor: "pointer", fontWeight: 600 }}
-              title="ブロック間の余白を詰める"
-            >
-              ↑ 空白を詰める
+              title="ブロック間の余白を詰める">
+              空白を詰める
             </button>
             <span style={{ fontSize: 11, color: "#CBD5E1", fontFamily: "monospace" }}>{CW}px</span>
           </div>
@@ -1324,7 +1586,7 @@ export default function CanvasEditor({ config, onChange }: Props) {
           onClick={() => { setSelectedId(null); setEditingId(null); }}>
           <div
             ref={canvasRef}
-            style={{ position: "relative", width: CW, minHeight: canvasHeight, background: "#FFFFFF", margin: "0 auto", boxShadow: "0 4px 40px rgba(0,0,0,0.12)" }}
+            style={{ position: "relative", width: CW, minHeight: canvasHeight, background: "#FFFFFF", margin: "0 auto", boxShadow: "0 4px 40px rgba(0,0,0,0.12)", fontFamily: `"${siteFont}", sans-serif` }}
             onPointerMove={onCanvasPointerMove}
             onPointerUp={() => setDrag(null)}
             onClick={e => e.stopPropagation()}

@@ -101,12 +101,15 @@ export async function POST(req: NextRequest) {
     target?: string;
     strengths?: string;
     globalStyle?: GlobalStyle;
+    siteFont?: string;
   };
 
-  const { businessName, serviceDesc, target, strengths, globalStyle } = body;
+  const { businessName, serviceDesc, target, strengths, globalStyle, siteFont } = body;
   if (!businessName || !serviceDesc) {
     return NextResponse.json({ error: "businessName と serviceDesc は必須です" }, { status: 400 });
   }
+
+  const fontName = siteFont ?? "Noto Sans JP";
 
   // ── ユーザー入力の構築 ────────────────────────────────────
   const colorHint = globalStyle
@@ -119,6 +122,8 @@ export async function POST(req: NextRequest) {
 サービス・商品の説明: ${serviceDesc}
 ${target    ? `ターゲット: ${target}`       : ""}
 ${strengths ? `強み・特徴: ${strengths}` : ""}${colorHint}
+
+【フォント指定】本文・見出し共に「${fontName}」を必ず使用してください。Google Fontsから読み込み、font-familyに設定すること。
 
 上記ルールに従い、日本市場向けの一流LPをHTMLで出力してください。`;
 
