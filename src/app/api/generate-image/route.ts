@@ -4,53 +4,58 @@ export const maxDuration = 60;
 
 const API_KEY     = process.env.GEMINI_API_KEY ?? "";
 const GEMINI_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
-// Gemini 2.0 Flash image generation — works with standard AI Studio key
-const MODEL       = "gemini-2.0-flash-preview-image-generation";
 
 export async function POST(req: NextRequest) {
   if (!API_KEY) return NextResponse.json({ error: "GEMINI_API_KEY未設定" }, { status: 500 });
 
   const body = (await req.json()) as { prompt: string; aspectRatio?: string };
-  const { prompt } = body;
-
+  const { prompt, aspectRatio = "1:1" } = body;
   if (!prompt) return NextResponse.json({ error: "promptは必須です" }, { status: 400 });
 
   const enhancedPrompt = `${prompt}, professional high quality photo, sharp focus`;
 
-  try {
-    const res = await fetch(
-      `${GEMINI_BASE}/${MODEL}:generateContent?key=${API_KEY}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ role: "user", parts: [{ text: enhancedPrompt }] }],
-          generationConfig: { responseModalities: ["IMAGE", "TEXT"] },
-        }),
-        signal: AbortSignal.timeout(55000),
-      }
-    );
+  // まず Gemini 2.5 Flash Image (generateContent) を試み、失敗したら Imagen 4 Fast (predict) にフォールバック
+  const attempts = [
+    {
+      model: "gemini-2.5-flash-image",
+      endpoint: "generateContent",
+      body: () => JSON.stringify({
+        contents: [{ role: "user", parts: [{ text: enhancedPrompt }] }],
+        generationConfig: { responseModalities: ["IMAGE", "TEXT"] },
+      }),
+      parse: (data: Record<string, unknown>) => {
+        const parts = ((data.candidates as {content:{parts:unknown[]}}[])?.[0]?.content?.parts ?? []) as Array<{ inlineData?: { mimeType: string; data: string } }>;
+        return parts.filter(p => p.inlineData?.data).map(p => `data:${p.inlineData!.mimeType};base64,${p.inlineData!.data}`);
+      },
+    },
+    {
+      model: "imagen-4.0-fast-generate-001",
+      endpoint: "predict",
+      body: () => JSON.stringify({
+        instances: [{ prompt: enhancedPrompt }],
+        parameters: { sampleCount: 3, aspectRatio, safetyFilterLevel: "block_few", personGeneration: "allow_adult" },
+      }),
+      parse: (data: Record<string, unknown>) => {
+        const preds = (data.predictions ?? []) as Array<{ bytesBase64Encoded: string; mimeType: string }>;
+        return preds.map(p => `data:${p.mimeType ?? "image/png"};base64,${p.bytesBase64Encoded}`);
+      },
+    },
+  ];
 
-    if (!res.ok) {
-      const err = await res.text();
-      return NextResponse.json({ error: `APIエラー: ${err.slice(0, 400)}` }, { status: 503 });
+  for (const attempt of attempts) {
+    try {
+      const res = await fetch(
+        `${GEMINI_BASE}/${attempt.model}:${attempt.endpoint}?key=${API_KEY}`,
+        { method: "POST", headers: { "Content-Type": "application/json" }, body: attempt.body(), signal: AbortSignal.timeout(50000) }
+      );
+      if (!res.ok) continue; // 次のモデルを試す
+      const data = await res.json() as Record<string, unknown>;
+      const images = attempt.parse(data);
+      if (images.length) return NextResponse.json({ images: images.map(dataUrl => ({ dataUrl })) });
+    } catch {
+      continue;
     }
-
-    const data = await res.json();
-    const parts = data.candidates?.[0]?.content?.parts ?? [];
-
-    const images = (parts as Array<{ inlineData?: { mimeType: string; data: string } }>)
-      .filter(p => p.inlineData?.data)
-      .map(p => ({
-        dataUrl: `data:${p.inlineData!.mimeType};base64,${p.inlineData!.data}`,
-      }));
-
-    if (!images.length) {
-      return NextResponse.json({ error: "画像が生成されませんでした。プロンプトを変えて試してください。" }, { status: 500 });
-    }
-
-    return NextResponse.json({ images });
-  } catch (e) {
-    return NextResponse.json({ error: e instanceof Error ? e.message : "生成失敗" }, { status: 500 });
   }
+
+  return NextResponse.json({ error: "画像生成に失敗しました。プロンプトを変えて試してください。" }, { status: 500 });
 }
