@@ -1225,6 +1225,25 @@ export default function CanvasEditor({ config, onChange }: Props) {
     }
   }
 
+  // ── Drag & drop image onto canvas ───────────────────────
+  function onCanvasDrop(e: React.DragEvent) {
+    e.preventDefault();
+    const raw = e.dataTransfer.getData("application/canvas-image");
+    if (!raw) return;
+    const { src, alt } = JSON.parse(raw) as { src: string; alt: string };
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    const x = Math.max(0, Math.round(e.clientX - rect.left) - 200);
+    const y = Math.max(0, Math.round(e.clientY - rect.top)  - 200);
+    const el: CanvasElement = {
+      id: uid(), type: "image", x, y, width: 400, height: 400,
+      src, alt, style: { objectFit: "cover", borderRadius: 8 }, zIndex: 5,
+    };
+    onChange({ ...config, elements: [...elements, el] });
+    setSelectedId(el.id);
+  }
+
   // ── Render ───────────────────────────────────────────────
   return (
     <div style={{ display: "flex", flex: 1, overflow: "hidden", minHeight: 0, background: "#F1F5F9" }}>
@@ -1406,12 +1425,14 @@ export default function CanvasEditor({ config, onChange }: Props) {
                         onChange({ ...config, elements: [...(config.elements ?? []), el] });
                         setSelectedId(el.id);
                       }}
-                      style={{ padding: 0, border: "2px solid transparent", borderRadius: 7, overflow: "hidden", cursor: "pointer", background: "none", transition: "border-color 0.15s" }}
+                      draggable
+                    onDragStart={e => e.dataTransfer.setData("application/canvas-image", JSON.stringify({ src: img.url, alt: img.label }))}
+                    style={{ padding: 0, border: "2px solid transparent", borderRadius: 7, overflow: "hidden", cursor: "grab", background: "none", transition: "border-color 0.15s" }}
                       onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "#4F46E5"; }}
                       onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "transparent"; }}
                       title={img.label}>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={img.url} alt={img.label} style={{ width: "100%", aspectRatio: "1/1", objectFit: "cover", display: "block" }} loading="lazy" />
+                      <img src={img.url} alt={img.label} style={{ width: "100%", aspectRatio: "1/1", objectFit: "cover", display: "block" }} loading="lazy" draggable={false} />
                       <div style={{ fontSize: 9, color: "#6B7280", padding: "2px 4px", background: "#F9FAFB" }}>{img.label}</div>
                     </button>
                   ))}
@@ -1547,11 +1568,13 @@ export default function CanvasEditor({ config, onChange }: Props) {
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 5 }}>
                       {aiGenImages.map((url, i) => (
                         <button key={i} onClick={() => addAiImageToCanvas(url)}
-                          style={{ padding: 0, border: "2px solid transparent", borderRadius: 6, overflow: "hidden", cursor: "pointer", background: "none", transition: "border-color 0.15s" }}
+                          draggable
+                          onDragStart={e => e.dataTransfer.setData("application/canvas-image", JSON.stringify({ src: url, alt: "AI生成画像" }))}
+                          style={{ padding: 0, border: "2px solid transparent", borderRadius: 6, overflow: "hidden", cursor: "grab", background: "none", transition: "border-color 0.15s" }}
                           onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "#4F46E5"; }}
                           onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "transparent"; }}>
                           {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={url} alt={`AI ${i + 1}`} style={{ width: "100%", aspectRatio: "1/1", objectFit: "cover", display: "block" }} />
+                          <img src={url} alt={`AI ${i + 1}`} style={{ width: "100%", aspectRatio: "1/1", objectFit: "cover", display: "block" }} draggable={false} />
                         </button>
                       ))}
                     </div>
@@ -1590,6 +1613,8 @@ export default function CanvasEditor({ config, onChange }: Props) {
             onPointerMove={onCanvasPointerMove}
             onPointerUp={() => setDrag(null)}
             onClick={e => e.stopPropagation()}
+            onDragOver={e => e.preventDefault()}
+            onDrop={onCanvasDrop}
           >
             {elements.length === 0 && (
               <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 16, color: "#94A3B8" }}>
