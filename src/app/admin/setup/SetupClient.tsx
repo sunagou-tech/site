@@ -297,46 +297,36 @@ export default function SetupClient() {
     }
   }, [businessName, serviceDesc, target, strengths]);
 
-  // ─── デモテンプレートから生成 ─────────────────────────────────
+  // ─── デモテンプレートから生成（キャンバス編集へ）──────────────
   const generateFromDemo = useCallback(async () => {
     if (!selectedDemo || !demoBizName.trim() || !demoBizDesc.trim()) return;
     setPhase("generating");
     setGenPct(0);
     setGenText("テンプレートのデザインを適用中...");
 
-    const DEMO_STEPS = [
-      { pct: 12, text: "デザインコンセプトを適用中..." },
-      { pct: 28, text: "ヒーローセクションを構築中..." },
-      { pct: 46, text: "各セクションをデザイン中..." },
-      { pct: 64, text: "アニメーション・インタラクションを追加中..." },
-      { pct: 82, text: "カラー・タイポグラフィを調整中..." },
-      { pct: 93, text: "最終仕上げ中..." },
-    ];
-    DEMO_STEPS.forEach(({ pct, text }, i) => {
-      setTimeout(() => { setGenPct(pct); setGenText(text); }, i * 2200);
+    GEN_STEPS.forEach(({ pct, text }, i) => {
+      setTimeout(() => { setGenPct(pct); setGenText(text); }, i * 1600);
     });
 
     try {
-      const res = await fetch("/api/generate-html", {
+      const res = await fetch("/api/setup-ai", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          businessName: demoBizName,
-          serviceDesc: demoBizDesc,
-          globalStyle: selectedDemo.style,
+          phase: "form-generate",
+          formData: { businessName: demoBizName, serviceDesc: demoBizDesc, target: "", strengths: "" },
+          analysisResult: selectedDemo.style,
         }),
       });
-      let data: { error?: string; html?: string };
-      try { data = await res.json(); } catch { throw new Error("サーバーエラーが発生しました。"); }
-      if (!res.ok || data.error) throw new Error(data.error ?? "HTML生成に失敗しました");
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let data: { error?: string; config?: any };
+      try { data = await res.json(); } catch { throw new Error("サーバーエラーが発生しました。もう一度お試しください。"); }
+      if (!res.ok || data.error) throw new Error(data.error ?? "生成に失敗しました");
 
       setGenPct(100);
-      setTimeout(() => {
-        setHtmlContent(data.html!);
-        setPhase("html-preview");
-      }, 800);
+      setTimeout(() => { setGeneratedConfig(data.config); setPhase("preview"); }, 800);
     } catch (e) {
-      setDemoError(e instanceof Error ? e.message : "HTML生成に失敗しました");
+      setDemoError(e instanceof Error ? e.message : "生成に失敗しました");
       setPhase("form");
       setMainTab("demo");
     }
@@ -880,7 +870,7 @@ export default function SetupClient() {
                           ? "0 4px 16px rgba(26,54,93,0.3)" : "none",
                       }}>
                       <MsIcon name="auto_awesome" size={16} color="#FFFFFF" />
-                      このデザインでHTMLを生成する
+                      このデザインで編集を始める
                     </button>
                   </div>
                 </div>
