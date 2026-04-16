@@ -110,14 +110,19 @@ export default function AdminClient() {
     <EditingContext.Provider value={true}>
       <div style={{ display: "flex", flexDirection: "column", height: "100vh", overflow: "hidden" }}>
         {/* ─── Top bar ─────────────────────────────────── */}
-        <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "0 16px", background: "#111827", color: "#fff", height: 48, flexShrink: 0, minWidth: 0, overflow: "hidden" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "0 16px", background: "#FFFFFF", borderBottom: "1px solid #E2E8F0", height: 48, flexShrink: 0, minWidth: 0, overflow: "hidden" }}>
+          {/* Logo */}
           <div className="flex items-center gap-2 flex-shrink-0">
-            <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-            <span className="text-sm font-semibold">Site Builder</span>
+            <div style={{ width: 24, height: 24, borderRadius: 6, background: "linear-gradient(135deg, #4F46E5, #7C3AED)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><rect x="1" y="1" width="4" height="4" rx="1" fill="white" opacity="0.9"/><rect x="7" y="1" width="4" height="4" rx="1" fill="white" opacity="0.6"/><rect x="1" y="7" width="4" height="4" rx="1" fill="white" opacity="0.6"/><rect x="7" y="7" width="4" height="4" rx="1" fill="white" opacity="0.9"/></svg>
+            </div>
+            <span style={{ fontSize: 13, fontWeight: 700, color: "#111827", letterSpacing: "-0.01em" }}>ツクリエ</span>
           </div>
 
+          <div style={{ width: 1, height: 20, background: "#E2E8F0", flexShrink: 0 }} />
+
           {/* Page tabs */}
-          <div style={{ display: "flex", alignItems: "center", gap: 4, flex: 1, overflowX: "auto", minWidth: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 2, flex: 1, overflowX: "auto", minWidth: 0 }}>
             {allPageTabs.map((page) => (
               <div key={page.id} className="relative group/tab flex-shrink-0">
                 {renamingPageId === page.id ? (
@@ -125,15 +130,16 @@ export default function AdminClient() {
                     onChange={(e) => setRenameValue(e.target.value)}
                     onBlur={commitRename}
                     onKeyDown={(e) => { if (e.key === "Enter") commitRename(); if (e.key === "Escape") setRenamingPageId(null); }}
-                    className="text-xs bg-white/20 text-white rounded px-2 py-1 outline-none border border-white/40 w-28" />
+                    style={{ fontSize: 12, background: "#F8FAFC", color: "#111827", borderRadius: 6, padding: "4px 8px", outline: "none", border: "1.5px solid #4F46E5", width: 100 }} />
                 ) : (
                   <button
                     onClick={() => setActivePageId(page.id)}
                     onDoubleClick={() => !page.isHome && (setRenamingPageId(page.id), setRenameValue(page.title))}
-                    className={`text-xs px-3 py-1.5 rounded-md flex items-center gap-1.5 transition-colors whitespace-nowrap ${
-                      activePageId === page.id
-                        ? "bg-white/20 text-white" : "text-gray-400 hover:text-white hover:bg-white/10"
-                    }`}
+                    style={{ fontSize: 12, padding: "4px 10px", borderRadius: 6, border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 5, whiteSpace: "nowrap", transition: "all 0.12s",
+                      background: activePageId === page.id ? "#EEF2FF" : "transparent",
+                      color: activePageId === page.id ? "#4F46E5" : "#6B7280",
+                      fontWeight: activePageId === page.id ? 600 : 400,
+                    }}
                   >
                     <Layout size={10} /> {page.title}
                   </button>
@@ -147,16 +153,18 @@ export default function AdminClient() {
               </div>
             ))}
             <button onClick={addPage}
-              className="text-xs text-gray-500 hover:text-white px-2 py-1.5 rounded-md hover:bg-white/10 flex items-center gap-1 flex-shrink-0 transition-colors">
-              <Plus size={10} /> 追加
+              style={{ fontSize: 11, color: "#94A3B8", padding: "4px 8px", borderRadius: 6, border: "none", background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", gap: 3, flexShrink: 0, transition: "color 0.12s" }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = "#4F46E5"; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = "#94A3B8"; }}>
+              <Plus size={10} /> ページ追加
             </button>
           </div>
 
-          {/* Right side: slug + publish */}
-          <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
-            {/* Site slug editor */}
-            <div className="flex items-center gap-1.5 bg-gray-800 rounded-lg px-2.5 py-1.5">
-              <Globe size={10} className="text-gray-400 flex-shrink-0" />
+          {/* Right side: slug + actions */}
+          <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+            {/* Site slug */}
+            <div style={{ display: "flex", alignItems: "center", gap: 5, background: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: 8, padding: "4px 10px" }}>
+              <Globe size={10} style={{ color: "#94A3B8", flexShrink: 0 }} />
               {editingSlug ? (
                 <input
                   autoFocus
@@ -164,54 +172,48 @@ export default function AdminClient() {
                   onChange={(e) => setSiteSlug(e.target.value.replace(/[^a-z0-9-]/g, ""))}
                   onBlur={() => setEditingSlug(false)}
                   onKeyDown={(e) => { if (e.key === "Enter" || e.key === "Escape") setEditingSlug(false); }}
-                  className="bg-transparent text-white text-xs outline-none w-28 font-mono"
+                  style={{ background: "transparent", color: "#111827", fontSize: 11, outline: "none", width: 100, fontFamily: "monospace" }}
                   placeholder="my-site"
                 />
               ) : (
                 <button
                   onClick={() => setEditingSlug(true)}
-                  className="text-gray-300 text-xs font-mono hover:text-white transition-colors truncate max-w-[120px]"
-                  title="スラッグを編集（URLの一部になります）"
+                  style={{ background: "none", border: "none", color: "#374151", fontSize: 11, fontFamily: "monospace", cursor: "pointer", maxWidth: 110, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+                  title="URLスラッグを編集"
                 >
-                  {siteSlug || "スラッグを設定"}
+                  {siteSlug || "スラッグ設定"}
                 </button>
               )}
             </div>
 
-            <a
-              href="/admin/column"
-              className="flex items-center gap-1.5 text-xs text-emerald-300 hover:text-emerald-200 px-3 py-1.5 rounded hover:bg-gray-700 transition-colors border border-emerald-400/30"
-              title="コラム記事の作成・SEO管理"
-            >
-              📝 コラム
+            <a href="/admin/column"
+              style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: "#059669", padding: "5px 10px", borderRadius: 7, border: "1px solid #D1FAE5", background: "#F0FDF4", textDecoration: "none", fontWeight: 600, whiteSpace: "nowrap" }}
+              title="コラム記事の作成・SEO管理">
+              コラム
             </a>
 
-            <a
-              href="/admin/setup"
-              className="flex items-center gap-1.5 text-xs text-violet-300 hover:text-violet-200 px-3 py-1.5 rounded hover:bg-gray-700 transition-colors border border-violet-400/30"
-              title="AIヒアリングでサイトを自動生成"
-            >
+            <a href="/admin/setup"
+              style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: "#7C3AED", padding: "5px 10px", borderRadius: 7, border: "1px solid #DDD6FE", background: "#F5F3FF", textDecoration: "none", fontWeight: 600, whiteSpace: "nowrap" }}
+              title="AIヒアリングでサイトを自動生成">
               AI生成
             </a>
 
             <button onClick={() => setConfig(defaultConfig)}
-              className="flex items-center gap-1.5 text-xs text-gray-300 hover:text-white px-3 py-1.5 rounded hover:bg-gray-700 transition-colors">
-              <RefreshCw size={12} /> リセット
+              style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: "#6B7280", padding: "5px 8px", borderRadius: 7, border: "1px solid #E2E8F0", background: "transparent", cursor: "pointer" }}>
+              <RefreshCw size={11} /> リセット
             </button>
 
             {/* Publish button */}
             <button
               onClick={handlePublish}
               disabled={publishing || !siteSlug}
-              title={!isSupabaseConfigured ? "Supabase未設定 — .env.local を確認" : undefined}
-              className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded transition-all disabled:opacity-50 ${
-                publishStatus === "success" ? "bg-green-600 text-white"
-                : publishStatus === "error" ? "bg-red-600 text-white"
-                : "bg-indigo-600 hover:bg-indigo-500 text-white"
-              }`}
+              title={!isSupabaseConfigured ? "Supabase未設定" : undefined}
+              style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12, fontWeight: 700, padding: "6px 14px", borderRadius: 8, border: "none", cursor: publishing || !siteSlug ? "not-allowed" : "pointer", opacity: publishing || !siteSlug ? 0.5 : 1, transition: "all 0.15s", whiteSpace: "nowrap",
+                background: publishStatus === "success" ? "#059669" : publishStatus === "error" ? "#DC2626" : "#4F46E5",
+                color: "#fff" }}
             >
               {publishing ? (
-                <><span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" /> 保存中...</>
+                <><span style={{ width: 11, height: 11, border: "2px solid rgba(255,255,255,0.3)", borderTop: "2px solid #fff", borderRadius: "50%", display: "inline-block", animation: "spin 0.6s linear infinite" }} /> 保存中...</>
               ) : publishStatus === "success" ? (
                 <><Check size={12} /> 公開済み</>
               ) : publishStatus === "error" ? (

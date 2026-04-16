@@ -1030,11 +1030,17 @@ export default function CanvasEditor({ config, onChange }: Props) {
   const [blockDragIdx,  setBlockDragIdx]  = useState<number | null>(null);
   const [blockDragOver, setBlockDragOver] = useState<number | null>(null);
   const [hoverInsertIdx, setHoverInsertIdx] = useState<number | null>(null);
+  const [previewMode, setPreviewMode] = useState<"pc" | "tablet" | "sp">("pc");
   const canvasRef = useRef<HTMLDivElement>(null);
 
   const CW       = config.canvasWidth ?? 1200;
   const elements = config.elements ?? [];
   const canvasHeight = Math.max(800, ...(elements.length > 0 ? elements.map(el => el.y + el.height + 80) : [800]));
+  // Preview mode
+  const DEVICE_W = { pc: CW, tablet: 768, sp: 390 } as const;
+  const deviceW  = DEVICE_W[previewMode];
+  const previewScale = deviceW / CW;
+  const isPreview = previewMode !== "pc";
   const selectedEl = elements.find(e => e.id === selectedId) ?? null;
 
   // ── Helpers ──────────────────────────────────────────────
@@ -1745,84 +1751,128 @@ export default function CanvasEditor({ config, onChange }: Props) {
         {/* Hint bar */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "6px 16px", background: "#FFFFFF", borderBottom: "1px solid #E2E8F0", flexShrink: 0 }}>
           <span style={{ fontSize: 11, color: "#94A3B8" }}>
-            クリック選択 &nbsp;·&nbsp; ドラッグ移動 &nbsp;·&nbsp; ハンドルでリサイズ &nbsp;·&nbsp; ダブルクリックで編集 &nbsp;·&nbsp; Del で削除
+            {isPreview
+              ? `${previewMode === "tablet" ? "タブレット" : "スマホ"} プレビュー（${deviceW}px）— 編集するには PC を選択`
+              : "クリック選択 · ドラッグ移動 · ハンドルでリサイズ · ダブルクリックで編集 · Del で削除"}
           </span>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <button onClick={compactBlocks}
-              style={{ fontSize: 11, color: "#6366F1", background: "#EEF2FF", border: "1px solid #C7D2FE", borderRadius: 6, padding: "3px 10px", cursor: "pointer", fontWeight: 600 }}
-              title="ブロック間の余白を詰める">
-              空白を詰める
-            </button>
-            <span style={{ fontSize: 11, color: "#CBD5E1", fontFamily: "monospace" }}>{CW}px</span>
+            {/* デバイス切替 */}
+            {([
+              { id: "pc" as const, label: "PC",
+                icon: <svg width="15" height="12" viewBox="0 0 20 16" fill="currentColor"><rect x="1" y="0" width="18" height="12" rx="2" fill="none" stroke="currentColor" strokeWidth="1.8"/><rect x="6" y="13" width="8" height="1.5" rx="0.75"/><rect x="8" y="12" width="4" height="1" rx="0.5"/></svg> },
+              { id: "tablet" as const, label: "タブレット",
+                icon: <svg width="10" height="13" viewBox="0 0 14 18" fill="currentColor"><rect x="1" y="0" width="12" height="18" rx="2" fill="none" stroke="currentColor" strokeWidth="1.8"/><circle cx="7" cy="15.5" r="0.9"/></svg> },
+              { id: "sp" as const, label: "スマホ",
+                icon: <svg width="8" height="13" viewBox="0 0 11 18" fill="currentColor"><rect x="1" y="0" width="9" height="18" rx="2" fill="none" stroke="currentColor" strokeWidth="1.8"/><rect x="3.5" y="1.5" width="4" height="1" rx="0.5"/><circle cx="5.5" cy="15.8" r="0.9"/></svg> },
+            ] as const).map(d => (
+              <button key={d.id} onClick={() => setPreviewMode(d.id)}
+                title={d.label}
+                style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 28, height: 24, borderRadius: 6,
+                  border: previewMode === d.id ? "1.5px solid #4F46E5" : "1px solid #E2E8F0",
+                  background: previewMode === d.id ? "#EEF2FF" : "#F8FAFC",
+                  color: previewMode === d.id ? "#4F46E5" : "#94A3B8",
+                  cursor: "pointer", transition: "all 0.12s",
+                }}>
+                {d.icon}
+              </button>
+            ))}
+            <div style={{ width: 1, height: 16, background: "#E2E8F0" }} />
+            {!isPreview && (
+              <button onClick={compactBlocks}
+                style={{ fontSize: 11, color: "#6366F1", background: "#EEF2FF", border: "1px solid #C7D2FE", borderRadius: 6, padding: "3px 10px", cursor: "pointer", fontWeight: 600 }}
+                title="ブロック間の余白を詰める">
+                空白を詰める
+              </button>
+            )}
+            <span style={{ fontSize: 11, color: "#CBD5E1", fontFamily: "monospace" }}>{deviceW}px</span>
           </div>
         </div>
 
         {/* Canvas scroll */}
-        <div style={{ flex: 1, overflow: "auto", padding: "32px 24px", minHeight: 0 }}
+        <div style={{ flex: 1, overflow: "auto", padding: isPreview ? "24px" : "32px 24px", minHeight: 0, background: isPreview ? "#1E293B" : "#F1F5F9", display: "flex", flexDirection: "column", alignItems: isPreview ? "center" : undefined }}
           onClick={() => { setSelectedId(null); setEditingId(null); }}>
-          <div
-            ref={canvasRef}
-            style={{ position: "relative", width: CW, minHeight: canvasHeight, background: "#FFFFFF", margin: "0 auto", boxShadow: "0 4px 40px rgba(0,0,0,0.12)", fontFamily: `"${siteFont}", sans-serif` }}
-            onPointerMove={onCanvasPointerMove}
-            onPointerUp={() => setDrag(null)}
-            onClick={e => e.stopPropagation()}
-            onDragOver={e => e.preventDefault()}
-            onDrop={onCanvasDrop}
-          >
-            {elements.length === 0 && (
-              <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 16, color: "#94A3B8" }}>
-                <div style={{ fontSize: 48 }}>🎨</div>
-                <p style={{ fontSize: 16, fontWeight: 600 }}>左パネルからブロックを追加してください</p>
-                <p style={{ fontSize: 13 }}>ヒーロー、特徴、FAQ など豊富なテンプレートを用意しています</p>
+
+          {/* ── Device frame outer (preview only, identity wrapper in PC) ── */}
+          <div style={isPreview ? {
+            borderRadius: previewMode === "sp" ? 36 : 20,
+            border: `${previewMode === "sp" ? 10 : 8}px solid #0F172A`,
+            boxShadow: "0 40px 100px rgba(0,0,0,0.7), inset 0 0 0 1px rgba(255,255,255,0.08)",
+            overflow: "hidden",
+            background: "#0F172A",
+            flexShrink: 0,
+          } : {}}>
+
+            {/* top speaker notch (sp only) */}
+            {isPreview && previewMode === "sp" && (
+              <div style={{ background: "#0F172A", height: 22, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <div style={{ width: 60, height: 6, borderRadius: 999, background: "#1E293B" }} />
               </div>
             )}
-            {[...elements].sort((a, b) => (a.zIndex ?? 0) - (b.zIndex ?? 0)).map(el => (
-              <CanvasElementView
-                key={el.id} element={el}
-                isSelected={selectedId === el.id}
-                isEditing={editingId === el.id}
-                onSelect={() => { setSelectedId(el.id); setEditingId(null); }}
-                onDoubleClick={() => { if (el.type === "text" || el.type === "button") { setSelectedId(el.id); setEditingId(el.id); } }}
-                onStartDrag={(e, mode) => startDrag(e, el.id, mode)}
-                onUpdate={patch => updateEl(el.id, patch)}
-              />
-            ))}
-            {/* ── Block insert zones ─────────────────────────────── */}
-            {blockGroups.map((g, idx) => {
-              if (idx >= blockGroups.length - 1) return null;
-              const isHov = hoverInsertIdx === idx;
-              return (
+
+            {/* ── Scale clip (preview) or identity (PC) ── */}
+            <div style={isPreview ? { width: deviceW, height: canvasHeight * previewScale, overflow: "hidden" } : {}}>
+              <div style={isPreview ? { width: CW, transform: `scale(${previewScale})`, transformOrigin: "top left", height: canvasHeight, pointerEvents: "none" } : {}}>
+
+                {/* ══ Canvas div ══ */}
                 <div
-                  key={`ins-${g.blockId}`}
-                  onMouseEnter={() => setHoverInsertIdx(idx)}
-                  onMouseLeave={() => setHoverInsertIdx(null)}
-                  onClick={e => { e.stopPropagation(); setInsertAfterIdx(idx); setBlockModal(true); }}
-                  style={{
-                    position: "absolute", left: 0, width: CW,
-                    top: g.maxY - 14, height: 28,
-                    zIndex: 500,
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    cursor: "pointer",
-                  }}>
-                  <div style={{
-                    position: "absolute", left: 0, right: 0, height: 2,
-                    background: isHov ? "#4F46E5" : "rgba(99,102,241,0.15)",
-                    transition: "background 0.15s",
-                  }} />
-                  <div style={{
-                    width: 28, height: 28, borderRadius: "50%",
-                    background: isHov ? "#4F46E5" : "rgba(99,102,241,0.12)",
-                    color: isHov ? "#fff" : "#818CF8",
-                    fontSize: 18, fontWeight: 700,
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    boxShadow: isHov ? "0 2px 10px rgba(79,70,229,0.4)" : "none",
-                    transition: "all 0.15s",
-                    zIndex: 1,
-                  }}>+</div>
+                  ref={canvasRef}
+                  style={{ position: "relative", width: CW, minHeight: canvasHeight, background: "#FFFFFF",
+                    ...(!isPreview ? { margin: "0 auto", boxShadow: "0 4px 40px rgba(0,0,0,0.12)" } : {}),
+                    fontFamily: `"${siteFont}", sans-serif` }}
+                  onPointerMove={!isPreview ? onCanvasPointerMove : undefined}
+                  onPointerUp={!isPreview ? () => setDrag(null) : undefined}
+                  onClick={!isPreview ? (e => e.stopPropagation()) : undefined}
+                  onDragOver={!isPreview ? (e => e.preventDefault()) : undefined}
+                  onDrop={!isPreview ? onCanvasDrop : undefined}
+                >
+                  {elements.length === 0 && (
+                    <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 16, color: "#94A3B8" }}>
+                      <div style={{ fontSize: 48 }}>🎨</div>
+                      <p style={{ fontSize: 16, fontWeight: 600 }}>左パネルからブロックを追加してください</p>
+                      <p style={{ fontSize: 13 }}>ヒーロー、特徴、FAQ など豊富なテンプレートを用意しています</p>
+                    </div>
+                  )}
+                  {[...elements].sort((a, b) => (a.zIndex ?? 0) - (b.zIndex ?? 0)).map(el => (
+                    <CanvasElementView
+                      key={el.id} element={el}
+                      isSelected={!isPreview && selectedId === el.id}
+                      isEditing={!isPreview && editingId === el.id}
+                      onSelect={() => { if (!isPreview) { setSelectedId(el.id); setEditingId(null); } }}
+                      onDoubleClick={() => { if (!isPreview && (el.type === "text" || el.type === "button")) { setSelectedId(el.id); setEditingId(el.id); } }}
+                      onStartDrag={(e, mode) => { if (!isPreview) startDrag(e, el.id, mode); }}
+                      onUpdate={patch => { if (!isPreview) updateEl(el.id, patch); }}
+                    />
+                  ))}
+                  {/* ── Block insert zones (edit mode only) ── */}
+                  {!isPreview && blockGroups.map((g, idx) => {
+                    if (idx >= blockGroups.length - 1) return null;
+                    const isHov = hoverInsertIdx === idx;
+                    return (
+                      <div
+                        key={`ins-${g.blockId}`}
+                        onMouseEnter={() => setHoverInsertIdx(idx)}
+                        onMouseLeave={() => setHoverInsertIdx(null)}
+                        onClick={e => { e.stopPropagation(); setInsertAfterIdx(idx); setBlockModal(true); }}
+                        style={{ position: "absolute", left: 0, width: CW, top: g.maxY - 14, height: 28, zIndex: 500, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+                        <div style={{ position: "absolute", left: 0, right: 0, height: 2, background: isHov ? "#4F46E5" : "rgba(99,102,241,0.15)", transition: "background 0.15s" }} />
+                        <div style={{ width: 28, height: 28, borderRadius: "50%", background: isHov ? "#4F46E5" : "rgba(99,102,241,0.12)", color: isHov ? "#fff" : "#818CF8", fontSize: 18, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: isHov ? "0 2px 10px rgba(79,70,229,0.4)" : "none", transition: "all 0.15s", zIndex: 1 }}>+</div>
+                      </div>
+                    );
+                  })}
                 </div>
-              );
-            })}
+                {/* ══ / Canvas div ══ */}
+
+              </div>
+            </div>
+
+            {/* bottom home button (sp only) */}
+            {isPreview && previewMode === "sp" && (
+              <div style={{ background: "#0F172A", height: 22, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <div style={{ width: 36, height: 6, borderRadius: 999, background: "#1E293B" }} />
+              </div>
+            )}
           </div>
+
         </div>
       </div>
 
