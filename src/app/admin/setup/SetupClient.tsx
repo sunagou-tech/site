@@ -12,6 +12,125 @@ type ChatMessage = { role: "user" | "assistant"; content: string };
 const NAVY = "#1A365D";
 type Phase = "form" | "generating" | "preview" | "html-preview";
 
+// ── デモテンプレート ──────────────────────────────────────────
+type DemoTemplate = {
+  id: string; name: string; label: string; desc: string;
+  thumb: { bg: string; accent: string; textColor: string; subColor: string; gradient?: string; };
+  style: Partial<GlobalStyle>;
+};
+
+const DEMO_TEMPLATES: DemoTemplate[] = [
+  {
+    id: "juku-dark",
+    name: "スター学習塾",
+    label: "ダーク × 高級感",
+    desc: "難関大受験特化。黒背景とゴールドで圧倒的な信頼感。",
+    thumb: { bg: "#0D0D0D", accent: "#C9A84C", textColor: "#FFFFFF", subColor: "#888" },
+    style: {
+      primaryColor: "#C9A84C", accentColor: "#C9A84C",
+      heroBgColor: "#0D0D0D", bgColor: "#111111",
+      cardBgColor: "#1A1A1A", buttonBgColor: "#C9A84C",
+      designStyle: "luxury-dark",
+      designNotes: "学習塾、大学受験特化、ダーク背景、ゴールドアクセント、プレミアム感、大きなタイポグラフィ、星空風装飾",
+    },
+  },
+  {
+    id: "juku-blue",
+    name: "オーシャン進学",
+    label: "ブルーグラデーション",
+    desc: "爽やかなブルーグラデで明るい未来を表現。個別指導向け。",
+    thumb: { bg: "#1D4ED8", accent: "#38BDF8", textColor: "#FFFFFF", subColor: "#BAE6FD", gradient: "linear-gradient(135deg, #1D4ED8 0%, #06B6D4 100%)" },
+    style: {
+      primaryColor: "#1D4ED8", accentColor: "#38BDF8",
+      heroBgColor: "#1D4ED8", bgColor: "#EFF6FF",
+      cardBgColor: "#DBEAFE", buttonBgColor: "#1D4ED8",
+      designStyle: "bright-modern",
+      designNotes: "学習塾、個別指導、ブルーグラデーション、爽やか、明るい、親しみやすい、小中学生向け",
+    },
+  },
+  {
+    id: "juku-warm",
+    name: "みらい学習センター",
+    label: "ナチュラル × 温かみ",
+    desc: "暖色系でやさしい印象。小中学生向け総合学習塾に最適。",
+    thumb: { bg: "#FFF8F0", accent: "#F97316", textColor: "#1C1917", subColor: "#78716C" },
+    style: {
+      primaryColor: "#EA580C", accentColor: "#F97316",
+      heroBgColor: "#2D4A3E", bgColor: "#FFFFFF",
+      cardBgColor: "#FFF7ED", buttonBgColor: "#EA580C",
+      designStyle: "natural-warm",
+      designNotes: "学習塾、小中学生向け、ナチュラル、暖色系、オレンジアクセント、家庭的、温かみ、親しみやすい",
+    },
+  },
+  {
+    id: "juku-modern",
+    name: "エキスパート学習院",
+    label: "モダン × クリーン",
+    desc: "白背景×ネイビーのシャープなデザイン。中学受験特化塾向け。",
+    thumb: { bg: "#F8FAFC", accent: "#1E40AF", textColor: "#0F172A", subColor: "#64748B" },
+    style: {
+      primaryColor: "#1E40AF", accentColor: "#3B82F6",
+      heroBgColor: "#1E3A8A", bgColor: "#F8FAFC",
+      cardBgColor: "#EFF6FF", buttonBgColor: "#1E40AF",
+      designStyle: "editorial-clean",
+      designNotes: "学習塾、中学受験特化、モダン、クリーン、白背景ネイビー、実績重視、プロフェッショナル",
+    },
+  },
+  {
+    id: "juku-luxury",
+    name: "プレミアム個別指導院",
+    label: "ラグジュアリー × 深紺",
+    desc: "深紺×水色で高級個別指導のブランド感を演出。",
+    thumb: { bg: "#0A1628", accent: "#4FC3F7", textColor: "#FFFFFF", subColor: "#93C5FD" },
+    style: {
+      primaryColor: "#4FC3F7", accentColor: "#38BDF8",
+      heroBgColor: "#0A1628", bgColor: "#0D1B2A",
+      cardBgColor: "#0F2133", buttonBgColor: "#4FC3F7",
+      designStyle: "deep-navy-luxury",
+      designNotes: "学習塾、プレミアム個別指導、高級感、深紺背景、水色アクセント、マンツーマン、成績保証",
+    },
+  },
+];
+
+// ── デモサムネイル ────────────────────────────────────────────
+function DemoThumb({ t, W = 220, H = 130 }: { t: DemoTemplate; W?: number; H?: number }) {
+  const { bg, accent, textColor, gradient } = t.thumb;
+  const heroBg = gradient || bg;
+  return (
+    <div style={{ width: W, height: H, background: heroBg, position: "relative", overflow: "hidden", borderRadius: 10, flexShrink: 0 }}>
+      {/* nav */}
+      <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: H*0.13,
+        background: `${bg}CC`, backdropFilter: "blur(4px)",
+        display: "flex", alignItems: "center", padding: `0 ${W*0.07}px`, gap: W*0.05 }}>
+        <div style={{ width: W*0.09, height: H*0.05, background: accent, borderRadius: 2 }} />
+        {[0,1,2,3].map(i => <div key={i} style={{ width: W*0.08, height: H*0.025, background: textColor, opacity: 0.25, borderRadius: 2 }} />)}
+        <div style={{ marginLeft: "auto", width: W*0.13, height: H*0.05, background: accent, borderRadius: 3 }} />
+      </div>
+      {/* hero text */}
+      <div style={{ position: "absolute", top: H*0.22, left: W*0.07, right: W*0.35 }}>
+        <div style={{ width: W*0.28, height: H*0.055, background: accent, opacity: 0.7, borderRadius: 2, marginBottom: H*0.04 }} />
+        <div style={{ width: W*0.68, height: H*0.09, background: textColor, opacity: 0.9, borderRadius: 2, marginBottom: H*0.025 }} />
+        <div style={{ width: W*0.5, height: H*0.09, background: textColor, opacity: 0.9, borderRadius: 2, marginBottom: H*0.06 }} />
+        <div style={{ width: W*0.22, height: H*0.07, background: accent, borderRadius: 4 }} />
+      </div>
+      {/* right deco */}
+      <div style={{ position: "absolute", right: W*0.04, top: H*0.18, width: W*0.28, height: H*0.62,
+        background: `${accent}25`, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ width: "60%", height: "60%", background: `${accent}35`, borderRadius: "50%" }} />
+      </div>
+      {/* bottom stats */}
+      <div style={{ position: "absolute", bottom: H*0.05, left: W*0.07, display: "flex", gap: W*0.04 }}>
+        {[0,1,2].map(i => (
+          <div key={i} style={{ background: `${accent}20`, borderRadius: 4, padding: `${H*0.025}px ${W*0.04}px` }}>
+            <div style={{ width: W*0.08, height: H*0.04, background: accent, borderRadius: 2, marginBottom: 2 }} />
+            <div style={{ width: W*0.1, height: H*0.025, background: textColor, opacity: 0.3, borderRadius: 2 }} />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 const GEN_STEPS = [
   { pct: 10,  text: "参考サイトのデザインを解析中..." },
   { pct: 25,  text: "カラー・フォントを取り込み中..." },
@@ -63,10 +182,14 @@ export default function SetupClient() {
   const [target,       setTarget]       = useState("");
   const [strengths,    setStrengths]    = useState("");
 
-  // ─── HTMLモード ──────────────────────────────────────────────
+  // ─── HTMLモード / デモモード ─────────────────────────────────
+  const [mainTab,        setMainTab]      = useState<"chat" | "demo">("chat");
   const [genMode,        setGenMode]      = useState<"html" | "canvas">("html");
   const [htmlContent,    setHtmlContent]  = useState<string>("");
   const [blobUrl,        setBlobUrl]      = useState<string>("");
+  const [selectedDemo,   setSelectedDemo] = useState<DemoTemplate | null>(null);
+  const [demoBizName,    setDemoBizName]  = useState("");
+  const [demoBizDesc,    setDemoBizDesc]  = useState("");
 
   const [chatMessages,   setChatMessages] = useState<ChatMessage[]>([]);
   const [chatInput,      setChatInput]    = useState("");
@@ -189,6 +312,50 @@ export default function SetupClient() {
       setPhase("form");
     }
   }, [businessName, serviceDesc, target, strengths]);
+
+  // ─── デモテンプレートから生成 ─────────────────────────────────
+  const generateFromDemo = useCallback(async () => {
+    if (!selectedDemo || !demoBizName.trim() || !demoBizDesc.trim()) return;
+    setPhase("generating");
+    setGenPct(0);
+    setGenText("テンプレートのデザインを適用中...");
+
+    const DEMO_STEPS = [
+      { pct: 12, text: "デザインコンセプトを適用中..." },
+      { pct: 28, text: "ヒーローセクションを構築中..." },
+      { pct: 46, text: "各セクションをデザイン中..." },
+      { pct: 64, text: "アニメーション・インタラクションを追加中..." },
+      { pct: 82, text: "カラー・タイポグラフィを調整中..." },
+      { pct: 93, text: "最終仕上げ中..." },
+    ];
+    DEMO_STEPS.forEach(({ pct, text }, i) => {
+      setTimeout(() => { setGenPct(pct); setGenText(text); }, i * 2200);
+    });
+
+    try {
+      const res = await fetch("/api/generate-html", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          businessName: demoBizName,
+          serviceDesc: demoBizDesc,
+          globalStyle: selectedDemo.style,
+        }),
+      });
+      let data: { error?: string; html?: string };
+      try { data = await res.json(); } catch { throw new Error("サーバーエラーが発生しました。"); }
+      if (!res.ok || data.error) throw new Error(data.error ?? "HTML生成に失敗しました");
+
+      setGenPct(100);
+      setTimeout(() => {
+        setHtmlContent(data.html!);
+        setPhase("html-preview");
+      }, 800);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "HTML生成に失敗しました");
+      setPhase("form");
+    }
+  }, [selectedDemo, demoBizName, demoBizDesc]);
 
   // ─── チャット: メッセージ送信 ────────────────────────────────
   const runChatGenerate = useCallback(async (msgs: ChatMessage[]) => {
@@ -602,9 +769,23 @@ export default function SetupClient() {
             <span className="text-sm font-bold" style={{ color: "#111827" }}>ツクリエ</span>
           </div>
 
-          <div className="flex items-center gap-2">
-            <MsIcon name="chat" size={16} color={NAVY} />
-            <span className="text-sm font-semibold hidden lg:block" style={{ color: "#111827" }}>AIとチャット</span>
+          {/* タブ切替 */}
+          <div className="flex gap-1 p-1 rounded-xl" style={{ background: "#F3F4F6" }}>
+            {([
+              ["chat", "AIとチャット", "chat"],
+              ["demo", "デモから作成", "grid_view"],
+            ] as const).map(([tab, label, icon]) => (
+              <button key={tab} onClick={() => setMainTab(tab)}
+                className="flex items-center gap-1.5 text-xs px-4 py-1.5 rounded-lg font-medium transition-all"
+                style={{
+                  background: mainTab === tab ? "#FFFFFF" : "transparent",
+                  color: mainTab === tab ? "#111827" : "#6B7280",
+                  boxShadow: mainTab === tab ? "0 1px 4px rgba(0,0,0,0.08)" : "none",
+                }}>
+                <MsIcon name={icon} size={14} color={mainTab === tab ? NAVY : "#9CA3AF"} />
+                {label}
+              </button>
+            ))}
           </div>
 
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -621,7 +802,105 @@ export default function SetupClient() {
           </div>
         </div>
 
+        {/* ════ デモから作成タブ ════ */}
+        {mainTab === "demo" && (
+          <div style={{ flex: 1, overflowY: "auto", padding: "28px 32px", background: "#F9FAFB" }}>
+            <div className="max-w-4xl mx-auto">
+              <div className="mb-6">
+                <h2 className="font-bold mb-1" style={{ fontSize: 20, color: "#111827", letterSpacing: "-0.02em" }}>
+                  学習塾のデモサイトから作成
+                </h2>
+                <p className="text-sm" style={{ color: "#6B7280" }}>
+                  お好みのデザインを選んで、事業情報を入れるだけで完成します。
+                </p>
+              </div>
+
+              {/* デモカードグリッド */}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 16, marginBottom: 32 }}>
+                {DEMO_TEMPLATES.map(demo => (
+                  <button key={demo.id}
+                    onClick={() => setSelectedDemo(prev => prev?.id === demo.id ? null : demo)}
+                    className="text-left transition-all"
+                    style={{
+                      background: "#FFFFFF",
+                      border: `2px solid ${selectedDemo?.id === demo.id ? NAVY : "#E2E8F0"}`,
+                      borderRadius: 14,
+                      overflow: "hidden",
+                      boxShadow: selectedDemo?.id === demo.id ? `0 0 0 3px ${NAVY}22` : "0 1px 4px rgba(0,0,0,0.06)",
+                      cursor: "pointer",
+                    }}>
+                    <DemoThumb t={demo} W={260} H={150} />
+                    <div style={{ padding: "12px 14px" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
+                        <span className="text-xs font-bold" style={{ color: "#111827" }}>{demo.name}</span>
+                        {selectedDemo?.id === demo.id && (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded-full font-bold"
+                            style={{ background: NAVY, color: "#FFFFFF" }}>選択中</span>
+                        )}
+                      </div>
+                      <span className="text-[10px] px-2 py-0.5 rounded-full font-medium inline-block mb-2"
+                        style={{ background: "#F3F4F6", color: "#6B7280" }}>{demo.label}</span>
+                      <p className="text-xs leading-relaxed" style={{ color: "#9CA3AF" }}>{demo.desc}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+
+              {/* 選択後の生成フォーム */}
+              {selectedDemo && (
+                <div style={{ background: "#FFFFFF", borderRadius: 16, border: `1.5px solid ${NAVY}33`, padding: 24 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
+                    <div style={{ width: 8, height: 8, borderRadius: "50%", background: NAVY }} />
+                    <p className="text-sm font-bold" style={{ color: "#111827" }}>
+                      「{selectedDemo.name}」のスタイルで生成します
+                    </p>
+                    <span className="text-xs px-2 py-0.5 rounded-full"
+                      style={{ background: "#EFF6FF", color: NAVY }}>{selectedDemo.label}</span>
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                    <div>
+                      <label className="block text-xs font-semibold mb-1.5" style={{ color: "#374151" }}>
+                        事業・サービス名 <span style={{ color: "#EF4444" }}>*</span>
+                      </label>
+                      <input type="text" value={demoBizName} onChange={e => setDemoBizName(e.target.value)}
+                        placeholder="例：青山進学塾 / みらい個別指導"
+                        className="w-full text-sm rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-200"
+                        style={{ border: "1.5px solid #E2E8F0", background: "#F9FAFB", color: "#111827" }} />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold mb-1.5" style={{ color: "#374151" }}>
+                        サービス・特徴の説明 <span style={{ color: "#EF4444" }}>*</span>
+                      </label>
+                      <textarea value={demoBizDesc} onChange={e => setDemoBizDesc(e.target.value)}
+                        placeholder="例：中学受験専門の個別指導塾。講師全員が難関大出身で、年間合格率95%。少人数制で一人ひとりに最適な学習プランを提供します。"
+                        rows={3} className="w-full text-sm rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-200 resize-none"
+                        style={{ border: "1.5px solid #E2E8F0", background: "#F9FAFB", color: "#111827" }} />
+                    </div>
+                    {error && (
+                      <p className="text-xs" style={{ color: "#DC2626" }}>{error}</p>
+                    )}
+                    <button
+                      onClick={generateFromDemo}
+                      disabled={!demoBizName.trim() || !demoBizDesc.trim()}
+                      className="flex items-center justify-center gap-2 font-bold text-sm py-3 rounded-xl text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                      style={{
+                        background: demoBizName.trim() && demoBizDesc.trim()
+                          ? `linear-gradient(135deg, ${NAVY}, #2B6CB0)` : "#CBD5E1",
+                        boxShadow: demoBizName.trim() && demoBizDesc.trim()
+                          ? "0 4px 16px rgba(26,54,93,0.3)" : "none",
+                      }}>
+                      <MsIcon name="auto_awesome" size={16} color="#FFFFFF" />
+                      このデザインでHTMLを生成する
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* ════ チャット ════ */}
+        {mainTab === "chat" && (
         <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
           {/* メッセージ一覧 */}
           <div style={{ flex: 1, overflowY: "auto", padding: "20px 24px", display: "flex", flexDirection: "column", gap: 12 }}>
@@ -695,6 +974,7 @@ export default function SetupClient() {
             </p>
           </div>
         </div>
+        )}
       </main>
 
       <style>{`
