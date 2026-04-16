@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { SiteConfig, CanvasElement, CanvasElementType, uid } from "@/types/site";
 
 // ── Drag / resize types ──────────────────────────────────────
@@ -1131,6 +1131,57 @@ export default function CanvasEditor({ config, onChange }: Props) {
     setSelectedId(null); setEditingId(null);
   }, [config, onChange]);
 
+  // ── Block groups (sorted by top Y) ───────────────────────
+  const blockGroups = useMemo(() => {
+    const map = new Map<string, CanvasElement[]>();
+    for (const el of elements) {
+      if (!el.blockId) continue;
+      if (!map.has(el.blockId)) map.set(el.blockId, []);
+      map.get(el.blockId)!.push(el);
+    }
+    return Array.from(map.entries())
+      .map(([blockId, els]) => ({
+        blockId,
+        els,
+        minY: Math.min(...els.map(e => e.y)),
+        maxY: Math.max(...els.map(e => e.y + e.height)),
+        bg: els.find(e => e.type === "rect" && e.x === 0)?.style?.backgroundColor ?? "#E2E8F0",
+      }))
+      .sort((a, b) => a.minY - b.minY);
+  }, [elements]);
+
+  function moveBlockUp(blockId: string) {
+    const idx = blockGroups.findIndex(g => g.blockId === blockId);
+    if (idx <= 0) return;
+    const above = blockGroups[idx - 1];
+    const curr  = blockGroups[idx];
+    const gap = curr.minY - above.maxY;
+    const aboveH = above.maxY - above.minY;
+    const currH  = curr.maxY  - curr.minY;
+    const updated = elements.map(el => {
+      if (el.blockId === blockId)         return { ...el, y: el.y - aboveH - gap };
+      if (el.blockId === above.blockId)   return { ...el, y: el.y + currH  + gap };
+      return el;
+    });
+    onChange({ ...config, elements: updated });
+  }
+
+  function moveBlockDown(blockId: string) {
+    const idx = blockGroups.findIndex(g => g.blockId === blockId);
+    if (idx < 0 || idx >= blockGroups.length - 1) return;
+    const below = blockGroups[idx + 1];
+    const curr  = blockGroups[idx];
+    const gap = below.minY - curr.maxY;
+    const belowH = below.maxY - below.minY;
+    const currH  = curr.maxY  - curr.minY;
+    const updated = elements.map(el => {
+      if (el.blockId === blockId)         return { ...el, y: el.y + belowH + gap };
+      if (el.blockId === below.blockId)   return { ...el, y: el.y - currH  - gap };
+      return el;
+    });
+    onChange({ ...config, elements: updated });
+  }
+
   // ── Compact: ブロック間の空白を詰める ─────────────────────
   const compactBlocks = useCallback(() => {
     const els = config.elements ?? [];
@@ -1359,11 +1410,49 @@ export default function CanvasEditor({ config, onChange }: Props) {
             {/* ── ブロック ── */}
             {sidePanel === "blocks" && (
               <div>
+                {/* 配置済みブロック一覧 */}
+                {blockGroups.length > 0 && (
+                  <div style={{ marginBottom: 16 }}>
+                    <p style={{ fontSize: 10, fontWeight: 700, color: "#64748B", marginBottom: 8, letterSpacing: "0.05em" }}>配置済みブロック</p>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                      {blockGroups.map((g, idx) => (
+                        <div key={g.blockId}
+                          style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 10px", borderRadius: 8, border: "1px solid #E2E8F0", background: "#FAFAFA" }}>
+                          {/* カラーインジケーター */}
+                          <div style={{ width: 10, height: 10, borderRadius: 3, background: g.bg, flexShrink: 0, border: "1px solid rgba(0,0,0,0.08)" }} />
+                          <span style={{ fontSize: 11, fontWeight: 600, color: "#374151", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                            セクション {idx + 1}
+                          </span>
+                          {/* 上下移動 */}
+                          <button onClick={() => moveBlockUp(g.blockId)} disabled={idx === 0}
+                            style={{ width: 22, height: 22, border: "1px solid #E2E8F0", borderRadius: 5, background: idx === 0 ? "#F9FAFB" : "#fff", color: idx === 0 ? "#CBD5E1" : "#475569", cursor: idx === 0 ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, flexShrink: 0 }}
+                            title="上へ移動">
+                            ↑
+                          </button>
+                          <button onClick={() => moveBlockDown(g.blockId)} disabled={idx === blockGroups.length - 1}
+                            style={{ width: 22, height: 22, border: "1px solid #E2E8F0", borderRadius: 5, background: idx === blockGroups.length - 1 ? "#F9FAFB" : "#fff", color: idx === blockGroups.length - 1 ? "#CBD5E1" : "#475569", cursor: idx === blockGroups.length - 1 ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, flexShrink: 0 }}
+                            title="下へ移動">
+                            ↓
+                          </button>
+                          {/* 削除 */}
+                          <button onClick={() => deleteBlock(g.blockId)}
+                            style={{ width: 22, height: 22, border: "1px solid #FEE2E2", borderRadius: 5, background: "#FFF5F5", color: "#EF4444", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, flexShrink: 0 }}
+                            title="ブロックを削除">
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                    <div style={{ height: 1, background: "#F1F5F9", margin: "12px 0" }} />
+                  </div>
+                )}
+
+                {/* ブロックを追加 */}
                 <button onClick={() => setBlockModal(true)}
                   style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, width: "100%", padding: "10px 0", borderRadius: 8, border: "1.5px dashed #C7D2FE", background: "#EEF2FF", cursor: "pointer", color: "#4F46E5", fontWeight: 700, fontSize: 12, marginBottom: 12, transition: "background 0.12s" }}
                   onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "#E0E7FF"; }}
                   onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "#EEF2FF"; }}>
-                  <span style={{ fontSize: 15 }}>+</span> すべてのブロックを見る
+                  <span style={{ fontSize: 15 }}>+</span> ブロックを追加
                 </button>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 10 }}>
                   {["すべて", ...BLOCK_CATEGORIES].map(cat => (
