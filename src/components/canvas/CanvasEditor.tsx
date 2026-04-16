@@ -1026,6 +1026,10 @@ export default function CanvasEditor({ config, onChange }: Props) {
   const [aiImgError,    setAiImgError]    = useState("");
   const [aiGenImages,   setAiGenImages]   = useState<string[]>([]);
   const [blockModal,    setBlockModal]    = useState(false);
+  const [insertAfterIdx, setInsertAfterIdx] = useState<number | null>(null); // null = append at end
+  const [blockDragIdx,  setBlockDragIdx]  = useState<number | null>(null);
+  const [blockDragOver, setBlockDragOver] = useState<number | null>(null);
+  const [hoverInsertIdx, setHoverInsertIdx] = useState<number | null>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
 
   const CW       = config.canvasWidth ?? 1200;
@@ -1116,13 +1120,31 @@ export default function CanvasEditor({ config, onChange }: Props) {
     setSelectedId(el.id);
   }
 
-  // ── Add block template ───────────────────────────────────
-  function addBlock(tpl: BlockTemplate) {
-    const maxY = elements.length > 0 ? Math.max(...elements.map(e => e.y + e.height)) : 0;
+  // ── Add block template (insertAfter: insert after blockGroups[insertAfter], null = append) ─
+  function addBlock(tpl: BlockTemplate, insertAfter?: number | null) {
     const blockId = uid();
-    const newEls = tpl.create(maxY + 20, CW).map(el => ({ ...el, blockId }));
-    onChange({ ...config, elements: [...elements, ...newEls] });
-    if (newEls.length > 0) setSelectedId(newEls[0].id);
+    if (insertAfter !== null && insertAfter !== undefined && blockGroups.length > 0 && insertAfter >= 0) {
+      const insertY = blockGroups[insertAfter].maxY;
+      const newEls = tpl.create(insertY, CW).map(el => ({ ...el, blockId }));
+      const newBlockH = newEls.length > 0
+        ? Math.max(...newEls.map(e => e.y + e.height)) - insertY
+        : 0;
+      // Shift all elements in blocks below the insertion point
+      const belowIds = new Set(
+        blockGroups.slice(insertAfter + 1).flatMap(g => g.els.map(e => e.id))
+      );
+      const shifted = elements.map(el =>
+        belowIds.has(el.id) ? { ...el, y: el.y + newBlockH } : el
+      );
+      onChange({ ...config, elements: [...shifted, ...newEls] });
+      if (newEls.length > 0) setSelectedId(newEls[0].id);
+    } else {
+      const maxY = elements.length > 0 ? Math.max(...elements.map(e => e.y + e.height)) : 0;
+      const newEls = tpl.create(maxY + 20, CW).map(el => ({ ...el, blockId }));
+      onChange({ ...config, elements: [...elements, ...newEls] });
+      if (newEls.length > 0) setSelectedId(newEls[0].id);
+    }
+    setInsertAfterIdx(null);
   }
 
   // ── Delete entire block ───────────────────────────────────
@@ -1130,6 +1152,26 @@ export default function CanvasEditor({ config, onChange }: Props) {
     onChange({ ...config, elements: (config.elements ?? []).filter(e => e.blockId !== blockId) });
     setSelectedId(null); setEditingId(null);
   }, [config, onChange]);
+
+  // ── Reorder blocks by drag-and-drop ──────────────────────
+  function reorderBlocks(fromIdx: number, toIdx: number) {
+    if (fromIdx === toIdx) return;
+    const newOrder = [...blockGroups];
+    const [moved] = newOrder.splice(fromIdx, 1);
+    newOrder.splice(toIdx, 0, moved);
+    // Reassign Y positions based on new order
+    let curY = 0;
+    const deltaMap = new Map<string, number>();
+    for (const g of newOrder) {
+      const delta = curY - g.minY;
+      for (const el of g.els) deltaMap.set(el.id, delta);
+      curY += g.maxY - g.minY;
+    }
+    onChange({ ...config, elements: elements.map(el => {
+      const d = deltaMap.get(el.id);
+      return d !== undefined ? { ...el, y: el.y + d } : el;
+    }) });
+  }
 
   // ── Block groups (sorted by top Y) ───────────────────────
   const blockGroups = useMemo(() => {
@@ -1413,33 +1455,55 @@ export default function CanvasEditor({ config, onChange }: Props) {
                 {/* 配置済みブロック一覧 */}
                 {blockGroups.length > 0 && (
                   <div style={{ marginBottom: 16 }}>
-                    <p style={{ fontSize: 10, fontWeight: 700, color: "#64748B", marginBottom: 8, letterSpacing: "0.05em" }}>配置済みブロック</p>
-                    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                    <p style={{ fontSize: 10, fontWeight: 700, color: "#64748B", marginBottom: 8, letterSpacing: "0.05em" }}>配置済みブロック（ドラッグで並び替え）</p>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
                       {blockGroups.map((g, idx) => (
-                        <div key={g.blockId}
-                          style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 10px", borderRadius: 8, border: "1px solid #E2E8F0", background: "#FAFAFA" }}>
-                          {/* カラーインジケーター */}
-                          <div style={{ width: 10, height: 10, borderRadius: 3, background: g.bg, flexShrink: 0, border: "1px solid rgba(0,0,0,0.08)" }} />
-                          <span style={{ fontSize: 11, fontWeight: 600, color: "#374151", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                            セクション {idx + 1}
-                          </span>
-                          {/* 上下移動 */}
-                          <button onClick={() => moveBlockUp(g.blockId)} disabled={idx === 0}
-                            style={{ width: 22, height: 22, border: "1px solid #E2E8F0", borderRadius: 5, background: idx === 0 ? "#F9FAFB" : "#fff", color: idx === 0 ? "#CBD5E1" : "#475569", cursor: idx === 0 ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, flexShrink: 0 }}
-                            title="上へ移動">
-                            ↑
-                          </button>
-                          <button onClick={() => moveBlockDown(g.blockId)} disabled={idx === blockGroups.length - 1}
-                            style={{ width: 22, height: 22, border: "1px solid #E2E8F0", borderRadius: 5, background: idx === blockGroups.length - 1 ? "#F9FAFB" : "#fff", color: idx === blockGroups.length - 1 ? "#CBD5E1" : "#475569", cursor: idx === blockGroups.length - 1 ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, flexShrink: 0 }}
-                            title="下へ移動">
-                            ↓
-                          </button>
-                          {/* 削除 */}
-                          <button onClick={() => deleteBlock(g.blockId)}
-                            style={{ width: 22, height: 22, border: "1px solid #FEE2E2", borderRadius: 5, background: "#FFF5F5", color: "#EF4444", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, flexShrink: 0 }}
-                            title="ブロックを削除">
-                            ×
-                          </button>
+                        <div key={g.blockId}>
+                          {/* ── ブロック行 ── */}
+                          <div
+                            draggable
+                            onDragStart={() => setBlockDragIdx(idx)}
+                            onDragEnd={() => { setBlockDragIdx(null); setBlockDragOver(null); }}
+                            onDragOver={e => { e.preventDefault(); setBlockDragOver(idx); }}
+                            onDragLeave={() => setBlockDragOver(null)}
+                            onDrop={e => { e.preventDefault(); if (blockDragIdx !== null) reorderBlocks(blockDragIdx, idx); setBlockDragIdx(null); setBlockDragOver(null); }}
+                            style={{
+                              display: "flex", alignItems: "center", gap: 8,
+                              padding: "7px 10px", borderRadius: 8,
+                              border: blockDragOver === idx && blockDragIdx !== idx ? "1.5px solid #4F46E5" : "1px solid #E2E8F0",
+                              background: blockDragIdx === idx ? "#EEF2FF" : "#FAFAFA",
+                              opacity: blockDragIdx === idx ? 0.5 : 1,
+                              cursor: "grab", marginBottom: 2, transition: "all 0.1s",
+                            }}>
+                            {/* ドラッグハンドル */}
+                            <svg width="10" height="14" viewBox="0 0 10 14" fill="#CBD5E1" style={{ flexShrink: 0 }}>
+                              <circle cx="3" cy="2.5" r="1.3"/><circle cx="7" cy="2.5" r="1.3"/>
+                              <circle cx="3" cy="7" r="1.3"/><circle cx="7" cy="7" r="1.3"/>
+                              <circle cx="3" cy="11.5" r="1.3"/><circle cx="7" cy="11.5" r="1.3"/>
+                            </svg>
+                            {/* カラーインジケーター */}
+                            <div style={{ width: 10, height: 10, borderRadius: 3, background: g.bg, flexShrink: 0, border: "1px solid rgba(0,0,0,0.08)" }} />
+                            <span style={{ fontSize: 11, fontWeight: 600, color: "#374151", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                              セクション {idx + 1}
+                            </span>
+                            {/* 削除 */}
+                            <button onClick={() => deleteBlock(g.blockId)}
+                              style={{ width: 22, height: 22, border: "1px solid #FEE2E2", borderRadius: 5, background: "#FFF5F5", color: "#EF4444", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, flexShrink: 0 }}
+                              title="ブロックを削除">
+                              ×
+                            </button>
+                          </div>
+                          {/* ── ブロック間「+」 ── */}
+                          {idx < blockGroups.length - 1 && (
+                            <button
+                              onClick={() => { setInsertAfterIdx(idx); setBlockModal(true); }}
+                              style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 4, width: "100%", height: 22, border: "1px dashed #C7D2FE", borderRadius: 6, background: "transparent", cursor: "pointer", color: "#818CF8", fontSize: 13, fontWeight: 700, margin: "2px 0", transition: "all 0.12s" }}
+                              onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.background = "#EEF2FF"; el.style.borderColor = "#818CF8"; }}
+                              onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.background = "transparent"; el.style.borderColor = "#C7D2FE"; }}
+                              title="ここにブロックを挿入">
+                              +
+                            </button>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -1448,7 +1512,7 @@ export default function CanvasEditor({ config, onChange }: Props) {
                 )}
 
                 {/* ブロックを追加 */}
-                <button onClick={() => setBlockModal(true)}
+                <button onClick={() => { setInsertAfterIdx(null); setBlockModal(true); }}
                   style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, width: "100%", padding: "10px 0", borderRadius: 8, border: "1.5px dashed #C7D2FE", background: "#EEF2FF", cursor: "pointer", color: "#4F46E5", fontWeight: 700, fontSize: 12, marginBottom: 12, transition: "background 0.12s" }}
                   onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "#E0E7FF"; }}
                   onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "#EEF2FF"; }}>
@@ -1467,7 +1531,7 @@ export default function CanvasEditor({ config, onChange }: Props) {
                 </div>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
                   {BLOCK_TEMPLATES.filter(t => blockCategory === "すべて" || t.category === blockCategory).map(tpl => (
-                    <button key={tpl.id} onClick={() => addBlock(tpl)}
+                    <button key={tpl.id} onClick={() => { addBlock(tpl, null); }}
                       style={{ padding: 0, border: "1.5px solid #E2E8F0", borderRadius: 8, background: "#fff", cursor: "pointer", textAlign: "left", overflow: "hidden", transition: "all 0.14s", display: "flex", flexDirection: "column" }}
                       onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.borderColor = "#818CF8"; el.style.boxShadow = "0 4px 16px rgba(79,70,229,0.15)"; el.style.transform = "translateY(-1px)"; }}
                       onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.borderColor = "#E2E8F0"; el.style.boxShadow = "none"; el.style.transform = "translateY(0)"; }}
@@ -1723,6 +1787,41 @@ export default function CanvasEditor({ config, onChange }: Props) {
                 onUpdate={patch => updateEl(el.id, patch)}
               />
             ))}
+            {/* ── Block insert zones ─────────────────────────────── */}
+            {blockGroups.map((g, idx) => {
+              if (idx >= blockGroups.length - 1) return null;
+              const isHov = hoverInsertIdx === idx;
+              return (
+                <div
+                  key={`ins-${g.blockId}`}
+                  onMouseEnter={() => setHoverInsertIdx(idx)}
+                  onMouseLeave={() => setHoverInsertIdx(null)}
+                  onClick={e => { e.stopPropagation(); setInsertAfterIdx(idx); setBlockModal(true); }}
+                  style={{
+                    position: "absolute", left: 0, width: CW,
+                    top: g.maxY - 14, height: 28,
+                    zIndex: 500,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    cursor: "pointer",
+                  }}>
+                  <div style={{
+                    position: "absolute", left: 0, right: 0, height: 2,
+                    background: isHov ? "#4F46E5" : "rgba(99,102,241,0.15)",
+                    transition: "background 0.15s",
+                  }} />
+                  <div style={{
+                    width: 28, height: 28, borderRadius: "50%",
+                    background: isHov ? "#4F46E5" : "rgba(99,102,241,0.12)",
+                    color: isHov ? "#fff" : "#818CF8",
+                    fontSize: 18, fontWeight: 700,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    boxShadow: isHov ? "0 2px 10px rgba(79,70,229,0.4)" : "none",
+                    transition: "all 0.15s",
+                    zIndex: 1,
+                  }}>+</div>
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>
@@ -1772,7 +1871,7 @@ export default function CanvasEditor({ config, onChange }: Props) {
                     <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }}>
                       {tpls.map(tpl => (
                         <button key={tpl.id}
-                          onClick={() => { addBlock(tpl); setBlockModal(false); }}
+                          onClick={() => { addBlock(tpl, insertAfterIdx); setBlockModal(false); }}
                           style={{ background: "none", border: "1.5px solid #E2E8F0", borderRadius: 12, padding: 0, cursor: "pointer", textAlign: "left", overflow: "hidden", transition: "all 0.14s" }}
                           onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "#818CF8"; (e.currentTarget as HTMLElement).style.transform = "translateY(-2px)"; (e.currentTarget as HTMLElement).style.boxShadow = "0 8px 24px rgba(0,0,0,0.1)"; }}
                           onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "#E2E8F0"; (e.currentTarget as HTMLElement).style.transform = "translateY(0)"; (e.currentTarget as HTMLElement).style.boxShadow = "none"; }}>
