@@ -176,6 +176,8 @@ export default function SetupClient() {
   const [chatMessages,   setChatMessages] = useState<ChatMessage[]>([]);
   const [chatInput,      setChatInput]    = useState("");
   const [isChatLoading,  setIsChatLoading] = useState(false);
+  const [chatInited,     setChatInited]   = useState(false);
+  const [demoError,      setDemoError]    = useState("");
   const chatEndRef = useRef<HTMLDivElement>(null);
   const chatInputRef = useRef<HTMLInputElement>(null);
 
@@ -334,7 +336,7 @@ export default function SetupClient() {
         setPhase("html-preview");
       }, 800);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "HTML生成に失敗しました");
+      setDemoError(e instanceof Error ? e.message : "HTML生成に失敗しました");
       setPhase("form");
       setMainTab("demo");
     }
@@ -402,13 +404,14 @@ export default function SetupClient() {
     sendChatMessage(newMsgs);
   }, [chatInput, chatMessages, isChatLoading, sendChatMessage]);
 
-  // 初回メッセージを取得
+  // チャットタブに切り替えた時に初回メッセージを取得（lazy init）
   useEffect(() => {
-    if (chatMessages.length === 0 && !isChatLoading) {
+    if (mainTab === "chat" && !chatInited && chatMessages.length === 0 && !isChatLoading) {
+      setChatInited(true);
       sendChatMessage([]);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [mainTab]);
 
   // 新メッセージが来たらスクロール
   useEffect(() => {
@@ -758,7 +761,7 @@ export default function SetupClient() {
               ["chat", "AIとチャット", "chat"],
               ["demo", "デモから作成", "grid_view"],
             ] as const).map(([tab, label, icon]) => (
-              <button key={tab} onClick={() => setMainTab(tab)}
+              <button key={tab} onClick={() => { setMainTab(tab); setError(""); setDemoError(""); }}
                 className="flex items-center gap-1.5 text-xs px-4 py-1.5 rounded-lg font-medium transition-all"
                 style={{
                   background: mainTab === tab ? "#FFFFFF" : "transparent",
@@ -859,8 +862,12 @@ export default function SetupClient() {
                         rows={3} className="w-full text-sm rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-200 resize-none"
                         style={{ border: "1.5px solid #E2E8F0", background: "#F9FAFB", color: "#111827" }} />
                     </div>
-                    {error && (
-                      <p className="text-xs" style={{ color: "#DC2626" }}>{error}</p>
+                    {demoError && (
+                      <div className="flex items-start gap-2 p-3 rounded-xl"
+                        style={{ background: "#FEF2F2", border: "1px solid #FECACA" }}>
+                        <MsIcon name="error" size={14} color="#DC2626" />
+                        <p className="text-xs leading-relaxed" style={{ color: "#DC2626" }}>{demoError}</p>
+                      </div>
                     )}
                     <button
                       onClick={generateFromDemo}

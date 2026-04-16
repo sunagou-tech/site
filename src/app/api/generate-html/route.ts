@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GlobalStyle } from "@/types/site";
 
-export const runtime = "edge";
-export const maxDuration = 30;
+export const maxDuration = 60;
 
 const API_KEY   = process.env.GEMINI_API_KEY ?? "";
 const GEMINI_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
@@ -136,7 +135,7 @@ ${strengths ? `強み・特徴: ${strengths}` : ""}${colorHint}
           contents: [{ role: "user", parts: [{ text: userInput }] }],
           generationConfig: { maxOutputTokens: 8192, temperature: 0.8 },
         }),
-        signal: AbortSignal.timeout(26000),
+        signal: AbortSignal.timeout(55000),
       }
     );
     if (!res.ok) {
