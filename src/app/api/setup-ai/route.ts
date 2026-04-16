@@ -516,9 +516,16 @@ function buildCanvasFromSections(data: SectionData, dna?: GlobalStyle): CanvasEl
   const els: CanvasElement[] = [];
   const tk = resolveTokens(data, dna);
 
+  // セクションごとにblockIdを切り替える
+  let currentBlockId = uid();
   function add(el: Omit<CanvasElement, "id">): void {
-    els.push({ id: uid(), ...el });
+    // 全幅の背景rectはzIndex:0に正規化してクリック干渉を防ぐ
+    const normalized = (el.type === "rect" && el.x === 0 && el.width >= 1100)
+      ? { ...el, zIndex: 0 }
+      : el;
+    els.push({ id: uid(), blockId: currentBlockId, ...normalized });
   }
+  function nextSection() { currentBlockId = uid(); }
 
   const CW = 1200;
   let y = 0;
@@ -557,7 +564,7 @@ function buildCanvasFromSections(data: SectionData, dna?: GlobalStyle): CanvasEl
   else if (tpl === "light")       y += heroLight(data, tk, dna, y, CW, add);
   else                            y += heroSplit(data, tk, dna, y, CW, add);
 
-  // ── PROBLEM ───────────────────────────────────────────────
+  nextSection(); // ── PROBLEM ─────────────────────────────────
   const H_PROB = 560;
   add({ type: "rect", x: 0, y, width: CW, height: H_PROB, style: { backgroundColor: data.problem.bgColor || "#F8FAFC" }, zIndex: 1 });
   add({ type: "text", x: 400, y: y + 56, width: 400, height: 32,
@@ -586,7 +593,7 @@ function buildCanvasFromSections(data: SectionData, dna?: GlobalStyle): CanvasEl
   });
   y += H_PROB;
 
-  // ── SOLUTION ──────────────────────────────────────────────
+  nextSection(); // ── SOLUTION ──────────────────────────────────────────────
   const H_SOL = 520;
   add({ type: "rect", x: 0, y, width: CW, height: H_SOL, style: { backgroundColor: data.solution.bgColor || tk.cardBg }, zIndex: 1 });
   add({ type: "text", x: 200, y: y + 60, width: 800, height: 26,
@@ -608,7 +615,7 @@ function buildCanvasFromSections(data: SectionData, dna?: GlobalStyle): CanvasEl
   });
   y += H_SOL;
 
-  // ── FEATURES ──────────────────────────────────────────────
+  nextSection(); // ── FEATURES ──────────────────────────────────────────────
   const H_FEAT = 620;
   add({ type: "rect", x: 0, y, width: CW, height: H_FEAT, style: { backgroundColor: data.features.bgColor || tk.pageBg }, zIndex: 1 });
   add({ type: "text", x: 400, y: y + 56, width: 400, height: 32,
@@ -645,7 +652,7 @@ function buildCanvasFromSections(data: SectionData, dna?: GlobalStyle): CanvasEl
   });
   y += H_FEAT;
 
-  // ── STEPS ─────────────────────────────────────────────────
+  nextSection(); // ── STEPS ─────────────────────────────────────────────────
   const H_STEPS = 500;
   add({ type: "rect", x: 0, y, width: CW, height: H_STEPS, style: { backgroundColor: data.steps.bgColor || tk.cardBg }, zIndex: 1 });
   add({ type: "text", x: 400, y: y + 56, width: 400, height: 32,
@@ -672,7 +679,7 @@ function buildCanvasFromSections(data: SectionData, dna?: GlobalStyle): CanvasEl
   });
   y += H_STEPS;
 
-  // ── TESTIMONIALS ──────────────────────────────────────────
+  nextSection(); // ── TESTIMONIALS ──────────────────────────────────────────
   const H_TESTI = 520;
   add({ type: "rect", x: 0, y, width: CW, height: H_TESTI, style: { backgroundColor: data.testimonials.bgColor || "#F8FAFC" }, zIndex: 1 });
   add({ type: "text", x: 400, y: y + 56, width: 400, height: 32,
@@ -704,7 +711,7 @@ function buildCanvasFromSections(data: SectionData, dna?: GlobalStyle): CanvasEl
   });
   y += H_TESTI;
 
-  // ── FAQ ───────────────────────────────────────────────────
+  nextSection(); // ── FAQ ───────────────────────────────────────────────────
   const H_FAQ = 580;
   add({ type: "rect", x: 0, y, width: CW, height: H_FAQ, style: { backgroundColor: data.faq.bgColor || tk.pageBg }, zIndex: 1 });
   add({ type: "text", x: 400, y: y + 56, width: 400, height: 32,
@@ -730,7 +737,7 @@ function buildCanvasFromSections(data: SectionData, dna?: GlobalStyle): CanvasEl
   });
   y += H_FAQ;
 
-  // ── CTA ───────────────────────────────────────────────────
+  nextSection(); // ── CTA ───────────────────────────────────────────────────
   const H_CTA = 360;
   add({ type: "rect", x: 0, y, width: CW, height: H_CTA, style: { backgroundColor: data.cta.bgColor || tk.accent }, zIndex: 1 });
   // decorative circle
@@ -749,7 +756,7 @@ function buildCanvasFromSections(data: SectionData, dna?: GlobalStyle): CanvasEl
       backgroundColor: "#FFFFFF", borderRadius: tk.btnR, textAlign: "center" }, zIndex: 2 });
   y += H_CTA;
 
-  // ── FOOTER ────────────────────────────────────────────────
+  nextSection(); // ── FOOTER ────────────────────────────────────────────────
   const H_FOOTER = 300;
   const foot = data.footer;
   add({ type: "rect", x: 0, y, width: CW, height: H_FOOTER, style: { backgroundColor: foot.bgColor || "#0F172A" }, zIndex: 1 });
