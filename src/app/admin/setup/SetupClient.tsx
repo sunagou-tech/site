@@ -68,7 +68,6 @@ export default function SetupClient() {
   const [htmlContent,    setHtmlContent]  = useState<string>("");
   const [blobUrl,        setBlobUrl]      = useState<string>("");
 
-  const [inputMode,      setInputMode]    = useState<"form" | "chat">("form");
   const [chatMessages,   setChatMessages] = useState<ChatMessage[]>([]);
   const [chatInput,      setChatInput]    = useState("");
   const [isChatLoading,  setIsChatLoading] = useState(false);
@@ -253,13 +252,13 @@ export default function SetupClient() {
     sendChatMessage(newMsgs);
   }, [chatInput, chatMessages, isChatLoading, sendChatMessage]);
 
-  // チャットモードに切り替えたとき初回メッセージを取得
+  // 初回メッセージを取得
   useEffect(() => {
-    if (inputMode === "chat" && chatMessages.length === 0 && !isChatLoading) {
+    if (chatMessages.length === 0 && !isChatLoading) {
       sendChatMessage([]);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [inputMode]);
+  }, []);
 
   // 新メッセージが来たらスクロール
   useEffect(() => {
@@ -603,20 +602,9 @@ export default function SetupClient() {
             <span className="text-sm font-bold" style={{ color: "#111827" }}>ツクリエ</span>
           </div>
 
-          {/* モード切替タブ */}
-          <div className="flex gap-1 p-1 rounded-xl hidden lg:flex" style={{ background: "#F3F4F6" }}>
-            {([["form", "フォームで入力", "edit_note"], ["chat", "AIとチャット", "chat"]] as const).map(([m, label, icon]) => (
-              <button key={m} onClick={() => setInputMode(m)}
-                className="flex items-center gap-1.5 text-xs px-4 py-1.5 rounded-lg font-medium transition-all"
-                style={{
-                  background: inputMode === m ? "#FFFFFF" : "transparent",
-                  color: inputMode === m ? "#111827" : "#6B7280",
-                  boxShadow: inputMode === m ? "0 1px 4px rgba(0,0,0,0.08)" : "none",
-                }}>
-                <MsIcon name={icon} size={14} color={inputMode === m ? NAVY : "#9CA3AF"} />
-                {label}
-              </button>
-            ))}
+          <div className="flex items-center gap-2">
+            <MsIcon name="chat" size={16} color={NAVY} />
+            <span className="text-sm font-semibold hidden lg:block" style={{ color: "#111827" }}>AIとチャット</span>
           </div>
 
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -633,195 +621,80 @@ export default function SetupClient() {
           </div>
         </div>
 
-        {/* ════ チャットモード ════ */}
-        {inputMode === "chat" ? (
-          <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
-            {/* メッセージ一覧 */}
-            <div style={{ flex: 1, overflowY: "auto", padding: "20px 24px", display: "flex", flexDirection: "column", gap: 12 }}>
-              {chatMessages.length === 0 && !isChatLoading && (
-                <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100%" }}>
-                  <p className="text-sm" style={{ color: "#9CA3AF" }}>AIが接続中...</p>
-                </div>
-              )}
-              {chatMessages.map((msg, i) => (
-                <div key={i} style={{ display: "flex", justifyContent: msg.role === "user" ? "flex-end" : "flex-start" }}>
-                  {msg.role === "assistant" && (
-                    <div style={{ width: 28, height: 28, borderRadius: 8, background: NAVY,
-                      display: "flex", alignItems: "center", justifyContent: "center", marginRight: 8, flexShrink: 0, marginTop: 4 }}>
-                      <MsIcon name="auto_awesome" size={14} color="#FFFFFF" />
-                    </div>
-                  )}
-                  <div style={{
-                    maxWidth: "72%",
-                    padding: "10px 14px",
-                    borderRadius: msg.role === "user" ? "18px 18px 4px 18px" : "4px 18px 18px 18px",
-                    background: msg.role === "user" ? NAVY : "#FFFFFF",
-                    color: msg.role === "user" ? "#FFFFFF" : "#111827",
-                    border: msg.role === "assistant" ? "1px solid #E2E8F0" : "none",
-                    fontSize: 14,
-                    lineHeight: 1.7,
-                    whiteSpace: "pre-wrap",
-                  }}>
-                    {msg.content}
-                  </div>
-                </div>
-              ))}
-              {isChatLoading && (
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <div style={{ width: 28, height: 28, borderRadius: 8, background: NAVY,
-                    display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                    <MsIcon name="auto_awesome" size={14} color="#FFFFFF" />
-                  </div>
-                  <div style={{ display: "flex", gap: 5, padding: "10px 14px", background: "#FFFFFF",
-                    borderRadius: "4px 18px 18px 18px", border: "1px solid #E2E8F0" }}>
-                    {[0, 1, 2].map(i => (
-                      <div key={i} style={{ width: 7, height: 7, borderRadius: "50%", background: "#CBD5E1",
-                        animation: `bounce 1.2s ${i * 0.2}s ease-in-out infinite` }} />
-                    ))}
-                  </div>
-                </div>
-              )}
-              <div ref={chatEndRef} />
-            </div>
-
-            {/* 入力エリア */}
-            <div style={{ padding: "16px 24px", borderTop: "1px solid #E2E8F0", background: "#FFFFFF", flexShrink: 0 }}>
-              <div style={{ display: "flex", gap: 10, alignItems: "flex-end",
-                maxWidth: 720, margin: "0 auto" }}>
-                <input ref={chatInputRef}
-                  value={chatInput}
-                  onChange={e => setChatInput(e.target.value)}
-                  onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
-                  placeholder="メッセージを入力… (Enterで送信)"
-                  disabled={isChatLoading}
-                  className="flex-1 text-sm outline-none"
-                  style={{ padding: "10px 16px", borderRadius: 14,
-                    border: "1.5px solid #E2E8F0", background: "#F9FAFB", color: "#111827" }} />
-                <button onClick={handleSend} disabled={!chatInput.trim() || isChatLoading}
-                  className="flex items-center justify-center transition-opacity disabled:opacity-40"
-                  style={{ width: 42, height: 42, borderRadius: 12,
-                    background: NAVY, border: "none", cursor: "pointer", flexShrink: 0 }}>
-                  <MsIcon name="send" size={18} color="#FFFFFF" />
-                </button>
-              </div>
-              <p className="text-center text-xs mt-2" style={{ color: "#9CA3AF" }}>
-                AIが質問に答えながらサイトを自動生成します
-              </p>
-            </div>
-          </div>
-        ) : (
-
-        /* ════ フォームモード ════ */
-        <div className="flex-1 overflow-y-auto">
-          <div className="max-w-2xl mx-auto px-6 py-10">
-            <div className="mb-8">
-              <h1 className="font-bold mb-2 leading-tight" style={{ fontSize: 24, color: "#111827", letterSpacing: "-0.03em" }}>
-                参考サイトのデザインで<br />
-                <span style={{ color: NAVY }}>プロ級サイト</span>を自動生成
-              </h1>
-              <p className="text-sm leading-relaxed" style={{ color: "#6B7280" }}>
-                事業情報を入力してAIが生成。左のURLでデザインを取り込めます（任意）。
-              </p>
-            </div>
-
-            {urlError && (
-              <div className="mb-6 flex items-start gap-3 p-4 rounded-xl"
-                style={{ background: "#EFF6FF", border: "1px solid #BFDBFE" }}>
-                <MsIcon name="info" size={18} color="#2563EB" />
-                <div>
-                  <p className="text-sm font-semibold" style={{ color: "#1E40AF" }}>URLなしでも生成できます</p>
-                  <p className="text-xs mt-0.5" style={{ color: "#1D4ED8" }}>事業名・サービス内容を入力してサイトを生成してください。</p>
-                </div>
+        {/* ════ チャット ════ */}
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+          {/* メッセージ一覧 */}
+          <div style={{ flex: 1, overflowY: "auto", padding: "20px 24px", display: "flex", flexDirection: "column", gap: 12 }}>
+            {chatMessages.length === 0 && !isChatLoading && (
+              <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100%" }}>
+                <p className="text-sm" style={{ color: "#9CA3AF" }}>AIが接続中...</p>
               </div>
             )}
-
-            <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-              <div>
-                <label className="block text-sm font-semibold mb-2" style={{ color: "#111827" }}>
-                  事業・サービス名 <span style={{ color: "#EF4444" }}>*</span>
-                </label>
-                <input type="text" value={businessName} onChange={e => setBusinessName(e.target.value)}
-                  placeholder="例：田中税理士事務所 / フリーランスデザイナー 山田太郎"
-                  className="w-full text-sm rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-200"
-                  style={{ border: "1.5px solid #E2E8F0", background: "#FFFFFF", color: "#111827" }} />
+            {chatMessages.map((msg, i) => (
+              <div key={i} style={{ display: "flex", justifyContent: msg.role === "user" ? "flex-end" : "flex-start" }}>
+                {msg.role === "assistant" && (
+                  <div style={{ width: 28, height: 28, borderRadius: 8, background: NAVY,
+                    display: "flex", alignItems: "center", justifyContent: "center", marginRight: 8, flexShrink: 0, marginTop: 4 }}>
+                    <MsIcon name="auto_awesome" size={14} color="#FFFFFF" />
+                  </div>
+                )}
+                <div style={{
+                  maxWidth: "72%",
+                  padding: "10px 14px",
+                  borderRadius: msg.role === "user" ? "18px 18px 4px 18px" : "4px 18px 18px 18px",
+                  background: msg.role === "user" ? NAVY : "#FFFFFF",
+                  color: msg.role === "user" ? "#FFFFFF" : "#111827",
+                  border: msg.role === "assistant" ? "1px solid #E2E8F0" : "none",
+                  fontSize: 14,
+                  lineHeight: 1.7,
+                  whiteSpace: "pre-wrap",
+                }}>
+                  {msg.content}
+                </div>
               </div>
-
-              <div>
-                <label className="block text-sm font-semibold mb-2" style={{ color: "#111827" }}>
-                  どんなサービス・商品ですか？ <span style={{ color: "#EF4444" }}>*</span>
-                </label>
-                <textarea value={serviceDesc} onChange={e => setServiceDesc(e.target.value)}
-                  placeholder="例：中小企業向けの税務申告・節税対策サービスを提供しています。年間100社以上のサポート実績があります。"
-                  rows={3} className="w-full text-sm rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-200 resize-none"
-                  style={{ border: "1.5px solid #E2E8F0", background: "#FFFFFF", color: "#111827" }} />
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold mb-1" style={{ color: "#111827" }}>ターゲット</label>
-                <p className="text-xs mb-2" style={{ color: "#9CA3AF" }}>任意</p>
-                <input type="text" value={target} onChange={e => setTarget(e.target.value)}
-                  placeholder="例：30〜50代の経営者 / 副業を始めたいサラリーマン"
-                  className="w-full text-sm rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-200"
-                  style={{ border: "1.5px solid #E2E8F0", background: "#FFFFFF", color: "#111827" }} />
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold mb-1" style={{ color: "#111827" }}>強み・特徴</label>
-                <p className="text-xs mb-2" style={{ color: "#9CA3AF" }}>任意</p>
-                <textarea value={strengths} onChange={e => setStrengths(e.target.value)}
-                  placeholder="例：即日対応 / 完全オンライン / 初回相談無料 / 20年の実績"
-                  rows={2} className="w-full text-sm rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-200 resize-none"
-                  style={{ border: "1.5px solid #E2E8F0", background: "#FFFFFF", color: "#111827" }} />
-              </div>
-
-              {/* 生成モード選択 */}
-              <div style={{ background: "#F3F4F6", borderRadius: 16, padding: 14 }}>
-                <p className="text-xs font-semibold mb-3" style={{ color: "#374151" }}>生成モードを選択</p>
-                <div className="flex gap-2">
-                  {([
-                    ["html", "HTMLページ生成", "code", "一流LPを1枚のHTMLで即出力", true],
-                    ["canvas", "キャンバス編集", "grid_view", "ブロックを自由に編集できる形式", false],
-                  ] as const).map(([mode, label, icon, desc, recommended]) => (
-                    <button key={mode} onClick={() => setGenMode(mode)}
-                      className="flex-1 text-left p-3 rounded-xl transition-all"
-                      style={{
-                        background: genMode === mode ? "#FFFFFF" : "transparent",
-                        border: `2px solid ${genMode === mode ? NAVY : "transparent"}`,
-                        boxShadow: genMode === mode ? "0 2px 8px rgba(0,0,0,0.08)" : "none",
-                      }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
-                        <MsIcon name={icon} size={14} color={genMode === mode ? NAVY : "#9CA3AF"} />
-                        <span className="text-xs font-semibold" style={{ color: genMode === mode ? "#111827" : "#6B7280" }}>{label}</span>
-                        {recommended && (
-                          <span className="text-[9px] px-1.5 py-0.5 rounded-full font-bold"
-                            style={{ background: "#FEF3C7", color: "#92400E" }}>推奨</span>
-                        )}
-                      </div>
-                      <p className="text-[11px] leading-snug" style={{ color: "#9CA3AF" }}>{desc}</p>
-                    </button>
+            ))}
+            {isChatLoading && (
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <div style={{ width: 28, height: 28, borderRadius: 8, background: NAVY,
+                  display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  <MsIcon name="auto_awesome" size={14} color="#FFFFFF" />
+                </div>
+                <div style={{ display: "flex", gap: 5, padding: "10px 14px", background: "#FFFFFF",
+                  borderRadius: "4px 18px 18px 18px", border: "1px solid #E2E8F0" }}>
+                  {[0, 1, 2].map(i => (
+                    <div key={i} style={{ width: 7, height: 7, borderRadius: "50%", background: "#CBD5E1",
+                      animation: `bounce 1.2s ${i * 0.2}s ease-in-out infinite` }} />
                   ))}
                 </div>
               </div>
+            )}
+            <div ref={chatEndRef} />
+          </div>
 
-              <button onClick={genMode === "html" ? generateHtml : generateSite} disabled={!canGenerate}
-                className="w-full flex items-center justify-center gap-3 font-bold text-base py-4 rounded-2xl text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-                style={{
-                  background: canGenerate ? `linear-gradient(135deg, ${NAVY}, #2B6CB0)` : "#CBD5E1",
-                  boxShadow: canGenerate ? "0 4px 20px rgba(26,54,93,0.3)" : "none",
-                }}>
-                <MsIcon name="auto_awesome" size={20} color="#FFFFFF" />
-                {genMode === "html" ? "一流LPのHTMLを生成する" : "キャンバスでサイトを生成する"}
+          {/* 入力エリア */}
+          <div style={{ padding: "16px 24px", borderTop: "1px solid #E2E8F0", background: "#FFFFFF", flexShrink: 0 }}>
+            <div style={{ display: "flex", gap: 10, alignItems: "flex-end", maxWidth: 720, margin: "0 auto" }}>
+              <input ref={chatInputRef}
+                value={chatInput}
+                onChange={e => setChatInput(e.target.value)}
+                onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
+                placeholder="メッセージを入力… (Enterで送信)"
+                disabled={isChatLoading}
+                className="flex-1 text-sm outline-none"
+                style={{ padding: "10px 16px", borderRadius: 14,
+                  border: "1.5px solid #E2E8F0", background: "#F9FAFB", color: "#111827" }} />
+              <button onClick={handleSend} disabled={!chatInput.trim() || isChatLoading}
+                className="flex items-center justify-center transition-opacity disabled:opacity-40"
+                style={{ width: 42, height: 42, borderRadius: 12,
+                  background: NAVY, border: "none", cursor: "pointer", flexShrink: 0 }}>
+                <MsIcon name="send" size={18} color="#FFFFFF" />
               </button>
-
-              {!canGenerate && (
-                <p className="text-center text-xs" style={{ color: "#9CA3AF" }}>
-                  事業名とサービス内容を入力してください
-                </p>
-              )}
             </div>
+            <p className="text-center text-xs mt-2" style={{ color: "#9CA3AF" }}>
+              AIの質問に答えるとサイトが自動生成されます
+            </p>
           </div>
         </div>
-        )}
       </main>
 
       <style>{`
