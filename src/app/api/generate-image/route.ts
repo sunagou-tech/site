@@ -4,7 +4,7 @@ export const maxDuration = 60;
 
 const API_KEY    = process.env.GEMINI_API_KEY ?? "";
 const GEMINI_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
-const MODEL      = "imagen-3.0-generate-002";
+const MODEL      = "imagen-3.0-generate-001";
 
 export async function POST(req: NextRequest) {
   if (!API_KEY) return NextResponse.json({ error: "GEMINI_API_KEY未設定" }, { status: 500 });
