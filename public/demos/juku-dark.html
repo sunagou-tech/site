@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>スター学習塾 | 難関大合格への最短ルート</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@700;900&family=Noto+Sans+JP:wght@400;500&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--gold:#C9A84C;--bg:#0D0D0D;--card:#1A1A1A}
+body{background:var(--bg);color:#fff;font-family:'Noto Sans JP',sans-serif;overflow-x:hidden}
+nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 60px;height:72px;background:rgba(13,13,13,.85);backdrop-filter:blur(12px);border-bottom:1px solid rgba(201,168,76,.15)}
+.logo{font-family:'Noto Serif JP',serif;font-weight:900;font-size:20px;letter-spacing:.1em;color:#fff}
+.logo span{color:var(--gold)}
+nav ul{display:flex;list-style:none;gap:36px}
+nav a{color:rgba(255,255,255,.7);text-decoration:none;font-size:14px;letter-spacing:.05em;transition:.2s}
+nav a:hover{color:var(--gold)}
+.nav-cta{background:var(--gold);color:#0D0D0D!important;padding:8px 24px;border-radius:0;font-weight:700;font-size:13px}
+.hero{min-height:100vh;position:relative;display:flex;align-items:center;overflow:hidden}
+.stars{position:absolute;inset:0;overflow:hidden}
+.star{position:absolute;background:#fff;border-radius:50%;animation:twinkle 3s ease-in-out infinite}
+@keyframes twinkle{0%,100%{opacity:.2;transform:scale(1)}50%{opacity:.9;transform:scale(1.4)}}
+.hero-content{position:relative;z-index:1;padding:140px 60px 80px;max-width:900px}
+.eyebrow{display:inline-block;font-size:12px;letter-spacing:.25em;color:var(--gold);border:1px solid var(--gold);padding:6px 18px;margin-bottom:40px;text-transform:uppercase}
+.hero-heading{font-family:'Noto Serif JP',serif;font-weight:900;font-size:clamp(3rem,7vw,6rem);line-height:1.15;letter-spacing:-.03em;margin-bottom:32px}
+.hero-heading em{color:var(--gold);font-style:normal}
+.hero-sub{font-size:17px;line-height:1.9;color:rgba(255,255,255,.65);max-width:480px;margin-bottom:52px}
+.btn-primary{display:inline-flex;align-items:center;gap:12px;background:var(--gold);color:#0D0D0D;font-weight:700;font-size:15px;padding:18px 44px;letter-spacing:.05em;border:none;cursor:pointer;transition:.3s}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(201,168,76,.4)}
+.btn-outline{display:inline-flex;align-items:center;gap:12px;background:transparent;color:#fff;font-weight:700;font-size:15px;padding:18px 44px;letter-spacing:.05em;border:1px solid rgba(255,255,255,.3);cursor:pointer;margin-left:16px;transition:.3s}
+.btn-outline:hover{border-color:var(--gold);color:var(--gold)}
+.stats-row{position:absolute;right:60px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:16px}
+.stat{background:rgba(255,255,255,.04);border:1px solid rgba(201,168,76,.2);padding:24px 32px;text-align:center;backdrop-filter:blur(8px)}
+.stat-num{font-family:'Playfair Display',serif;font-size:42px;font-weight:700;color:var(--gold);letter-spacing:-.02em;line-height:1}
+.stat-label{font-size:11px;letter-spacing:.1em;color:rgba(255,255,255,.5);margin-top:6px}
+.line-deco{position:absolute;bottom:0;left:60px;right:60px;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent)}
+section{padding:120px 60px}
+.section-tag{font-size:11px;letter-spacing:.25em;color:var(--gold);margin-bottom:16px;text-transform:uppercase}
+.section-title{font-family:'Noto Serif JP',serif;font-size:clamp(1.8rem,3.5vw,2.8rem);font-weight:700;letter-spacing:-.02em;margin-bottom:48px;line-height:1.3}
+.problem-section{background:#111}
+.problem-grid{display:grid;grid-template-columns:1fr 2fr;gap:80px;align-items:center}
+.problem-list{display:flex;flex-direction:column;gap:24px}
+.problem-item{border-left:2px solid var(--gold);padding-left:24px}
+.problem-item h3{font-size:17px;font-weight:700;margin-bottom:8px}
+.problem-item p{font-size:14px;color:rgba(255,255,255,.55);line-height:1.7}
+.feature-section{background:var(--bg)}
+.features-alt{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;margin-top:60px}
+.feature{background:var(--card);padding:40px 32px;transition:.3s}
+.feature:hover{background:#222}
+.feature-num{font-family:'Playfair Display',serif;font-size:48px;color:var(--gold);opacity:.4;margin-bottom:16px}
+.feature h3{font-size:18px;font-weight:700;margin-bottom:12px}
+.feature p{font-size:14px;line-height:1.8;color:rgba(255,255,255,.55)}
+.big-stat{background:linear-gradient(135deg,#111 0%,#1a1a00 100%);text-align:center;padding:120px 60px}
+.big-num{font-family:'Playfair Display',serif;font-size:clamp(6rem,15vw,12rem);color:var(--gold);line-height:.9;letter-spacing:-.05em}
+.big-label{font-size:18px;color:rgba(255,255,255,.6);margin-top:24px;letter-spacing:.1em}
+.cta-section{background:var(--gold);color:#0D0D0D;text-align:center;padding:120px 60px}
+.cta-section .section-title{color:#0D0D0D}
+.cta-btn{display:inline-flex;align-items:center;gap:12px;background:#0D0D0D;color:#fff;font-weight:700;font-size:16px;padding:20px 56px;cursor:pointer;border:none;transition:.3s;margin-top:48px}
+.cta-btn:hover{background:#1a1a1a;transform:translateY(-2px)}
+</style>
+</head>
+<body>
+<nav>
+  <div class="logo">STAR<span>塾</span></div>
+  <ul>
+    <li><a href="#">特徴</a></li>
+    <li><a href="#">実績</a></li>
+    <li><a href="#">講師</a></li>
+    <li><a href="#">料金</a></li>
+    <li><a href="#" class="nav-cta">無料体験</a></li>
+  </ul>
+</nav>
+
+<section class="hero">
+  <div class="stars">
+    <div class="star" style="width:2px;height:2px;left:10%;top:20%;animation-delay:0s"></div>
+    <div class="star" style="width:1px;height:1px;left:25%;top:40%;animation-delay:.5s"></div>
+    <div class="star" style="width:3px;height:3px;left:40%;top:15%;animation-delay:1s"></div>
+    <div class="star" style="width:1px;height:1px;left:55%;top:60%;animation-delay:1.5s"></div>
+    <div class="star" style="width:2px;height:2px;left:70%;top:30%;animation-delay:.8s"></div>
+    <div class="star" style="width:1px;height:1px;left:80%;top:70%;animation-delay:.3s"></div>
+    <div class="star" style="width:2px;height:2px;left:15%;top:75%;animation-delay:2s"></div>
+    <div class="star" style="width:1px;height:1px;left:35%;top:85%;animation-delay:1.2s"></div>
+    <div class="star" style="width:3px;height:3px;left:60%;top:10%;animation-delay:.6s"></div>
+    <div class="star" style="width:1px;height:1px;left:90%;top:50%;animation-delay:1.8s"></div>
+    <div class="star" style="width:2px;height:2px;left:5%;top:55%;animation-delay:.4s"></div>
+    <div class="star" style="width:1px;height:1px;left:48%;top:45%;animation-delay:2.2s"></div>
+  </div>
+  <div class="hero-content">
+    <div class="eyebrow">難関大合格への最短ルート</div>
+    <h1 class="hero-heading">合格という<br>勝利へ、<em>導く。</em></h1>
+    <p class="hero-sub">東大・京大・医学部への合格を科学する。<br>個別最適化された戦略で、あなたの可能性を最大化します。</p>
+    <div>
+      <button class="btn-primary">無料体験授業を申し込む</button>
+      <button class="btn-outline">資料を請求する</button>
+    </div>
+  </div>
+  <div class="stats-row">
+    <div class="stat"><div class="stat-num">97<span style="font-size:20px">%</span></div><div class="stat-label">難関大合格率</div></div>
+    <div class="stat"><div class="stat-num">15<span style="font-size:20px">年</span></div><div class="stat-label">指導実績</div></div>
+    <div class="stat"><div class="stat-num">2,400<span style="font-size:14px">名</span></div><div class="stat-label">累計合格者数</div></div>
+  </div>
+  <div class="line-deco"></div>
+</section>
+
+<section class="problem-section">
+  <div class="problem-grid">
+    <div>
+      <p class="section-tag">Problem</p>
+      <h2 class="section-title">こんな悩みを<br>抱えていませんか？</h2>
+    </div>
+    <div class="problem-list">
+      <div class="problem-item"><h3>塾に通っているのに成績が上がらない</h3><p>集団授業では自分のペースで学べず、苦手分野がそのままになっていませんか？</p></div>
+      <div class="problem-item"><h3>どの参考書・勉強法が正しいか分からない</h3><p>情報が多すぎて何から始めればいいか迷い、時間だけが過ぎていませんか？</p></div>
+      <div class="problem-item"><h3>受験まで時間がなく焦っている</h3><p>残りの時間で何をすべきか優先順位が分からず、不安ばかりが募っていませんか？</p></div>
+    </div>
+  </div>
+</section>
+
+<div class="big-stat">
+  <div class="big-num">97%</div>
+  <div class="big-label">3年連続・難関大学合格率</div>
+</div>
+
+<section class="feature-section">
+  <p class="section-tag">Features</p>
+  <h2 class="section-title">選ばれ続ける<br>3つの理由</h2>
+  <div class="features-alt">
+    <div class="feature"><div class="feature-num">01</div><h3>完全個別カリキュラム</h3><p>入塾前の診断テストで実力を正確に把握し、合格までの最適ルートを設計します。</p></div>
+    <div class="feature"><div class="feature-num">02</div><h3>東大・京大OB講師陣</h3><p>難関大学を実際に突破した講師が、合格の秘訣を直接伝授。再現性の高い指導を提供します。</p></div>
+    <div class="feature"><div class="feature-num">03</div><h3>週次進捗管理システム</h3><p>毎週の学習状況をデータで管理。保護者への報告書も毎週送付し、家庭と連携して伴走します。</p></div>
+  </div>
+</section>
+
+<section class="cta-section">
+  <p style="font-size:13px;letter-spacing:.2em;opacity:.6;margin-bottom:16px;text-transform:uppercase">First Step</p>
+  <h2 class="section-title" style="font-family:'Noto Serif JP',serif;font-size:clamp(1.8rem,3vw,2.8rem)">今すぐ、最初の一歩を。<br>無料体験授業で確かめてください。</h2>
+  <p style="font-size:16px;opacity:.7;margin-top:16px">初回完全無料・手ぶらでOK・キャンセルいつでも可</p>
+  <button class="cta-btn">無料体験授業に申し込む →</button>
+</section>
+</body>
+</html>

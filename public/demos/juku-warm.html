@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>みらい学習センター | 子どもの可能性を、信じ続ける</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@700;900&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--green:#2D4A3E;--orange:#F97316;--cream:#FFF8F0;--warm:#FFF3E8}
+body{background:#fff;color:#1C1917;font-family:'Noto Sans JP',sans-serif;overflow-x:hidden}
+nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 60px;height:72px;background:rgba(255,248,240,.95);backdrop-filter:blur(8px);border-bottom:1px solid rgba(45,74,62,.1)}
+.logo{font-family:'Noto Serif JP',serif;font-weight:900;font-size:20px;color:var(--green)}
+.logo span{color:var(--orange)}
+nav ul{display:flex;list-style:none;gap:32px}
+nav a{color:#44403C;text-decoration:none;font-size:14px;transition:.2s}
+nav a:hover{color:var(--green)}
+.nav-cta{background:var(--orange);color:#fff!important;padding:10px 28px;border-radius:100px;font-weight:700;font-size:13px}
+.hero{min-height:100vh;background:var(--cream);display:grid;grid-template-columns:1fr 1fr;align-items:center;padding:100px 60px 60px;position:relative;overflow:hidden}
+.accent-bar{position:absolute;left:0;top:0;bottom:0;width:6px;background:linear-gradient(180deg,var(--orange),var(--green))}
+.blob{position:absolute;border-radius:50%;filter:blur(60px);opacity:.12}
+.blob-1{width:500px;height:500px;background:var(--orange);right:-100px;top:-100px}
+.blob-2{width:300px;height:300px;background:var(--green);right:200px;bottom:-50px}
+.hero-text{position:relative;z-index:1}
+.eyebrow{font-size:12px;letter-spacing:.2em;color:var(--orange);text-transform:uppercase;margin-bottom:28px;display:flex;align-items:center;gap:12px}
+.eyebrow::before{content:'';display:block;width:32px;height:2px;background:var(--orange)}
+h1{font-family:'Noto Serif JP',serif;font-weight:900;font-size:clamp(2.5rem,5.5vw,4.5rem);line-height:1.25;letter-spacing:-.02em;color:var(--green);margin-bottom:28px}
+h1 em{color:var(--orange);font-style:normal}
+.hero-sub{font-size:17px;line-height:1.9;color:#78716C;margin-bottom:44px;max-width:440px}
+.hero-btns{display:flex;gap:16px;flex-wrap:wrap}
+.btn-main{display:inline-flex;align-items:center;gap:10px;background:var(--orange);color:#fff;font-weight:700;font-size:15px;padding:16px 40px;border-radius:100px;cursor:pointer;border:none;transition:.3s}
+.btn-main:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(249,115,22,.35)}
+.btn-sub{display:inline-flex;align-items:center;gap:10px;background:transparent;color:var(--green);font-weight:700;font-size:15px;padding:16px 40px;border:2px solid var(--green);border-radius:100px;cursor:pointer;transition:.3s}
+.btn-sub:hover{background:var(--green);color:#fff}
+.hero-right{position:relative;z-index:1;display:flex;flex-direction:column;gap:16px;align-items:flex-end}
+.merit-card{background:#fff;border-radius:20px;padding:20px 24px;display:flex;align-items:center;gap:16px;box-shadow:0 4px 24px rgba(0,0,0,.06);width:300px}
+.merit-icon{width:48px;height:48px;border-radius:12px;background:var(--warm);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.merit-title{font-size:14px;font-weight:700;color:var(--green);margin-bottom:4px}
+.merit-desc{font-size:12px;color:#78716C}
+.feature-section{background:var(--cream);padding:100px 60px}
+.section-tag{font-size:11px;letter-spacing:.2em;color:var(--orange);text-transform:uppercase;margin-bottom:12px}
+.section-title{font-family:'Noto Serif JP',serif;font-size:clamp(1.6rem,3vw,2.6rem);font-weight:700;letter-spacing:-.02em;margin-bottom:16px;line-height:1.3;color:var(--green)}
+.features-list{display:grid;grid-template-columns:1fr 1fr;gap:32px;margin-top:60px}
+.feat-item{display:flex;gap:20px;padding:28px;background:#fff;border-radius:16px}
+.feat-num{font-family:'Noto Serif JP',serif;font-size:40px;font-weight:900;color:var(--orange);opacity:.35;line-height:1;flex-shrink:0}
+.feat-item h3{font-size:17px;font-weight:700;margin-bottom:8px;color:var(--green)}
+.feat-item p{font-size:14px;line-height:1.8;color:#78716C}
+.stats{background:var(--green);padding:80px 60px;display:grid;grid-template-columns:repeat(3,1fr);text-align:center;gap:2px}
+.stat{padding:20px}
+.stat-num{font-family:'Noto Serif JP',serif;font-size:54px;font-weight:900;color:var(--orange);letter-spacing:-.04em;line-height:1}
+.stat-label{font-size:13px;color:rgba(255,255,255,.6);margin-top:8px}
+.cta{background:#fff;padding:100px 60px;text-align:center}
+.cta-inner{max-width:640px;margin:0 auto;background:var(--cream);border-radius:32px;padding:60px 48px}
+.cta h2{font-family:'Noto Serif JP',serif;font-size:clamp(1.6rem,3vw,2.4rem);font-weight:900;color:var(--green);margin-bottom:16px}
+.cta p{font-size:16px;color:#78716C;margin-bottom:36px;line-height:1.8}
+.cta-btn{display:inline-flex;align-items:center;background:var(--orange);color:#fff;font-weight:700;font-size:16px;padding:18px 52px;border-radius:100px;cursor:pointer;border:none;transition:.3s}
+.cta-btn:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(249,115,22,.4)}
+</style>
+</head>
+<body>
+<nav>
+  <div class="logo">みらい<span>学習センター</span></div>
+  <ul>
+    <li><a href="#">コース紹介</a></li>
+    <li><a href="#">実績</a></li>
+    <li><a href="#">講師紹介</a></li>
+    <li><a href="#">よくある質問</a></li>
+    <li><a href="#" class="nav-cta">無料体験</a></li>
+  </ul>
+</nav>
+
+<section class="hero">
+  <div class="accent-bar"></div>
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="hero-text">
+    <p class="eyebrow">小中学生向け総合学習塾</p>
+    <h1>子どもの可能性を、<br><em>信じ続ける。</em></h1>
+    <p class="hero-sub">「わかった！」の瞬間を一緒に積み重ねる。一人ひとりの個性を大切にした、温かみのある個別指導で、お子さまの自信を育てます。</p>
+    <div class="hero-btns">
+      <button class="btn-main">無料体験を申し込む</button>
+      <button class="btn-sub">資料を請求する</button>
+    </div>
+  </div>
+  <div class="hero-right">
+    <div class="merit-card">
+      <div class="merit-icon">📚</div>
+      <div><div class="merit-title">完全個別対応</div><div class="merit-desc">お子さまのペースで着実に</div></div>
+    </div>
+    <div class="merit-card">
+      <div class="merit-icon">⭐</div>
+      <div><div class="merit-title">合格率95%</div><div class="merit-desc">第一志望校への実績</div></div>
+    </div>
+    <div class="merit-card">
+      <div class="merit-icon">🎯</div>
+      <div><div class="merit-title">即日対応可能</div><div class="merit-desc">お問い合わせから最短3日</div></div>
+    </div>
+  </div>
+</section>
+
+<section class="feature-section">
+  <p class="section-tag">Features</p>
+  <h2 class="section-title">みらいが選ばれる理由</h2>
+  <div class="features-list">
+    <div class="feat-item"><div class="feat-num">01</div><div><h3>担任制によるきめ細かな指導</h3><p>入塾から卒業まで同じ講師が担任として関わり続け、お子さまの成長を長期的に見守ります。</p></div></div>
+    <div class="feat-item"><div class="feat-num">02</div><div><h3>保護者との密な連携</h3><p>毎月の三者面談と週次のLINE報告で、ご家庭と塾が一体となってサポートします。</p></div></div>
+    <div class="feat-item"><div class="feat-num">03</div><div><h3>自習室は無制限で使い放題</h3><p>開塾時間中はいつでも自習室を利用可能。わからない問題は講師に即質問できます。</p></div></div>
+    <div class="feat-item"><div class="feat-num">04</div><div><h3>月謝制で安心の料金体系</h3><p>入塾金・テキスト代すべて込みの明確な料金。追加費用は一切発生しません。</p></div></div>
+  </div>
+</section>
+
+<div class="stats">
+  <div class="stat"><div class="stat-num">95<span style="font-size:24px">%</span></div><div class="stat-label">第一志望合格率</div></div>
+  <div class="stat"><div class="stat-num">12<span style="font-size:24px">年</span></div><div class="stat-label">地域密着の実績</div></div>
+  <div class="stat"><div class="stat-num">800<span style="font-size:20px">名</span></div><div class="stat-label">卒業生の笑顔</div></div>
+</div>
+
+<section class="cta">
+  <div class="cta-inner">
+    <h2>まずは無料体験から<br>始めてみませんか？</h2>
+    <p>プレッシャーなし。お子さまの様子を見ながら、ゆっくり考えていただけます。</p>
+    <button class="cta-btn">無料体験に申し込む →</button>
+  </div>
+</section>
+</body>
+</html>

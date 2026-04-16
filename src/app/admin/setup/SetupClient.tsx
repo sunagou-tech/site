@@ -92,41 +92,23 @@ const DEMO_TEMPLATES: DemoTemplate[] = [
   },
 ];
 
-// ── デモサムネイル ────────────────────────────────────────────
-function DemoThumb({ t, W = 220, H = 130 }: { t: DemoTemplate; W?: number; H?: number }) {
-  const { bg, accent, textColor, gradient } = t.thumb;
-  const heroBg = gradient || bg;
+// ── デモサムネイル（実際のHTMLをiframeで表示）────────────────
+function DemoThumb({ t, W = 260, H = 155 }: { t: DemoTemplate; W?: number; H?: number }) {
+  const IFRAME_W = 1280;
+  const scale = W / IFRAME_W;
+  const iframeH = Math.round(H / scale);
   return (
-    <div style={{ width: W, height: H, background: heroBg, position: "relative", overflow: "hidden", borderRadius: 10, flexShrink: 0 }}>
-      {/* nav */}
-      <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: H*0.13,
-        background: `${bg}CC`, backdropFilter: "blur(4px)",
-        display: "flex", alignItems: "center", padding: `0 ${W*0.07}px`, gap: W*0.05 }}>
-        <div style={{ width: W*0.09, height: H*0.05, background: accent, borderRadius: 2 }} />
-        {[0,1,2,3].map(i => <div key={i} style={{ width: W*0.08, height: H*0.025, background: textColor, opacity: 0.25, borderRadius: 2 }} />)}
-        <div style={{ marginLeft: "auto", width: W*0.13, height: H*0.05, background: accent, borderRadius: 3 }} />
-      </div>
-      {/* hero text */}
-      <div style={{ position: "absolute", top: H*0.22, left: W*0.07, right: W*0.35 }}>
-        <div style={{ width: W*0.28, height: H*0.055, background: accent, opacity: 0.7, borderRadius: 2, marginBottom: H*0.04 }} />
-        <div style={{ width: W*0.68, height: H*0.09, background: textColor, opacity: 0.9, borderRadius: 2, marginBottom: H*0.025 }} />
-        <div style={{ width: W*0.5, height: H*0.09, background: textColor, opacity: 0.9, borderRadius: 2, marginBottom: H*0.06 }} />
-        <div style={{ width: W*0.22, height: H*0.07, background: accent, borderRadius: 4 }} />
-      </div>
-      {/* right deco */}
-      <div style={{ position: "absolute", right: W*0.04, top: H*0.18, width: W*0.28, height: H*0.62,
-        background: `${accent}25`, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <div style={{ width: "60%", height: "60%", background: `${accent}35`, borderRadius: "50%" }} />
-      </div>
-      {/* bottom stats */}
-      <div style={{ position: "absolute", bottom: H*0.05, left: W*0.07, display: "flex", gap: W*0.04 }}>
-        {[0,1,2].map(i => (
-          <div key={i} style={{ background: `${accent}20`, borderRadius: 4, padding: `${H*0.025}px ${W*0.04}px` }}>
-            <div style={{ width: W*0.08, height: H*0.04, background: accent, borderRadius: 2, marginBottom: 2 }} />
-            <div style={{ width: W*0.1, height: H*0.025, background: textColor, opacity: 0.3, borderRadius: 2 }} />
-          </div>
-        ))}
-      </div>
+    <div style={{ width: W, height: H, overflow: "hidden", position: "relative",
+      borderRadius: "10px 10px 0 0", background: t.thumb.bg, flexShrink: 0 }}>
+      <iframe
+        src={`/demos/${t.id}.html`}
+        style={{ width: IFRAME_W, height: iframeH,
+          transform: `scale(${scale})`, transformOrigin: "0 0",
+          border: "none", pointerEvents: "none" }}
+        scrolling="no"
+        loading="lazy"
+        title={t.name}
+      />
     </div>
   );
 }
@@ -354,6 +336,7 @@ export default function SetupClient() {
     } catch (e) {
       setError(e instanceof Error ? e.message : "HTML生成に失敗しました");
       setPhase("form");
+      setMainTab("demo");
     }
   }, [selectedDemo, demoBizName, demoBizDesc]);
 
