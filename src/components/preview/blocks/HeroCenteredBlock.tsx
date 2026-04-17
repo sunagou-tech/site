@@ -13,8 +13,7 @@ export default function HeroCenteredBlockComponent({ block, config, onChange }: 
   const fontClass = config.fontFamily === "serif" ? "font-serif" : config.fontFamily === "mono" ? "font-mono" : "font-sans";
 
   return (
-    <section className="relative flex items-center justify-center overflow-hidden text-center"
-      style={{ minHeight: "min(100svh, 760px)" }}>
+    <section className="relative flex items-center justify-center overflow-hidden text-center min-h-[600px] md:min-h-[680px]">
       {/* Background — absolute inset-0 so image fills the whole section */}
       <div className="absolute inset-0">
         {block.imageUrl ? (
@@ -42,7 +41,7 @@ export default function HeroCenteredBlockComponent({ block, config, onChange }: 
       )}
 
       {/* Content */}
-      <div className="relative z-10 px-6 md:px-8 py-16 md:py-20 max-w-2xl mx-auto w-full">
+      <div className="relative z-10 px-6 md:px-8 py-10 max-w-2xl mx-auto w-full">
         <EditableText tag="p" value={block.eyebrow} onChange={(v) => u({ eyebrow: v })}
           className="text-[11px] tracking-[0.25em] uppercase font-medium mb-4 block"
           style={{ color: config.accentColor }} />
