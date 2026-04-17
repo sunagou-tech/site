@@ -14,6 +14,7 @@
 
 import { useRef, useEffect, useState } from "react";
 import { Pencil, X } from "lucide-react";
+import { useEditing } from "@/contexts/EditingContext";
 
 type Tag = "h1" | "h2" | "h3" | "h4" | "p" | "span" | "div";
 
@@ -56,6 +57,7 @@ export default function EditableText({
   deletable = true,
 }: Props) {
   const Tag = tag;
+  const editingMode = useEditing();
   const ref = useRef<HTMLElement>(null);
   const isEditing = useRef(false);
   const savedValue = useRef(value);
@@ -84,8 +86,8 @@ export default function EditableText({
     }
   }, [adding]);
 
-  // ─── readOnly モード ──────────────────────────────────────
-  if (readOnly) {
+  // ─── 非編集モード（公開サイト・プレビューiframe）────────────
+  if (!editingMode || readOnly) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const ReadTag = tag as any;
     if (!plainOnly && hasHtml(value)) {

@@ -4,6 +4,7 @@ import { HeroGlassBlock, SiteConfig } from "@/types/site";
 import EditableText from "../EditableText";
 import EditableImage from "../EditableImage";
 import LinkableButton from "../LinkableButton";
+import { useEditing } from "@/contexts/EditingContext";
 
 interface Props {
   block: HeroGlassBlock;
@@ -12,6 +13,7 @@ interface Props {
 }
 
 export default function HeroGlassBlockComponent({ block, config, onChange }: Props) {
+  const isEditing = useEditing();
   const u = (patch: Partial<HeroGlassBlock>) => onChange({ ...block, ...patch });
   const fontClass =
     config.fontFamily === "serif" ? "font-serif" : config.fontFamily === "mono" ? "font-mono" : "font-sans";
@@ -40,14 +42,14 @@ export default function HeroGlassBlockComponent({ block, config, onChange }: Pro
         <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-black/20" />
       </div>
 
-      {/* ── Add/remove image buttons ──────────────────────── */}
-      {!block.imageUrl && (
+      {/* ── Add/remove image buttons (editing only) ──────── */}
+      {isEditing && !block.imageUrl && (
         <button onClick={() => u({ imageUrl: " " })}
           className="absolute bottom-4 right-4 z-20 text-[10px] text-white/60 border border-white/20 px-3 py-1.5 rounded-full hover:border-white/60 transition-colors">
           + 背景画像を追加
         </button>
       )}
-      {block.imageUrl?.trim() && (
+      {isEditing && block.imageUrl?.trim() && (
         <button onClick={() => u({ imageUrl: "" })}
           className="absolute bottom-4 right-4 z-20 text-[10px] text-red-300 border border-red-300/30 px-3 py-1.5 rounded-full hover:border-red-300 transition-colors">
           背景画像を削除

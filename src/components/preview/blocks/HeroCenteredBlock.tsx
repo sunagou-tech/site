@@ -3,10 +3,12 @@ import { HeroCenteredBlock, SiteConfig } from "@/types/site";
 import EditableText from "../EditableText";
 import EditableImage from "../EditableImage";
 import LinkableButton from "../LinkableButton";
+import { useEditing } from "@/contexts/EditingContext";
 
 interface Props { block: HeroCenteredBlock; config: SiteConfig; onChange: (b: HeroCenteredBlock) => void; }
 
 export default function HeroCenteredBlockComponent({ block, config, onChange }: Props) {
+  const isEditing = useEditing();
   const u = (patch: Partial<HeroCenteredBlock>) => onChange({ ...block, ...patch });
   const fontClass = config.fontFamily === "serif" ? "font-serif" : config.fontFamily === "mono" ? "font-mono" : "font-sans";
 
@@ -22,13 +24,13 @@ export default function HeroCenteredBlockComponent({ block, config, onChange }: 
         )}
         <div className="absolute inset-0 bg-black/50" />
       </div>
-      {!block.imageUrl && (
+      {isEditing && !block.imageUrl && (
         <button onClick={() => u({ imageUrl: " " })}
           className="absolute bottom-4 right-4 z-20 text-[10px] text-white/60 border border-white/20 px-3 py-1.5 rounded-full hover:border-white/60 transition-colors">
           + 背景画像を追加
         </button>
       )}
-      {block.imageUrl && block.imageUrl.trim() && (
+      {isEditing && block.imageUrl && block.imageUrl.trim() && (
         <button onClick={() => u({ imageUrl: "" })}
           className="absolute bottom-4 right-4 z-20 text-[10px] text-red-300 border border-red-300/30 px-3 py-1.5 rounded-full hover:border-red-300 transition-colors">
           背景画像を削除
@@ -40,7 +42,7 @@ export default function HeroCenteredBlockComponent({ block, config, onChange }: 
           className="text-xs tracking-[0.3em] uppercase font-medium mb-4 block"
           style={{ color: config.accentColor }} />
         <EditableText tag="h1" value={block.tagline} onChange={(v) => u({ tagline: v })}
-          multiline className={`text-5xl font-black text-white leading-tight whitespace-pre-line mb-6 block ${fontClass}`} />
+          multiline className={`text-3xl md:text-5xl font-black text-white leading-tight whitespace-pre-line mb-6 block ${fontClass}`} />
         <EditableText tag="p" value={block.body} onChange={(v) => u({ body: v })}
           multiline className="text-base text-white/70 leading-relaxed mb-10 max-w-xl mx-auto block" />
         <div className="flex items-center justify-center gap-4 flex-wrap">

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { ImageIcon, Link2, Sparkles, X } from "lucide-react";
 import AIImagePanel from "./AIImagePanel";
+import { useEditing } from "@/contexts/EditingContext";
 
 type Tab = "url" | "ai";
 
@@ -27,6 +28,7 @@ export default function EditableImage({
   primaryColor = "#1a1a2e",
   accentColor = "#F5C842",
 }: Props) {
+  const editingMode = useEditing();
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<Tab>("url");
   const [urlInput, setUrlInput] = useState(url);
@@ -34,6 +36,22 @@ export default function EditableImage({
   const [imgError, setImgError] = useState(false);
 
   const showPlaceholder = !url || imgError;
+
+  // 非編集モード: 画像だけ表示（オーバーレイなし）
+  if (!editingMode) {
+    if (showPlaceholder) {
+      return (
+        <div className={`w-full h-full ${className}`}
+          style={{ background: placeholderGradient }} />
+      );
+    }
+    return (
+      <div className={`relative overflow-hidden ${className}`}>
+        <img src={url} alt={alt} className="w-full h-full object-cover"
+          onError={() => setImgError(true)} />
+      </div>
+    );
+  }
 
   const applyUrl = (u: string) => {
     onChange(u);
