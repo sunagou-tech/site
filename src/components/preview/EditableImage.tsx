@@ -38,15 +38,16 @@ export default function EditableImage({
   const showPlaceholder = !url || imgError;
 
   // 非編集モード: 画像だけ表示（オーバーレイなし）
+  // ※ className に absolute inset-0 が含まれる場合に relative を追加しないよう注意
   if (!editingMode) {
     if (showPlaceholder) {
       return (
-        <div className={`w-full h-full ${className}`}
+        <div className={`overflow-hidden ${className}`}
           style={{ background: placeholderGradient }} />
       );
     }
     return (
-      <div className={`relative overflow-hidden ${className}`}>
+      <div className={`overflow-hidden ${className}`}>
         <img src={url} alt={alt} className="w-full h-full object-cover"
           onError={() => setImgError(true)} />
       </div>

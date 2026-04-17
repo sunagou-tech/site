@@ -13,17 +13,21 @@ export default function HeroCenteredBlockComponent({ block, config, onChange }: 
   const fontClass = config.fontFamily === "serif" ? "font-serif" : config.fontFamily === "mono" ? "font-mono" : "font-sans";
 
   return (
-    <section className="relative min-h-[560px] flex items-center justify-center overflow-hidden text-center">
-      {/* Background */}
+    <section className="relative flex items-center justify-center overflow-hidden text-center"
+      style={{ minHeight: "min(100svh, 760px)" }}>
+      {/* Background — absolute inset-0 so image fills the whole section */}
       <div className="absolute inset-0">
         {block.imageUrl ? (
           <EditableImage url={block.imageUrl} onChange={(url) => u({ imageUrl: url })}
             className="absolute inset-0" primaryColor={config.primaryColor} accentColor={config.accentColor} alt="hero bg" />
         ) : (
-          <div className="w-full h-full" style={{ background: `linear-gradient(135deg, ${config.primaryColor} 0%, ${config.primaryColor}cc 40%, ${config.accentColor}33 100%)` }} />
+          <div className="absolute inset-0" style={{ background: `linear-gradient(135deg, ${config.primaryColor} 0%, ${config.primaryColor}cc 40%, ${config.accentColor}33 100%)` }} />
         )}
-        <div className="absolute inset-0 bg-black/50" />
+        {/* Dark overlay */}
+        <div className="absolute inset-0 bg-black/55" />
       </div>
+
+      {/* Editing-only buttons */}
       {isEditing && !block.imageUrl && (
         <button onClick={() => u({ imageUrl: " " })}
           className="absolute bottom-4 right-4 z-20 text-[10px] text-white/60 border border-white/20 px-3 py-1.5 rounded-full hover:border-white/60 transition-colors">
@@ -36,22 +40,23 @@ export default function HeroCenteredBlockComponent({ block, config, onChange }: 
           背景画像を削除
         </button>
       )}
+
       {/* Content */}
-      <div className="relative z-10 px-8 max-w-3xl mx-auto">
+      <div className="relative z-10 px-6 md:px-8 py-16 md:py-20 max-w-2xl mx-auto w-full">
         <EditableText tag="p" value={block.eyebrow} onChange={(v) => u({ eyebrow: v })}
-          className="text-xs tracking-[0.3em] uppercase font-medium mb-4 block"
+          className="text-[11px] tracking-[0.25em] uppercase font-medium mb-4 block"
           style={{ color: config.accentColor }} />
         <EditableText tag="h1" value={block.tagline} onChange={(v) => u({ tagline: v })}
-          multiline className={`text-3xl md:text-5xl font-black text-white leading-tight whitespace-pre-line mb-6 block ${fontClass}`} />
+          multiline className={`text-3xl md:text-5xl font-black text-white leading-tight whitespace-pre-line mb-5 block ${fontClass}`} />
         <EditableText tag="p" value={block.body} onChange={(v) => u({ body: v })}
-          multiline className="text-base text-white/70 leading-relaxed mb-10 max-w-xl mx-auto block" />
-        <div className="flex items-center justify-center gap-4 flex-wrap">
+          multiline className="text-sm md:text-base text-white/75 leading-relaxed mb-8 mx-auto block" />
+        <div className="flex items-center justify-center gap-3 flex-wrap">
           <LinkableButton
             label={block.buttonText}
             url={block.buttonUrl ?? ""}
             onLabelChange={(v) => u({ buttonText: v })}
             onUrlChange={(v) => u({ buttonUrl: v })}
-            className="px-8 py-4 rounded-full text-sm font-bold shadow-lg hover:opacity-90 transition-opacity"
+            className="px-7 py-3.5 rounded-full text-sm font-bold shadow-lg hover:opacity-90 transition-opacity"
             style={{ backgroundColor: config.accentColor, color: config.primaryColor }}
           />
           <LinkableButton
@@ -59,7 +64,7 @@ export default function HeroCenteredBlockComponent({ block, config, onChange }: 
             url={block.buttonUrl2 ?? ""}
             onLabelChange={(v) => u({ buttonText2: v })}
             onUrlChange={(v) => u({ buttonUrl2: v })}
-            className="px-8 py-4 rounded-full text-sm font-medium border border-white/40 text-white hover:bg-white/10 transition-colors"
+            className="px-7 py-3.5 rounded-full text-sm font-medium border border-white/40 text-white hover:bg-white/10 transition-colors"
           />
         </div>
       </div>
