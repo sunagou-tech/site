@@ -1031,6 +1031,7 @@ export default function CanvasEditor({ config, onChange }: Props) {
   const [blockDragOver, setBlockDragOver] = useState<number | null>(null);
   const [hoverInsertIdx, setHoverInsertIdx] = useState<number | null>(null);
   const [previewMode, setPreviewMode] = useState<"pc" | "tablet" | "sp">("pc");
+  const [previewKey,  setPreviewKey]  = useState(0);
   const canvasRef = useRef<HTMLDivElement>(null);
 
   const CW       = config.canvasWidth ?? 1200;
@@ -1765,7 +1766,13 @@ export default function CanvasEditor({ config, onChange }: Props) {
               { id: "sp" as const, label: "スマホ",
                 icon: <svg width="8" height="13" viewBox="0 0 11 18" fill="currentColor"><rect x="1" y="0" width="9" height="18" rx="2" fill="none" stroke="currentColor" strokeWidth="1.8"/><rect x="3.5" y="1.5" width="4" height="1" rx="0.5"/><circle cx="5.5" cy="15.8" r="0.9"/></svg> },
             ] as const).map(d => (
-              <button key={d.id} onClick={() => setPreviewMode(d.id)}
+              <button key={d.id} onClick={() => {
+                if (d.id !== "pc") {
+                  localStorage.setItem("site-config", JSON.stringify(config));
+                  setPreviewKey(k => k + 1);
+                }
+                setPreviewMode(d.id);
+              }}
                 title={d.label}
                 style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 28, height: 24, borderRadius: 6,
                   border: previewMode === d.id ? "1.5px solid #4F46E5" : "1px solid #E2E8F0",
@@ -1809,21 +1816,29 @@ export default function CanvasEditor({ config, onChange }: Props) {
               </div>
             )}
 
-            {/* ── Scale clip (preview) or identity (PC) ── */}
-            <div style={isPreview ? { width: deviceW, height: canvasHeight * previewScale, overflow: "hidden" } : {}}>
-              <div style={isPreview ? { width: CW, transform: `scale(${previewScale})`, transformOrigin: "top left", height: canvasHeight, pointerEvents: "none" } : {}}>
-
+            {/* ── Preview iframe (sp/tablet) or Canvas (PC) ── */}
+            {isPreview ? (
+              <iframe
+                key={previewKey}
+                src="/"
+                width={deviceW}
+                height={previewMode === "sp" ? 780 : 1024}
+                style={{ border: "none", display: "block" }}
+                title="レスポンシブプレビュー"
+              />
+            ) : (
+              <>
                 {/* ══ Canvas div ══ */}
                 <div
                   ref={canvasRef}
                   style={{ position: "relative", width: CW, minHeight: canvasHeight, background: "#FFFFFF",
-                    ...(!isPreview ? { margin: "0 auto", boxShadow: "0 4px 40px rgba(0,0,0,0.12)" } : {}),
+                    margin: "0 auto", boxShadow: "0 4px 40px rgba(0,0,0,0.12)",
                     fontFamily: `"${siteFont}", sans-serif` }}
-                  onPointerMove={!isPreview ? onCanvasPointerMove : undefined}
-                  onPointerUp={!isPreview ? () => setDrag(null) : undefined}
-                  onClick={!isPreview ? (e => e.stopPropagation()) : undefined}
-                  onDragOver={!isPreview ? (e => e.preventDefault()) : undefined}
-                  onDrop={!isPreview ? onCanvasDrop : undefined}
+                  onPointerMove={onCanvasPointerMove}
+                  onPointerUp={() => setDrag(null)}
+                  onClick={e => e.stopPropagation()}
+                  onDragOver={e => e.preventDefault()}
+                  onDrop={onCanvasDrop}
                 >
                   {elements.length === 0 && (
                     <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 16, color: "#94A3B8" }}>
@@ -1835,16 +1850,16 @@ export default function CanvasEditor({ config, onChange }: Props) {
                   {[...elements].sort((a, b) => (a.zIndex ?? 0) - (b.zIndex ?? 0)).map(el => (
                     <CanvasElementView
                       key={el.id} element={el}
-                      isSelected={!isPreview && selectedId === el.id}
-                      isEditing={!isPreview && editingId === el.id}
-                      onSelect={() => { if (!isPreview) { setSelectedId(el.id); setEditingId(null); } }}
-                      onDoubleClick={() => { if (!isPreview && (el.type === "text" || el.type === "button")) { setSelectedId(el.id); setEditingId(el.id); } }}
-                      onStartDrag={(e, mode) => { if (!isPreview) startDrag(e, el.id, mode); }}
-                      onUpdate={patch => { if (!isPreview) updateEl(el.id, patch); }}
+                      isSelected={selectedId === el.id}
+                      isEditing={editingId === el.id}
+                      onSelect={() => { setSelectedId(el.id); setEditingId(null); }}
+                      onDoubleClick={() => { if (el.type === "text" || el.type === "button") { setSelectedId(el.id); setEditingId(el.id); } }}
+                      onStartDrag={(e, mode) => startDrag(e, el.id, mode)}
+                      onUpdate={patch => updateEl(el.id, patch)}
                     />
                   ))}
-                  {/* ── Block insert zones (edit mode only) ── */}
-                  {!isPreview && blockGroups.map((g, idx) => {
+                  {/* ── Block insert zones ── */}
+                  {blockGroups.map((g, idx) => {
                     if (idx >= blockGroups.length - 1) return null;
                     const isHov = hoverInsertIdx === idx;
                     return (
@@ -1861,9 +1876,8 @@ export default function CanvasEditor({ config, onChange }: Props) {
                   })}
                 </div>
                 {/* ══ / Canvas div ══ */}
-
-              </div>
-            </div>
+              </>
+            )}
 
             {/* bottom home button (sp only) */}
             {isPreview && previewMode === "sp" && (

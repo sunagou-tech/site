@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { SiteConfig } from "@/types/site";
 import BlockRenderer from "@/components/preview/blocks/BlockRenderer";
 
@@ -9,6 +10,7 @@ interface Props {
 }
 
 export default function ProductionSiteView({ config, slug }: Props) {
+  const [menuOpen, setMenuOpen] = useState(false);
   const fontClass =
     config.fontFamily === "serif" ? "font-serif"
     : config.fontFamily === "mono" ? "font-mono"
@@ -26,33 +28,73 @@ export default function ProductionSiteView({ config, slug }: Props) {
   return (
     <div className={fontClass}>
       {/* Read-only NavBar */}
-      <nav className="sticky top-0 z-20 bg-white border-b border-gray-100 px-8 py-3 flex items-center justify-between shadow-sm">
-        <div className="flex items-center gap-2">
-          <div
-            className="w-8 h-8 rounded flex items-center justify-center text-white text-xs font-bold shadow"
-            style={{ backgroundColor: config.primaryColor }}
-          >
-            {config.title?.charAt(0)?.toUpperCase() ?? "S"}
-          </div>
-          <a href="/" className="font-bold text-sm tracking-wide hover:opacity-80 transition-opacity">
-            {config.title}
-          </a>
-        </div>
-        <div className="flex items-center gap-4">
-          {config.navLinks.map((link) => (
-            <a key={link.id} href={link.url}
-              className="text-xs text-gray-600 hover:text-gray-900 transition-colors">
-              {link.label}
+      <nav className="sticky top-0 z-20 bg-white border-b border-gray-100 shadow-sm">
+        <div className="px-4 md:px-8 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div
+              className="w-8 h-8 rounded flex items-center justify-center text-white text-xs font-bold shadow"
+              style={{ backgroundColor: config.primaryColor }}
+            >
+              {config.title?.charAt(0)?.toUpperCase() ?? "S"}
+            </div>
+            <a href="/" className="font-bold text-sm tracking-wide hover:opacity-80 transition-opacity">
+              {config.title}
             </a>
-          ))}
-          <a
-            href="/contact"
-            className="text-xs text-white px-4 py-2 rounded-full font-medium shadow-sm hover:opacity-90 transition-opacity"
-            style={{ backgroundColor: config.primaryColor }}
+          </div>
+
+          {/* Desktop nav */}
+          <div className="hidden md:flex items-center gap-4">
+            {config.navLinks.map((link) => (
+              <a key={link.id} href={link.url} className="text-xs text-gray-600 hover:text-gray-900 transition-colors">
+                {link.label}
+              </a>
+            ))}
+            <a
+              href="/contact"
+              className="text-xs text-white px-4 py-2 rounded-full font-medium shadow-sm hover:opacity-90 transition-opacity"
+              style={{ backgroundColor: config.primaryColor }}
+            >
+              お問い合わせ
+            </a>
+          </div>
+
+          {/* Hamburger (mobile only) */}
+          <button
+            className="md:hidden p-2 text-gray-600 hover:text-gray-900 transition-colors"
+            onClick={() => setMenuOpen(!menuOpen)}
+            aria-label="メニュー"
           >
-            お問い合わせ
-          </a>
+            {menuOpen ? (
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+              </svg>
+            ) : (
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                <rect x="0" y="3" width="20" height="2" rx="1"/>
+                <rect x="0" y="9" width="20" height="2" rx="1"/>
+                <rect x="0" y="15" width="20" height="2" rx="1"/>
+              </svg>
+            )}
+          </button>
         </div>
+
+        {/* Mobile dropdown */}
+        {menuOpen && (
+          <div className="md:hidden border-t border-gray-100 px-4 py-3 flex flex-col gap-1 bg-white">
+            {config.navLinks.map((link) => (
+              <a key={link.id} href={link.url} className="text-sm text-gray-700 hover:text-gray-900 py-2 border-b border-gray-50 transition-colors">
+                {link.label}
+              </a>
+            ))}
+            <a
+              href="/contact"
+              className="mt-2 text-sm text-white px-4 py-2.5 rounded-full font-medium text-center hover:opacity-90 transition-opacity"
+              style={{ backgroundColor: config.primaryColor }}
+            >
+              お問い合わせ
+            </a>
+          </div>
+        )}
       </nav>
 
       {pageNotFound ? (
