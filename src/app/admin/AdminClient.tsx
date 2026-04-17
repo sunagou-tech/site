@@ -11,7 +11,7 @@ import { RefreshCw, ExternalLink, Plus, Layout, Globe, Check, AlertCircle, Undo2
 import { EditingContext } from "@/contexts/EditingContext";
 import { publishSite, isSupabaseConfigured } from "@/lib/supabase";
 
-type SidePanel = "settings" | "blocks" | "upload" | "seo";
+type SidePanel = "settings" | "blocks" | "upload" | "ai-image" | "seo";
 type DeviceMode = "pc" | "tablet" | "sp";
 interface PageTab { id: string; slug: string; title: string; isHome: boolean; }
 interface UploadedImage { id: string; name: string; url: string; uploadedAt: number; }
@@ -26,6 +26,13 @@ export default function AdminClient() {
   const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([]);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const uploadInputRef = useRef<HTMLInputElement>(null);
+
+  // AI 画像生成
+  const [aiPrompt, setAiPrompt] = useState("");
+  const [aiStyleIdx, setAiStyleIdx] = useState(0);
+  const [aiSizeIdx, setAiSizeIdx] = useState(0);
+  const [aiStatus, setAiStatus] = useState<"idle" | "loading" | "done" | "error">("idle");
+  const [aiGeneratedUrl, setAiGeneratedUrl] = useState<string | null>(null);
   const [activePageId, setActivePageId] = useState("home");
   const [renamingPageId, setRenamingPageId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState("");
@@ -130,6 +137,47 @@ export default function AdminClient() {
     const prev = undoStack[undoStack.length - 1];
     setUndoStack((s) => s.slice(0, -1));
     setConfig(prev);
+  }
+
+  // ── AI 画像生成 ────────────────────────────────────────────
+  const AI_STYLES = [
+    { label: "リアル写真", en: "realistic photography, professional, high quality, 4k" },
+    { label: "イラスト",   en: "flat illustration, digital art, clean vector style" },
+    { label: "シネマ",     en: "cinematic, dramatic lighting, film photography" },
+    { label: "ミニマル",   en: "minimal, clean, white background, simple" },
+  ];
+  const AI_SIZES = [
+    { label: "横長 (PC)", w: 1080, h: 680 },
+    { label: "縦長 (SP)", w: 800,  h: 1200 },
+    { label: "正方形",    w: 800,  h: 800 },
+  ];
+
+  function generateAiImage() {
+    if (!aiPrompt.trim()) return;
+    setAiStatus("loading");
+    setAiGeneratedUrl(null);
+    const { w, h } = AI_SIZES[aiSizeIdx];
+    const fullPrompt = `${aiPrompt}, ${AI_STYLES[aiStyleIdx].en}`;
+    const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(fullPrompt)}?width=${w}&height=${h}&nologo=true&seed=${Math.floor(Math.random() * 99999)}&model=flux`;
+    const img = new window.Image();
+    img.onload = () => { setAiGeneratedUrl(url); setAiStatus("done"); };
+    img.onerror = () => setAiStatus("error");
+    img.src = url;
+  }
+
+  function saveAiImageToLibrary() {
+    if (!aiGeneratedUrl) return;
+    const newImg: UploadedImage = {
+      id: uid(), name: `AI生成_${new Date().toLocaleDateString("ja")}`, url: aiGeneratedUrl, uploadedAt: Date.now(),
+    };
+    setUploadedImages((prev) => {
+      const next = [newImg, ...prev];
+      try { localStorage.setItem("uploaded-images", JSON.stringify(next)); } catch {}
+      return next;
+    });
+    setAiStatus("idle");
+    setAiGeneratedUrl(null);
+    setSidePanel("upload");
   }
 
   // ── Device switching ───────────────────────────────────────
@@ -275,6 +323,8 @@ export default function AdminClient() {
       icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg> },
     { id: "upload", label: "画像",
       icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg> },
+    { id: "ai-image", label: "AI画像",
+      icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L9.09 8.26L2 9.27L7 14.14L5.82 21L12 17.77L18.18 21L17 14.14L22 9.27L14.91 8.26L12 2Z"/></svg> },
     { id: "seo", label: "SEO",
       icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> },
   ];
@@ -440,6 +490,7 @@ export default function AdminClient() {
                   {sidePanel === "settings" ? "サイト全体設定"
                     : sidePanel === "blocks" ? "ブロック編集"
                     : sidePanel === "upload" ? "画像ライブラリ"
+                    : sidePanel === "ai-image" ? "AI画像生成"
                     : "SEO / 集客設定"}
                 </p>
               </div>
@@ -633,6 +684,114 @@ export default function AdminClient() {
                         </p>
                       </>
                     )}
+                  </div>
+                )}
+
+                {/* ── AI画像生成パネル ── */}
+                {sidePanel === "ai-image" && (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                    {/* プロンプト */}
+                    <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                      <span style={{ fontSize: 10, fontWeight: 600, color: "#64748B" }}>どんな画像？（日本語でOK）</span>
+                      <textarea value={aiPrompt} onChange={e => setAiPrompt(e.target.value)}
+                        rows={3} placeholder={"例：笑顔のビジネスチームが\n会議室で話し合う場面"}
+                        onKeyDown={e => { if (e.key === "Enter" && e.metaKey) generateAiImage(); }}
+                        style={{ fontSize: 11, padding: "8px 10px", border: "1px solid #E2E8F0", borderRadius: 7, outline: "none", resize: "none", color: "#111", lineHeight: 1.6 }} />
+                    </label>
+
+                    {/* サンプル */}
+                    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                      <span style={{ fontSize: 10, fontWeight: 600, color: "#64748B" }}>サンプル</span>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+                        {["笑顔のビジネスチーム", "モダンオフィスの夜景", "自然の中でPCを開く人", "カフェで仕事する女性"].map(ex => (
+                          <button key={ex} onClick={() => setAiPrompt(ex)}
+                            style={{ fontSize: 9, padding: "3px 7px", borderRadius: 10, border: "1px solid #E2E8F0", background: "#F8FAFC", color: "#64748B", cursor: "pointer" }}>
+                            {ex}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* スタイル */}
+                    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                      <span style={{ fontSize: 10, fontWeight: 600, color: "#64748B" }}>スタイル</span>
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 4 }}>
+                        {AI_STYLES.map((s, i) => (
+                          <button key={i} onClick={() => setAiStyleIdx(i)}
+                            style={{ fontSize: 10, padding: "5px 0", borderRadius: 6, border: `1.5px solid ${aiStyleIdx === i ? config.primaryColor : "#E2E8F0"}`, background: aiStyleIdx === i ? config.primaryColor + "15" : "transparent", color: aiStyleIdx === i ? config.primaryColor : "#64748B", cursor: "pointer", fontWeight: aiStyleIdx === i ? 700 : 400 }}>
+                            {s.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* サイズ */}
+                    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                      <span style={{ fontSize: 10, fontWeight: 600, color: "#64748B" }}>サイズ</span>
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 4 }}>
+                        {AI_SIZES.map((s, i) => (
+                          <button key={i} onClick={() => setAiSizeIdx(i)}
+                            style={{ fontSize: 9, padding: "5px 2px", borderRadius: 6, border: `1.5px solid ${aiSizeIdx === i ? config.accentColor : "#E2E8F0"}`, background: aiSizeIdx === i ? config.accentColor + "20" : "transparent", color: aiSizeIdx === i ? "#374151" : "#64748B", cursor: "pointer", fontWeight: aiSizeIdx === i ? 700 : 400, textAlign: "center" }}>
+                            {s.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* 生成ボタン */}
+                    <button onClick={generateAiImage} disabled={!aiPrompt.trim() || aiStatus === "loading"}
+                      style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, width: "100%", padding: "10px 0", borderRadius: 8, border: "none", background: !aiPrompt.trim() || aiStatus === "loading" ? "#E2E8F0" : config.primaryColor, color: !aiPrompt.trim() || aiStatus === "loading" ? "#94A3B8" : "#fff", fontWeight: 700, fontSize: 12, cursor: !aiPrompt.trim() || aiStatus === "loading" ? "not-allowed" : "pointer" }}>
+                      {aiStatus === "loading" ? (
+                        <><span style={{ width: 12, height: 12, border: "2px solid rgba(255,255,255,0.3)", borderTop: "2px solid currentColor", borderRadius: "50%", display: "inline-block", animation: "spin 0.6s linear infinite" }} /> 生成中… (10〜30秒)</>
+                      ) : (
+                        <><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2L9.09 8.26L2 9.27L7 14.14L5.82 21L12 17.77L18.18 21L17 14.14L22 9.27L14.91 8.26L12 2Z" fill="currentColor"/></svg> 画像を生成</>
+                      )}
+                    </button>
+
+                    {/* 生成中プログレスバー */}
+                    {aiStatus === "loading" && (
+                      <div style={{ height: 3, background: "#F1F5F9", borderRadius: 2, overflow: "hidden" }}>
+                        <div style={{ height: "100%", background: config.accentColor, borderRadius: 2, animation: "ai-progress 1.5s ease-in-out infinite", width: "40%" }} />
+                        <style>{`@keyframes ai-progress{0%{transform:translateX(-100%);width:40%}50%{width:60%}100%{transform:translateX(300%);width:40%}}`}</style>
+                      </div>
+                    )}
+
+                    {/* 生成結果 */}
+                    {aiStatus === "done" && aiGeneratedUrl && (
+                      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                        <img src={aiGeneratedUrl} alt="generated" style={{ width: "100%", borderRadius: 8, display: "block", border: "1px solid #E2E8F0" }} />
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 6 }}>
+                          <button onClick={saveAiImageToLibrary}
+                            style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 5, padding: "8px 0", borderRadius: 7, border: "none", background: "#059669", color: "#fff", fontWeight: 700, fontSize: 11, cursor: "pointer" }}>
+                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                            ライブラリに保存
+                          </button>
+                          <button onClick={generateAiImage}
+                            style={{ display: "flex", alignItems: "center", gap: 4, padding: "8px 10px", borderRadius: 7, border: "1px solid #E2E8F0", background: "#F8FAFC", color: "#64748B", fontSize: 10, cursor: "pointer" }}>
+                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                            再生成
+                          </button>
+                        </div>
+                        <p style={{ fontSize: 9, color: "#94A3B8", textAlign: "center", margin: 0 }}>
+                          保存後→「画像」タブでURLコピー→ブロックに貼り付け
+                        </p>
+                      </div>
+                    )}
+
+                    {/* エラー */}
+                    {aiStatus === "error" && (
+                      <div style={{ padding: 10, background: "#FEF2F2", borderRadius: 8 }}>
+                        <p style={{ fontSize: 11, color: "#DC2626", margin: "0 0 6px" }}>生成に失敗しました。</p>
+                        <button onClick={generateAiImage}
+                          style={{ fontSize: 10, color: "#DC2626", border: "1px solid #FECACA", borderRadius: 5, padding: "4px 10px", background: "#fff", cursor: "pointer" }}>
+                          再試行
+                        </button>
+                      </div>
+                    )}
+
+                    <p style={{ fontSize: 9, color: "#CBD5E1", textAlign: "center", margin: 0 }}>
+                      Powered by Pollinations AI · 無料・APIキー不要
+                    </p>
                   </div>
                 )}
 
