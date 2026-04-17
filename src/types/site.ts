@@ -526,6 +526,39 @@ export interface HeroInteractiveBlock {
   buttonUrl: string;
 }
 
+export interface HeroGameBlock {
+  id: string; type: "hero-game";
+  eyebrow: string;
+  tagline: string;
+  body: string;
+  buttonText: string; buttonUrl: string;
+  imageUrl: string;
+  stat1Label: string; stat1Value: string;
+  stat2Label: string; stat2Value: string;
+  stat3Label: string; stat3Value: string;
+}
+
+export interface HeroReelBlock {
+  id: string; type: "hero-reel";
+  eyebrow: string;
+  tagline: string;
+  body: string;
+  videoUrl: string;
+  buttonText: string; buttonUrl: string;
+  buttonText2: string; buttonUrl2: string;
+}
+
+export interface HeroSlideBlock {
+  id: string; type: "hero-slide";
+  slides: Array<{
+    imageUrl: string;
+    eyebrow: string;
+    tagline: string;
+    buttonText: string;
+    buttonUrl: string;
+  }>;
+}
+
 export type SectionBlock =
   | HeroBlock
   | AboutBlock
@@ -572,7 +605,10 @@ export type SectionBlock =
   | HeroDiagonalBlock
   | ProblemBlock
   | SolutionBlock
-  | FreeBlock;
+  | FreeBlock
+  | HeroGameBlock
+  | HeroReelBlock
+  | HeroSlideBlock;
 
 export type BlockType = SectionBlock["type"];
 
@@ -1211,6 +1247,37 @@ export const BLOCK_DEFAULTS: Record<BlockType, () => SectionBlock> = {
     viewAllText: "すべての記事を見る",
     layout: "grid",
   }),
+  "hero-game": () => ({
+    id: uid(), type: "hero-game",
+    eyebrow: "STAGE 01",
+    tagline: "新しい\n冒険が始まる",
+    body: "最高のゲーム体験をあなたに。今すぐプレイして、その世界に飛び込もう。",
+    buttonText: "今すぐプレイ",
+    buttonUrl: "/play",
+    imageUrl: "",
+    stat1Label: "クリア率", stat1Value: "98%",
+    stat2Label: "プレイヤー数", stat2Value: "12,000+",
+    stat3Label: "レビュー", stat3Value: "★4.9",
+  }),
+  "hero-reel": () => ({
+    id: uid(), type: "hero-reel",
+    eyebrow: "SHOWREEL",
+    tagline: "動画で伝える\n圧倒的な世界観",
+    body: "言葉だけでは届かない魅力を、映像で余すところなく表現します。",
+    videoUrl: "",
+    buttonText: "お問い合わせ",
+    buttonUrl: "/contact",
+    buttonText2: "実績を見る",
+    buttonUrl2: "/works",
+  }),
+  "hero-slide": () => ({
+    id: uid(), type: "hero-slide",
+    slides: [
+      { imageUrl: "", eyebrow: "SEASON 1", tagline: "最高の瞬間を、ともに", buttonText: "詳しく見る", buttonUrl: "/" },
+      { imageUrl: "", eyebrow: "SEASON 2", tagline: "新しいステージへ", buttonText: "詳しく見る", buttonUrl: "/" },
+      { imageUrl: "", eyebrow: "SEASON 3", tagline: "挑戦が、未来を変える", buttonText: "詳しく見る", buttonUrl: "/" },
+    ],
+  }),
   free: () => ({
     id: uid(), type: "free",
     label: "自由ブロック",
@@ -1294,6 +1361,9 @@ export const BLOCK_META: {
   { type: "hero-mosaic",    label: "HeroL：モザイク",       desc: "4枚のモザイク写真グリッド + テキスト",        category: "ヒーロー" },
   { type: "hero-japanese",  label: "HeroM：日本的ミニマル", desc: "漢字一文字 + 縦書き風 + 和の余白",            category: "ヒーロー" },
   { type: "hero-diagonal",  label: "HeroN：ダイアゴナル",   desc: "斜めカットの写真 + ダイナミックレイアウト",    category: "ヒーロー" },
+  { type: "hero-game",      label: "HeroO：ゲーム",         desc: "サイバーパンク UI + ネオンカラー + スタット HUD",  category: "ヒーロー" },
+  { type: "hero-reel",      label: "HeroP：動画リール",     desc: "左テキスト + 右ビデオプレーヤー埋め込み",         category: "ヒーロー" },
+  { type: "hero-slide",     label: "HeroQ：スライドショー", desc: "フルスクリーン画像スライドショー + ドットナビ",    category: "ヒーロー" },
   { type: "problem",  label: "課題提起",  desc: "「こんなお悩みはありませんか？」3つのペインポイントカード", category: "黄金の型" },
   { type: "solution", label: "解決策",    desc: "チェックリスト形式で解決策を提示する信頼構築セクション",   category: "黄金の型" },
   { type: "free",     label: "🆓 自由ブロック", desc: "テキスト・画像・HTML・グラフを自由に組み合わせ、D&Dで並び替え", category: "自由" },

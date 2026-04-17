@@ -104,6 +104,48 @@ const DEMO_TEMPLATES: DemoTemplate[] = [
       designNotes: "学習塾、小中高全学年対応、明るい、白背景、赤アクセント、写真中心、家族向け、親しみやすい、キャンペーン訴求",
     },
   },
+  {
+    id: "juku-green",
+    name: "グロース学習院",
+    label: "ナチュラル × エメラルド",
+    desc: "グリーン×白で清潔感と成長を表現。自律学習・個別最適化に強みを持つ塾向け。",
+    thumb: { bg: "#F0FDF4", accent: "#16A34A", textColor: "#111827", subColor: "#6B7280", gradient: "linear-gradient(135deg,#F0FDF4 0%,#DCFCE7 100%)" },
+    style: {
+      primaryColor: "#16A34A", accentColor: "#4ADE80",
+      heroBgColor: "#14532D", bgColor: "#F0FDF4",
+      cardBgColor: "#DCFCE7", buttonBgColor: "#16A34A",
+      designStyle: "natural-green",
+      designNotes: "学習塾、自律学習、成長、グリーン、エメラルド、ナチュラル、清潔感、個別最適化、脳科学、保護者安心",
+    },
+  },
+  {
+    id: "juku-sakura",
+    name: "サクラ進学塾",
+    label: "パステル × 女の子向け",
+    desc: "ピンク×パステルで温かみのある印象。女の子専門・中学受験特化塾に最適。",
+    thumb: { bg: "#FDF2F8", accent: "#EC4899", textColor: "#111827", subColor: "#9CA3AF", gradient: "linear-gradient(160deg,#fff5f9 0%,#fce7f3 100%)" },
+    style: {
+      primaryColor: "#9D174D", accentColor: "#EC4899",
+      heroBgColor: "#9D174D", bgColor: "#FDF2F8",
+      cardBgColor: "#FCE7F3", buttonBgColor: "#EC4899",
+      designStyle: "pastel-feminine",
+      designNotes: "学習塾、女の子専門、中学受験、ピンク、パステル、桜、温かみ、親しみやすい、信頼感、保護者向け",
+    },
+  },
+  {
+    id: "juku-tech",
+    name: "CODE塾",
+    label: "テック × ダーク",
+    desc: "黒×シアンのハッカー風デザイン。プログラミング・理系受験特化塾向け。",
+    thumb: { bg: "#030712", accent: "#06B6D4", textColor: "#E2E8F0", subColor: "#94A3B8" },
+    style: {
+      primaryColor: "#06B6D4", accentColor: "#22D3EE",
+      heroBgColor: "#030712", bgColor: "#030712",
+      cardBgColor: "#0D1117", buttonBgColor: "#06B6D4",
+      designStyle: "tech-dark",
+      designNotes: "学習塾、プログラミング、理系受験、テック、ダーク、シアン、論理的思考、STEM、競技プログラミング、IT企業",
+    },
+  },
 ];
 
 // ── デモサムネイル（実際のHTMLをiframeで表示）────────────────

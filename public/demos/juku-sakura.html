@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>サクラ進学塾 | 女の子の夢を全力応援</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Noto+Serif+JP:wght@700;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--pink:#EC4899;--light:#FCE7F3;--deep:#9D174D;--soft:#FDF2F8;--peach:#FEF3C7}
+body{background:#fff;color:#111827;font-family:'Noto Sans JP',sans-serif;overflow-x:hidden}
+nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 60px;height:68px;background:rgba(255,255,255,.95);backdrop-filter:blur(12px);border-bottom:1px solid #fce7f3}
+.logo{font-family:'Noto Serif JP',serif;font-weight:900;font-size:20px;letter-spacing:.05em;color:var(--deep)}
+.logo span{color:var(--pink)}
+nav ul{display:flex;list-style:none;gap:32px}
+nav a{color:#6b7280;text-decoration:none;font-size:14px;transition:.2s}
+nav a:hover{color:var(--pink)}
+.nav-cta{background:linear-gradient(135deg,var(--pink),#f472b6);color:#fff!important;padding:8px 22px;border-radius:100px;font-weight:700;font-size:13px}
+.hero{min-height:100vh;position:relative;display:flex;align-items:center;justify-content:center;text-align:center;padding:140px 60px 80px;overflow:hidden}
+.hero-bg{position:absolute;inset:0;background:linear-gradient(160deg,#fff5f9 0%,#fdf2f8 40%,#fce7f3 100%)}
+.petal{position:absolute;font-size:24px;animation:fall 6s ease-in-out infinite;opacity:.6}
+@keyframes fall{0%{transform:translateY(-20px) rotate(0deg);opacity:0}20%{opacity:.6}80%{opacity:.4}100%{transform:translateY(100vh) rotate(360deg);opacity:0}}
+.hero-inner{position:relative;z-index:1;max-width:800px;margin:0 auto}
+.tag{display:inline-flex;align-items:center;gap:8px;background:#fce7f3;color:var(--pink);font-size:12px;font-weight:700;letter-spacing:.08em;padding:6px 18px;border-radius:100px;margin-bottom:28px;border:1px solid #f9a8d4}
+h1{font-family:'Noto Serif JP',serif;font-weight:900;font-size:clamp(2.4rem,5vw,4rem);line-height:1.2;letter-spacing:-.02em;color:#1f2937;margin-bottom:20px}
+h1 em{color:var(--pink);font-style:normal}
+.hero-sub{font-size:16px;line-height:1.9;color:#6b7280;margin-bottom:40px;max-width:600px;margin-left:auto;margin-right:auto}
+.btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.btn-main{display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,var(--pink),#f472b6);color:#fff;font-weight:700;font-size:15px;padding:16px 36px;border-radius:100px;border:none;cursor:pointer;transition:.3s;box-shadow:0 4px 20px rgba(236,72,153,.3)}
+.btn-main:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(236,72,153,.45)}
+.btn-sub{display:inline-flex;align-items:center;gap:8px;background:#fff;color:var(--pink);font-weight:700;font-size:15px;padding:16px 36px;border-radius:100px;border:2px solid #f9a8d4;cursor:pointer;transition:.3s}
+.btn-sub:hover{background:#fce7f3}
+.stats-bar{display:flex;justify-content:center;gap:0;margin-top:56px;background:#fff;border-radius:24px;box-shadow:0 8px 32px rgba(236,72,153,.1);overflow:hidden;border:1px solid #fce7f3}
+.stat{padding:24px 48px;text-align:center;border-right:1px solid #fce7f3}
+.stat:last-child{border-right:none}
+.stat-num{font-size:32px;font-weight:900;color:var(--pink);letter-spacing:-.03em}
+.stat-label{font-size:12px;color:#9ca3af;margin-top:4px}
+section{padding:100px 60px}
+.section-tag{display:inline-block;font-size:11px;letter-spacing:.2em;color:var(--pink);background:#fce7f3;padding:4px 14px;border-radius:100px;margin-bottom:12px;font-weight:700}
+.section-title{font-family:'Noto Serif JP',serif;font-size:clamp(1.6rem,3vw,2.4rem);font-weight:700;line-height:1.3;margin-bottom:48px;color:#111827}
+.voices{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+.voice{background:var(--soft);border-radius:20px;padding:28px;border:1px solid #fce7f3;position:relative}
+.voice::before{content:'"';position:absolute;top:16px;right:20px;font-size:64px;color:#f9a8d4;font-family:serif;line-height:1;opacity:.4}
+.voice-text{font-size:14px;line-height:1.85;color:#374151;margin-bottom:20px}
+.voice-author{display:flex;align-items:center;gap:12px}
+.avatar{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#f9a8d4,#fbcfe8);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.author-name{font-size:13px;font-weight:700;color:#374151}
+.author-sub{font-size:11px;color:#9ca3af}
+.courses{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+.course{border-radius:20px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.06);border:1px solid #fce7f3;transition:.3s}
+.course:hover{transform:translateY(-4px);box-shadow:0 12px 32px rgba(236,72,153,.15)}
+.course-header{padding:28px;background:linear-gradient(135deg,var(--pink),#f472b6);color:#fff;text-align:center}
+.course-icon{font-size:36px;margin-bottom:8px}
+.course-name{font-size:17px;font-weight:700}
+.course-body{padding:24px;background:#fff}
+.course-body ul{list-style:none;display:flex;flex-direction:column;gap:10px}
+.course-body li{font-size:13px;color:#6b7280;padding-left:20px;position:relative;line-height:1.6}
+.course-body li::before{content:'✓';position:absolute;left:0;color:var(--pink);font-weight:700}
+.cta-section{background:linear-gradient(135deg,#9d174d 0%,var(--pink) 50%,#f472b6 100%);color:#fff;text-align:center;padding:100px 60px;position:relative;overflow:hidden}
+.cta-section::before{content:'🌸';position:absolute;font-size:200px;right:-40px;top:-40px;opacity:.1}
+.cta-section h2{font-family:'Noto Serif JP',serif;font-size:clamp(1.6rem,3vw,2.4rem);font-weight:700;margin-bottom:16px}
+.cta-section p{font-size:15px;opacity:.9;margin-bottom:36px}
+.cta-btn{display:inline-flex;align-items:center;gap:8px;background:#fff;color:var(--deep);font-weight:800;font-size:16px;padding:18px 48px;border-radius:100px;border:none;cursor:pointer;transition:.3s}
+.cta-btn:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.2)}
+</style>
+</head>
+<body>
+<nav>
+  <div class="logo">🌸 <span>サクラ</span>進学塾</div>
+  <ul>
+    <li><a href="#">コース</a></li>
+    <li><a href="#">実績</a></li>
+    <li><a href="#">講師</a></li>
+    <li><a href="#">料金</a></li>
+    <li><a href="#" class="nav-cta">無料体験</a></li>
+  </ul>
+</nav>
+
+<div class="hero">
+  <div class="hero-bg"></div>
+  <div class="petal" style="left:5%;top:20%;animation-delay:0s">🌸</div>
+  <div class="petal" style="left:15%;top:10%;animation-delay:1.2s">🌸</div>
+  <div class="petal" style="left:75%;top:15%;animation-delay:.6s">🌸</div>
+  <div class="petal" style="left:85%;top:25%;animation-delay:2s;font-size:16px">🌸</div>
+  <div class="petal" style="left:90%;top:5%;animation-delay:3s">🌸</div>
+  <div class="petal" style="left:30%;top:5%;animation-delay:1.8s;font-size:16px">🌸</div>
+  <div class="hero-inner">
+    <div class="tag">✨ 女の子専門・中学受験特化</div>
+    <h1>あなたの夢を、<em>全力で応援する。</em></h1>
+    <p class="hero-sub">「勉強が好きになった」「自信がついた」<br>女の子一人ひとりの個性と夢を大切にした、<br>温かみのある指導で志望校合格を目指します。</p>
+    <div class="btns">
+      <button class="btn-main">🌸 無料体験を申し込む</button>
+      <button class="btn-sub">資料を見る</button>
+    </div>
+    <div class="stats-bar">
+      <div class="stat"><div class="stat-num">95<span style="font-size:16px">%</span></div><div class="stat-label">志望校合格率</div></div>
+      <div class="stat"><div class="stat-num">8<span style="font-size:16px">年</span></div><div class="stat-label">指導実績</div></div>
+      <div class="stat"><div class="stat-num">1,800<span style="font-size:14px">名</span></div><div class="stat-label">卒業生数</div></div>
+      <div class="stat"><div class="stat-num">99<span style="font-size:16px">%</span></div><div class="stat-label">保護者満足度</div></div>
+    </div>
+  </div>
+</div>
+
+<section style="background:#fff">
+  <span class="section-tag">COURSES</span>
+  <h2 class="section-title">目的別コース</h2>
+  <div class="courses">
+    <div class="course">
+      <div class="course-header"><div class="course-icon">📚</div><div class="course-name">中学受験コース</div></div>
+      <div class="course-body"><ul><li>難関女子中合格実績多数</li><li>算数・国語の強化カリキュラム</li><li>模試対策・過去問演習</li><li>保護者との三者面談あり</li></ul></div>
+    </div>
+    <div class="course">
+      <div class="course-header"><div class="course-icon">🌟</div><div class="course-name">定期テスト対策</div></div>
+      <div class="course-body"><ul><li>5教科まるごとサポート</li><li>テスト2週間前から集中授業</li><li>学校別の出題傾向を分析</li><li>自習室を無制限で使用可能</li></ul></div>
+    </div>
+    <div class="course">
+      <div class="course-header"><div class="course-icon">💕</div><div class="course-name">高校受験コース</div></div>
+      <div class="course-body"><ul><li>女子特有の悩みに寄り添う指導</li><li>内申点アップを同時サポート</li><li>面接・作文対策も万全</li><li>志望校別ロードマップ作成</li></ul></div>
+    </div>
+  </div>
+</section>
+
+<section style="background:var(--soft)">
+  <span class="section-tag">VOICES</span>
+  <h2 class="section-title">保護者・生徒の声</h2>
+  <div class="voices">
+    <div class="voice">
+      <p class="voice-text">「苦手な算数が得意科目に変わりました。先生が優しく何度も教えてくれるので、間違えることへの恐怖感がなくなりました」</p>
+      <div class="voice-author"><div class="avatar">👧</div><div><div class="author-name">Kちゃん（小6）</div><div class="author-sub">慶應義塾中等部 合格</div></div></div>
+    </div>
+    <div class="voice">
+      <p class="voice-text">「娘が自分から勉強するようになり驚いています。先生との信頼関係が成績だけでなく、娘の自信にもつながっています」</p>
+      <div class="voice-author"><div class="avatar">👩</div><div><div class="author-name">保護者（Rちゃん・中1）</div><div class="author-sub">ご入塾8ヶ月</div></div></div>
+    </div>
+    <div class="voice">
+      <p class="voice-text">「部活との両立で不安でしたが、スケジュール管理から一緒に考えてくれました。志望校に合格できて本当に感謝しています」</p>
+      <div class="voice-author"><div class="avatar">🎓</div><div><div class="author-name">Mちゃん（中3）</div><div class="author-sub">県立トップ校 合格</div></div></div>
+    </div>
+  </div>
+</section>
+
+<section class="cta-section">
+  <h2>一人で悩まないで。<br>まずは無料体験へ。</h2>
+  <p>入塾の無理なすすめは一切しません。お気軽にどうぞ。</p>
+  <button class="cta-btn">🌸 無料体験授業を予約する</button>
+</section>
+</body>
+</html>

@@ -873,6 +873,93 @@ const THUMBNAILS: Record<BlockType, React.ReactNode> = {
       </div>
     </div>
   ),
+  "hero-game": (
+    <div className="w-full h-full relative overflow-hidden" style={{ backgroundColor: "#0a0a0f" }}>
+      {/* scanline hint */}
+      <div className="absolute inset-0 opacity-10"
+        style={{ backgroundImage: "repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(255,255,255,0.4) 2px,rgba(255,255,255,0.4) 4px)" }} />
+      <div className="absolute inset-0 flex gap-1 p-1.5">
+        {/* left content */}
+        <div className="flex-1 flex flex-col gap-1 pt-0.5">
+          <div className="flex items-center gap-1">
+            <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: "#F5C842" }} />
+            <div className="w-8 h-1 rounded" style={{ backgroundColor: "#F5C842" }} />
+          </div>
+          <div className="w-12 h-2 bg-white rounded" />
+          <div className="w-9 h-2 bg-white rounded" />
+          <div className="w-full h-1 bg-gray-600 rounded mt-0.5" />
+          <div className="w-full h-1 bg-gray-700 rounded" />
+          {/* HP bar */}
+          <div className="w-full h-1 bg-gray-800 rounded mt-1" style={{ border: "1px solid rgba(245,200,66,0.2)" }}>
+            <div className="h-full w-full rounded" style={{ backgroundColor: "#F5C842" }} />
+          </div>
+          <div className="w-8 h-2 mt-0.5" style={{ backgroundColor: "#F5C842", borderRadius: "1px" }} />
+        </div>
+        {/* right image frame */}
+        <div className="w-14 self-center" style={{ aspectRatio: "4/3", border: "1px solid rgba(245,200,66,0.5)", background: "#111", borderRadius: "1px" }} />
+      </div>
+      {/* stat row */}
+      <div className="absolute bottom-0 left-0 right-0 grid grid-cols-3 gap-0.5 px-1 pb-1">
+        {[0,1,2].map(i => (
+          <div key={i} className="flex flex-col items-center py-0.5 rounded" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(245,200,66,0.1)" }}>
+            <div className="w-5 h-1.5 rounded" style={{ backgroundColor: "#F5C842" }} />
+            <div className="w-4 h-0.5 bg-gray-600 rounded mt-0.5" />
+          </div>
+        ))}
+      </div>
+    </div>
+  ),
+  "hero-reel": (
+    <div className="w-full h-full flex overflow-hidden" style={{ background: "linear-gradient(135deg,#1a1a2e,#0a0a0f)" }}>
+      {/* left text */}
+      <div className="flex-1 flex flex-col justify-center px-2 gap-1">
+        <div className="w-6 h-0.5 rounded" style={{ backgroundColor: "#F5C842" }} />
+        <div className="w-12 h-2 bg-white rounded" />
+        <div className="w-9 h-2 bg-white rounded" />
+        <div className="w-full h-1 bg-white/30 rounded mt-0.5" />
+        <div className="w-3/4 h-1 bg-white/30 rounded" />
+        <div className="flex gap-1 mt-1">
+          <div className="w-8 h-2 rounded-full" style={{ backgroundColor: "#F5C842" }} />
+          <div className="w-7 h-2 rounded-full border border-white/30" />
+        </div>
+      </div>
+      {/* right video frame */}
+      <div className="w-20 my-2 mr-1.5 rounded-lg overflow-hidden relative flex-shrink-0 flex items-center justify-center"
+        style={{ background: "#000", border: "1px solid rgba(255,255,255,0.15)", boxShadow: "0 0 12px rgba(245,200,66,0.3)" }}>
+        <div className="w-5 h-5 rounded-full flex items-center justify-center" style={{ backgroundColor: "rgba(245,200,66,0.8)" }}>
+          <div className="w-0 h-0" style={{ borderLeft: "6px solid #0a0a0f", borderTop: "4px solid transparent", borderBottom: "4px solid transparent", marginLeft: "1px" }} />
+        </div>
+      </div>
+    </div>
+  ),
+  "hero-slide": (
+    <div className="w-full h-full relative overflow-hidden bg-gray-300 flex items-center justify-center">
+      {/* simulated image bg */}
+      <div className="absolute inset-0" style={{ background: "linear-gradient(160deg,#64748b,#475569)" }} />
+      <div className="absolute inset-0 bg-black/50" />
+      {/* center content */}
+      <div className="relative z-10 flex flex-col items-center gap-1">
+        <div className="w-8 h-0.5 rounded" style={{ backgroundColor: "#F5C842" }} />
+        <div className="w-16 h-2 bg-white rounded" />
+        <div className="w-12 h-2 bg-white rounded" />
+        <div className="w-10 h-2.5 rounded-full mt-1" style={{ backgroundColor: "#F5C842" }} />
+      </div>
+      {/* dot indicators */}
+      <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-1">
+        <div className="w-3 h-1 rounded-full bg-white" />
+        <div className="w-1 h-1 rounded-full bg-white/40" />
+        <div className="w-1 h-1 rounded-full bg-white/40" />
+      </div>
+      {/* left arrow */}
+      <div className="absolute left-1.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 rounded-full bg-black/40 flex items-center justify-center">
+        <div className="w-0 h-0" style={{ borderRight: "4px solid white", borderTop: "2.5px solid transparent", borderBottom: "2.5px solid transparent" }} />
+      </div>
+      {/* right arrow */}
+      <div className="absolute right-1.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 rounded-full bg-black/40 flex items-center justify-center">
+        <div className="w-0 h-0" style={{ borderLeft: "4px solid white", borderTop: "2.5px solid transparent", borderBottom: "2.5px solid transparent" }} />
+      </div>
+    </div>
+  ),
 };
 
 export default function BlockInsertModal({ onInsert, onClose }: Props) {

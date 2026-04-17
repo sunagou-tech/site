@@ -47,6 +47,9 @@ import HeroDiagonalBlockComponent from "./HeroDiagonalBlock";
 import ProblemBlockComponent from "./ProblemBlock";
 import SolutionBlockComponent from "./SolutionBlock";
 import FreeBlockComponent from "./FreeBlock";
+import HeroGameBlockComponent from "./HeroGameBlock";
+import HeroReelBlockComponent from "./HeroReelBlock";
+import HeroSlideBlockComponent from "./HeroSlideBlock";
 
 interface Props {
   block: SectionBlock;
@@ -148,6 +151,12 @@ export default function BlockRenderer({ block, config, onChange }: Props) {
       return <SolutionBlockComponent block={block} config={config} onChange={onChange} />;
     case "free":
       return <FreeBlockComponent block={block} config={config} onChange={onChange} />;
+    case "hero-game":
+      return <HeroGameBlockComponent block={block} config={config} onChange={onChange} />;
+    case "hero-reel":
+      return <HeroReelBlockComponent block={block} config={config} onChange={onChange} />;
+    case "hero-slide":
+      return <HeroSlideBlockComponent block={block} config={config} onChange={onChange} />;
     default:
       return null;
   }

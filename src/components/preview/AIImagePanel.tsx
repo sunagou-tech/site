@@ -42,7 +42,7 @@ export default function AIImagePanel({ onUse, onClose, primaryColor, accentColor
 
   const buildUrl = (p: string, s: number) => {
     const full = `${p}, ${STYLES[styleIdx].en}`;
-    return `https://image.pollinations.ai/prompt/${encodeURIComponent(full)}?width=800&height=500&nologo=true&seed=${s}&model=flux`;
+    return `https://image.pollinations.ai/prompt/${encodeURIComponent(full)}?width=800&height=500&nologo=true&seed=${s}&model=turbo`;
   };
 
   const generate = (overrideSeed?: number) => {

@@ -9,6 +9,7 @@ import SitePreview from "@/components/preview/SitePreview";
 import BlockInsertModal from "@/components/admin/BlockInsertModal";
 import { RefreshCw, ExternalLink, Plus, Layout, Globe, Check, AlertCircle, Undo2, Image, Copy, Trash2 } from "lucide-react";
 import { EditingContext } from "@/contexts/EditingContext";
+import { ImagePickContext } from "@/contexts/ImagePickContext";
 import { publishSite, isSupabaseConfigured } from "@/lib/supabase";
 
 type SidePanel = "settings" | "blocks" | "upload" | "ai-image" | "seo";
@@ -49,6 +50,9 @@ export default function AdminClient() {
   // Block insert modal
   const [insertPosition, setInsertPosition] = useState<number | null>(null); // null = append
   const [showBlockModal, setShowBlockModal] = useState(false);
+
+  // 画像ピック（ライブラリ → ブロック配置）
+  const [pickedUrl, setPickedUrl] = useState<string | null>(null);
 
   // Slug / publish
   const [siteSlug, setSiteSlug] = useState("");
@@ -158,7 +162,7 @@ export default function AdminClient() {
     setAiGeneratedUrl(null);
     const { w, h } = AI_SIZES[aiSizeIdx];
     const fullPrompt = `${aiPrompt}, ${AI_STYLES[aiStyleIdx].en}`;
-    const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(fullPrompt)}?width=${w}&height=${h}&nologo=true&seed=${Math.floor(Math.random() * 99999)}&model=flux`;
+    const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(fullPrompt)}?width=${w}&height=${h}&nologo=true&seed=${Math.floor(Math.random() * 99999)}&model=turbo`;
     const img = new window.Image();
     img.onload = () => { setAiGeneratedUrl(url); setAiStatus("done"); };
     img.onerror = () => setAiStatus("error");
@@ -331,6 +335,7 @@ export default function AdminClient() {
 
   return (
     <EditingContext.Provider value={true}>
+    <ImagePickContext.Provider value={{ pickedUrl, pick: setPickedUrl, clear: () => setPickedUrl(null) }}>
       <div style={{ display: "flex", flexDirection: "column", height: "100vh", overflow: "hidden" }}>
 
         {/* ─── Top bar ─────────────────────────────────── */}
@@ -659,9 +664,16 @@ export default function AdminClient() {
                         </p>
                         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
                           {uploadedImages.map((img) => (
-                            <div key={img.id} style={{ position: "relative", borderRadius: 8, overflow: "hidden", border: "1px solid #E2E8F0", background: "#F8FAFC" }}>
+                            <div key={img.id}
+                              onClick={() => setPickedUrl(pickedUrl === img.url ? null : img.url)}
+                              style={{ position: "relative", borderRadius: 8, overflow: "hidden", border: pickedUrl === img.url ? "2.5px solid #4F46E5" : "1px solid #E2E8F0", background: "#F8FAFC", cursor: "pointer", boxShadow: pickedUrl === img.url ? "0 0 0 3px #C7D2FE" : "none" }}>
+                              {pickedUrl === img.url && (
+                                <div style={{ position: "absolute", top: 4, right: 4, zIndex: 10, background: "#4F46E5", borderRadius: "50%", width: 16, height: 16, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><polyline points="1.5,5 3.8,7.5 8.5,2" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                                </div>
+                              )}
                               <img src={img.url} alt={img.name}
-                                style={{ width: "100%", aspectRatio: "4/3", objectFit: "cover", display: "block" }} />
+                                style={{ width: "100%", aspectRatio: "4/3", objectFit: "cover", display: "block", pointerEvents: "none" }} />
                               <div style={{ padding: "4px 6px", background: "#fff" }}>
                                 <p style={{ fontSize: 9, color: "#64748B", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{img.name}</p>
                               </div>
@@ -680,7 +692,7 @@ export default function AdminClient() {
                           ))}
                         </div>
                         <p style={{ fontSize: 10, color: "#94A3B8", textAlign: "center", margin: "4px 0 0" }}>
-                          「URLコピー」→ 画像設定欄に貼り付け
+                          クリックで選択 → プレビューの画像エリアをクリックで配置
                         </p>
                       </>
                     )}
@@ -773,7 +785,7 @@ export default function AdminClient() {
                           </button>
                         </div>
                         <p style={{ fontSize: 9, color: "#94A3B8", textAlign: "center", margin: 0 }}>
-                          保存後→「画像」タブでURLコピー→ブロックに貼り付け
+                          保存後→「画像」タブからドラッグ&ドロップで設定
                         </p>
                       </div>
                     )}
@@ -857,6 +869,15 @@ export default function AdminClient() {
         </div>
       </div>
 
+      {/* 画像選択中バナー */}
+      {pickedUrl && (
+        <div style={{ position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)", zIndex: 9999, background: "#4F46E5", color: "#fff", borderRadius: 999, padding: "10px 20px", display: "flex", alignItems: "center", gap: 10, boxShadow: "0 4px 20px rgba(79,70,229,0.4)", fontSize: 13, fontWeight: 600, whiteSpace: "nowrap" }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12,8 12,12 14,14"/></svg>
+          画像を選択中 — 配置したい画像エリアをクリック
+          <button onClick={() => setPickedUrl(null)} style={{ marginLeft: 6, background: "rgba(255,255,255,0.2)", border: "none", borderRadius: "50%", width: 20, height: 20, color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>×</button>
+        </div>
+      )}
+
       {/* Block insert modal */}
       {showBlockModal && (
         <BlockInsertModal
@@ -864,6 +885,7 @@ export default function AdminClient() {
           onClose={() => { setShowBlockModal(false); setInsertPosition(null); }}
         />
       )}
+    </ImagePickContext.Provider>
     </EditingContext.Provider>
   );
 }
