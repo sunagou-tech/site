@@ -1086,7 +1086,7 @@ export async function POST(req: NextRequest) {
         parsed.hero.heroImagePrompt + ", photorealistic, 4k, no watermark"
       );
       parsed.hero.imageUrl =
-        `https://image.pollinations.ai/prompt/${prompt}?width=1080&height=720&nologo=true&seed=${Date.now() % 9999}`;
+        `https://image.pollinations.ai/prompt/${prompt}?width=1080&height=1350&nologo=true&seed=${Date.now() % 9999}`;
     }
 
     const elements = buildCanvasFromSections(parsed, analysisResult);
