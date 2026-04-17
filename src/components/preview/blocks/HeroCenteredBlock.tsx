@@ -22,8 +22,8 @@ export default function HeroCenteredBlockComponent({ block, config, onChange }: 
         ) : (
           <div className="absolute inset-0" style={{ background: `linear-gradient(135deg, ${config.primaryColor} 0%, ${config.primaryColor}cc 40%, ${config.accentColor}33 100%)` }} />
         )}
-        {/* Dark overlay */}
-        <div className="absolute inset-0 bg-black/55" />
+        {/* Dark overlay — pointer-events-none で EditableImage のクリックを通す */}
+        <div className="absolute inset-0 bg-black/55 pointer-events-none" />
       </div>
 
       {/* Editing-only buttons */}

@@ -34,8 +34,8 @@ export default function ImageGridBlockComponent({ block, config, onChange }: Pro
                 className="absolute inset-0"
                 placeholderGradient={`linear-gradient(135deg, ${config.primaryColor}${20 + idx * 10}, ${config.accentColor}30)`}
                 primaryColor={config.primaryColor} accentColor={config.accentColor} alt={item.title} />
-              {/* Hover overlay */}
-              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/60 transition-all duration-300 flex flex-col justify-end p-4">
+              {/* Hover overlay — pointer-events-none で EditableImage クリックを通す */}
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/60 transition-all duration-300 flex flex-col justify-end p-4 pointer-events-none">
                 <div className="translate-y-4 group-hover:translate-y-0 transition-transform duration-300 opacity-0 group-hover:opacity-100">
                   <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-medium mb-1"
                     style={{ backgroundColor: config.accentColor, color: config.primaryColor }}>

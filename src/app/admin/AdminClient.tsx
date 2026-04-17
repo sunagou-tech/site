@@ -7,13 +7,14 @@ import {
 } from "@/types/site";
 import SitePreview from "@/components/preview/SitePreview";
 import BlockInsertModal from "@/components/admin/BlockInsertModal";
-import { RefreshCw, ExternalLink, Plus, Layout, Globe, Check, AlertCircle, Undo2 } from "lucide-react";
+import { RefreshCw, ExternalLink, Plus, Layout, Globe, Check, AlertCircle, Undo2, Image, Copy, Trash2 } from "lucide-react";
 import { EditingContext } from "@/contexts/EditingContext";
 import { publishSite, isSupabaseConfigured } from "@/lib/supabase";
 
-type SidePanel = "settings" | "blocks" | "images" | "elements" | "seo" | "ai-image";
+type SidePanel = "settings" | "blocks" | "upload" | "seo";
 type DeviceMode = "pc" | "tablet" | "sp";
 interface PageTab { id: string; slug: string; title: string; isHome: boolean; }
+interface UploadedImage { id: string; name: string; url: string; uploadedAt: number; }
 
 function toSlug(title: string) {
   return title.toLowerCase().replace(/[^\w\u3040-\u309f\u30a0-\u30ff\u4e00-\u9fff]+/g, "-").replace(/^-|-$/g, "") || "my-site";
@@ -22,6 +23,9 @@ function toSlug(title: string) {
 export default function AdminClient() {
   const [config, setConfig] = useState<SiteConfig>(defaultConfig);
   const [undoStack, setUndoStack] = useState<SiteConfig[]>([]);
+  const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([]);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const uploadInputRef = useRef<HTMLInputElement>(null);
   const [activePageId, setActivePageId] = useState("home");
   const [renamingPageId, setRenamingPageId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState("");
@@ -55,7 +59,50 @@ export default function AdminClient() {
     } catch {}
     const savedSlug = localStorage.getItem("site-slug");
     if (savedSlug) setSiteSlug(savedSlug);
+    const savedImages = localStorage.getItem("uploaded-images");
+    if (savedImages) try { setUploadedImages(JSON.parse(savedImages)); } catch {}
   }, []);
+
+  // ── Image upload ───────────────────────────────────────────
+  function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files ?? []);
+    if (!files.length) return;
+    files.forEach((file) => {
+      if (file.size > 3 * 1024 * 1024) {
+        alert(`${file.name} は3MBを超えています。圧縮してからアップロードしてください。`);
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const url = ev.target?.result as string;
+        const newImg: UploadedImage = { id: uid(), name: file.name, url, uploadedAt: Date.now() };
+        setUploadedImages((prev) => {
+          const next = [newImg, ...prev];
+          try { localStorage.setItem("uploaded-images", JSON.stringify(next)); } catch {
+            alert("ストレージ容量が不足しています。不要な画像を削除してください。");
+          }
+          return next;
+        });
+      };
+      reader.readAsDataURL(file);
+    });
+    e.target.value = "";
+  }
+
+  function deleteUploadedImage(id: string) {
+    setUploadedImages((prev) => {
+      const next = prev.filter((img) => img.id !== id);
+      localStorage.setItem("uploaded-images", JSON.stringify(next));
+      return next;
+    });
+  }
+
+  function copyImageUrl(img: UploadedImage) {
+    navigator.clipboard.writeText(img.url).then(() => {
+      setCopiedId(img.id);
+      setTimeout(() => setCopiedId(null), 2000);
+    });
+  }
 
   // Debounced auto-save
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -226,6 +273,8 @@ export default function AdminClient() {
       icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> },
     { id: "blocks", label: "ブロック",
       icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg> },
+    { id: "upload", label: "画像",
+      icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg> },
     { id: "seo", label: "SEO",
       icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> },
   ];
@@ -390,6 +439,7 @@ export default function AdminClient() {
                 <p style={{ fontSize: 11, fontWeight: 700, color: "#0F172A", margin: 0 }}>
                   {sidePanel === "settings" ? "サイト全体設定"
                     : sidePanel === "blocks" ? "ブロック編集"
+                    : sidePanel === "upload" ? "画像ライブラリ"
                     : "SEO / 集客設定"}
                 </p>
               </div>
@@ -527,6 +577,62 @@ export default function AdminClient() {
                       onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "#EEF2FF"; }}>
                       <span style={{ fontSize: 15 }}>+</span> ブロックを追加
                     </button>
+                  </div>
+                )}
+
+                {/* ── 画像アップロードパネル ── */}
+                {sidePanel === "upload" && (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                    {/* アップロードボタン */}
+                    <input ref={uploadInputRef} type="file" accept="image/*" multiple
+                      onChange={handleImageUpload} style={{ display: "none" }} />
+                    <button onClick={() => uploadInputRef.current?.click()}
+                      style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, width: "100%", padding: "10px 0", borderRadius: 8, border: "1.5px dashed #C7D2FE", background: "#EEF2FF", cursor: "pointer", color: "#4F46E5", fontWeight: 700, fontSize: 12, transition: "background 0.12s" }}
+                      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "#E0E7FF"; }}
+                      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "#EEF2FF"; }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
+                      画像をアップロード
+                    </button>
+                    <p style={{ fontSize: 10, color: "#94A3B8", margin: 0, textAlign: "center" }}>
+                      最大3MB / JPG・PNG・WebP対応
+                    </p>
+
+                    {uploadedImages.length === 0 ? (
+                      <div style={{ padding: "20px 0", textAlign: "center", color: "#CBD5E1", fontSize: 11 }}>
+                        まだ画像がありません
+                      </div>
+                    ) : (
+                      <>
+                        <p style={{ fontSize: 10, fontWeight: 600, color: "#64748B", margin: "4px 0 2px", letterSpacing: "0.05em" }}>
+                          アップロード済み ({uploadedImages.length}枚)
+                        </p>
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
+                          {uploadedImages.map((img) => (
+                            <div key={img.id} style={{ position: "relative", borderRadius: 8, overflow: "hidden", border: "1px solid #E2E8F0", background: "#F8FAFC" }}>
+                              <img src={img.url} alt={img.name}
+                                style={{ width: "100%", aspectRatio: "4/3", objectFit: "cover", display: "block" }} />
+                              <div style={{ padding: "4px 6px", background: "#fff" }}>
+                                <p style={{ fontSize: 9, color: "#64748B", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{img.name}</p>
+                              </div>
+                              {/* アクションボタン */}
+                              <div style={{ display: "flex", gap: 2, padding: "0 4px 4px", background: "#fff" }}>
+                                <button onClick={() => copyImageUrl(img)}
+                                  style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 3, padding: "4px 0", borderRadius: 5, border: "1px solid #E2E8F0", background: copiedId === img.id ? "#D1FAE5" : "#F8FAFC", color: copiedId === img.id ? "#059669" : "#4F46E5", cursor: "pointer", fontSize: 9, fontWeight: 600 }}>
+                                  {copiedId === img.id ? "✓ コピー済" : "URLコピー"}
+                                </button>
+                                <button onClick={() => deleteUploadedImage(img.id)}
+                                  style={{ width: 26, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 5, border: "1px solid #FEE2E2", background: "#FFF5F5", color: "#EF4444", cursor: "pointer" }}>
+                                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                        <p style={{ fontSize: 10, color: "#94A3B8", textAlign: "center", margin: "4px 0 0" }}>
+                          「URLコピー」→ 画像設定欄に貼り付け
+                        </p>
+                      </>
+                    )}
                   </div>
                 )}
 

@@ -31,7 +31,7 @@ export default function FullscreenBgBlockComponent({ block, config, onChange }: 
 
       {/* 暗いオーバーレイ（画像がある場合のみ） */}
       {block.imageUrl && (
-        <div className="absolute inset-0 z-10 bg-black/50" />
+        <div className="absolute inset-0 z-10 bg-black/50 pointer-events-none" />
       )}
 
       {/* カードオーバーレイ */}
