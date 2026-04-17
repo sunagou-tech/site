@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { GlobalStyle, CanvasElement, uid } from "@/types/site";
+import { GlobalStyle, CanvasElement, SectionBlock, FeatureItem, IconValue, uid } from "@/types/site";
 
 export const runtime = "edge";
 export const maxDuration = 30;
@@ -512,6 +512,138 @@ function heroLight(data: SectionData, tk: Tk, dna: GlobalStyle | undefined, y0: 
   return H;
 }
 
+// ── SectionData → SectionBlock[] (SitePreview用) ─────────────
+function buildSectionsFromData(data: SectionData): SectionBlock[] {
+  const sections: SectionBlock[] = [];
+  const defaultIcon: IconValue = { kind: "emoji", value: "✓" };
+
+  // Hero → hero-centered
+  sections.push({
+    id: uid(),
+    type: "hero-centered",
+    eyebrow: data.hero.eyebrow ?? "",
+    tagline: data.hero.heading ?? "",
+    body: data.hero.body ?? "",
+    buttonText: data.hero.ctaText ?? "お問い合わせ",
+    buttonUrl: data.hero.ctaHref ?? "/contact",
+    buttonText2: "",
+    buttonUrl2: "",
+    imageUrl: data.hero.imageUrl ?? "",
+  });
+
+  // Problem
+  if (data.problem?.items?.length) {
+    sections.push({
+      id: uid(),
+      type: "problem",
+      eyebrow: "よくある悩み",
+      heading: data.problem.heading ?? "",
+      subheading: "",
+      items: data.problem.items.map((item) => ({
+        icon: { kind: "emoji" as const, value: "😔" },
+        title: item.title,
+        desc: item.desc,
+      })),
+    });
+  }
+
+  // Solution
+  if (data.solution) {
+    sections.push({
+      id: uid(),
+      type: "solution",
+      eyebrow: "解決策",
+      heading: data.solution.heading ?? "",
+      body: data.solution.body ?? "",
+      items: (data.solution.points ?? []).map((p) => ({ text: p })),
+      imageUrl: "",
+      buttonText: "詳しくみる",
+      buttonUrl: "/contact",
+    });
+  }
+
+  // Features
+  if (data.features?.items?.length) {
+    const raw: FeatureItem[] = data.features.items.map((item) => ({
+      icon: defaultIcon,
+      title: item.title,
+      desc: item.desc,
+    }));
+    while (raw.length < 6) raw.push({ icon: defaultIcon, title: "", desc: "" });
+    sections.push({
+      id: uid(),
+      type: "features",
+      heading: data.features.heading ?? "",
+      subheading: "",
+      items: raw.slice(0, 6) as [FeatureItem, FeatureItem, FeatureItem, FeatureItem, FeatureItem, FeatureItem],
+    });
+  }
+
+  // Steps
+  if (data.steps?.items?.length) {
+    sections.push({
+      id: uid(),
+      type: "steps",
+      heading: data.steps.heading ?? "",
+      subheading: "",
+      items: data.steps.items.map((item) => ({
+        number: item.number,
+        title: item.title,
+        desc: item.desc,
+      })),
+    });
+  }
+
+  // Testimonials
+  if (data.testimonials?.items?.length) {
+    sections.push({
+      id: uid(),
+      type: "testimonials",
+      heading: data.testimonials.heading ?? "",
+      items: data.testimonials.items,
+    });
+  }
+
+  // FAQ
+  if (data.faq?.items?.length) {
+    sections.push({
+      id: uid(),
+      type: "faq",
+      heading: data.faq.heading ?? "",
+      items: data.faq.items.map((item) => ({
+        question: item.q,
+        answer: item.a,
+      })),
+    });
+  }
+
+  // CTA
+  if (data.cta) {
+    sections.push({
+      id: uid(),
+      type: "cta",
+      heading: data.cta.heading ?? "",
+      body: data.cta.body ?? "",
+      buttonText: data.cta.buttonText ?? "お問い合わせ",
+      buttonUrl: data.cta.buttonHref ?? "/contact",
+      buttonText2: "",
+      buttonUrl2: "",
+    });
+  }
+
+  // Footer
+  if (data.footer) {
+    sections.push({
+      id: uid(),
+      type: "footer",
+      companyName: data.footer.companyName ?? "",
+      address: data.footer.address ?? "",
+    });
+  }
+
+  return sections;
+}
+
 function buildCanvasFromSections(data: SectionData, dna?: GlobalStyle): CanvasElement[] {
   const els: CanvasElement[] = [];
   const tk = resolveTokens(data, dna);
@@ -958,6 +1090,7 @@ export async function POST(req: NextRequest) {
     }
 
     const elements = buildCanvasFromSections(parsed, analysisResult);
+    const sections = buildSectionsFromData(parsed);
 
     const config = {
       title:        parsed.title,
@@ -968,7 +1101,7 @@ export async function POST(req: NextRequest) {
       navLinks:     parsed.navLinks  ?? [],
       canvasWidth:  1200,
       elements,
-      sections: [], pages: [], articles: [],
+      sections, pages: [], articles: [],
       globalStyle: analysisResult ?? undefined,
     };
     return NextResponse.json({ config });
