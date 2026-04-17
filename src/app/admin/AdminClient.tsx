@@ -12,6 +12,7 @@ import { EditingContext } from "@/contexts/EditingContext";
 import { publishSite, isSupabaseConfigured } from "@/lib/supabase";
 
 type SidePanel = "settings" | "blocks" | "images" | "elements" | "seo" | "ai-image";
+type DeviceMode = "pc" | "tablet" | "sp";
 interface PageTab { id: string; slug: string; title: string; isHome: boolean; }
 
 function toSlug(title: string) {
@@ -23,6 +24,10 @@ export default function AdminClient() {
   const [activePageId, setActivePageId] = useState("home");
   const [renamingPageId, setRenamingPageId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState("");
+
+  // Device preview
+  const [deviceMode, setDeviceMode] = useState<DeviceMode>("pc");
+  const [previewKey, setPreviewKey] = useState(0);
 
   // Sidebar state
   const [sidePanel, setSidePanel] = useState<SidePanel>("blocks");
@@ -65,6 +70,16 @@ export default function AdminClient() {
   useEffect(() => {
     if (siteSlug) localStorage.setItem("site-slug", siteSlug);
   }, [siteSlug]);
+
+  // ── Device switching ───────────────────────────────────────
+  function switchDevice(mode: DeviceMode) {
+    setDeviceMode(mode);
+    if (mode !== "pc") {
+      // Persist immediately so iframe can read latest config
+      localStorage.setItem("site-config", JSON.stringify(config));
+      setPreviewKey((k) => k + 1);
+    }
+  }
 
   // ── Active page helpers ────────────────────────────────────
   function getActiveConfig(): SiteConfig {
@@ -252,6 +267,28 @@ export default function AdminClient() {
               onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = "#94A3B8"; }}>
               <Plus size={10} /> ページ追加
             </button>
+          </div>
+
+          {/* Device switcher */}
+          <div style={{ display: "flex", alignItems: "center", gap: 1, background: "#F1F5F9", borderRadius: 8, padding: 3, flexShrink: 0 }}>
+            {([
+              { mode: "pc" as DeviceMode, label: "PC",
+                icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><polyline points="8 21 12 17 16 21"/><line x1="12" y1="17" x2="12" y2="21"/></svg> },
+              { mode: "tablet" as DeviceMode, label: "Tab",
+                icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"/><circle cx="12" cy="17" r="1" fill="currentColor"/></svg> },
+              { mode: "sp" as DeviceMode, label: "SP",
+                icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><circle cx="12" cy="17" r="1" fill="currentColor"/></svg> },
+            ] as { mode: DeviceMode; label: string; icon: React.ReactNode }[]).map(({ mode, label, icon }) => (
+              <button key={mode} onClick={() => switchDevice(mode)}
+                title={mode === "pc" ? "PC表示" : mode === "tablet" ? "タブレット表示 (768px)" : "スマホ表示 (390px)"}
+                style={{ display: "flex", alignItems: "center", gap: 3, padding: "4px 8px", borderRadius: 6, border: "none", cursor: "pointer", fontSize: 10, fontWeight: 600, transition: "all 0.12s",
+                  background: deviceMode === mode ? "#FFFFFF" : "transparent",
+                  color: deviceMode === mode ? "#4F46E5" : "#64748B",
+                  boxShadow: deviceMode === mode ? "0 1px 3px rgba(0,0,0,0.1)" : "none",
+                }}>
+                {icon} {label}
+              </button>
+            ))}
           </div>
 
           {/* Right actions */}
@@ -472,12 +509,42 @@ export default function AdminClient() {
             </div>
           </div>
 
-          {/* ═══ Center: SitePreview ══════════════════════ */}
-          <SitePreview
-            config={getActiveConfig()}
-            onConfigChange={handleActiveConfigChange}
-            onInsertRequest={handleInsertRequest}
-          />
+          {/* ═══ Center: SitePreview / Device Preview ════ */}
+          {deviceMode === "pc" ? (
+            <SitePreview
+              config={getActiveConfig()}
+              onConfigChange={handleActiveConfigChange}
+              onInsertRequest={handleInsertRequest}
+            />
+          ) : (
+            <div style={{ flex: 1, overflowY: "auto", background: "#E2E8F0", display: "flex", flexDirection: "column", alignItems: "center", paddingTop: 20, paddingBottom: 20, gap: 12 }}>
+              {/* Refresh hint bar */}
+              <div style={{ display: "flex", alignItems: "center", gap: 8, background: "#fff", borderRadius: 8, padding: "6px 14px", fontSize: 11, color: "#64748B", boxShadow: "0 1px 4px rgba(0,0,0,0.08)" }}>
+                <span>{deviceMode === "sp" ? "スマホ (390px)" : "タブレット (768px)"}</span>
+                <button onClick={() => { localStorage.setItem("site-config", JSON.stringify(config)); setPreviewKey((k) => k + 1); }}
+                  style={{ display: "flex", alignItems: "center", gap: 4, padding: "3px 8px", borderRadius: 5, border: "1px solid #E2E8F0", background: "#F8FAFC", color: "#4F46E5", cursor: "pointer", fontSize: 10, fontWeight: 600 }}>
+                  <RefreshCw size={10} /> 更新
+                </button>
+              </div>
+              {/* Device frame */}
+              <div style={{
+                width: deviceMode === "sp" ? 390 : 768,
+                background: "#fff",
+                borderRadius: deviceMode === "sp" ? 36 : 12,
+                boxShadow: "0 8px 40px rgba(0,0,0,0.22)",
+                overflow: "hidden",
+                border: deviceMode === "sp" ? "8px solid #1E293B" : "6px solid #1E293B",
+                flexShrink: 0,
+              }}>
+                <iframe
+                  key={previewKey}
+                  src="/"
+                  style={{ width: "100%", height: deviceMode === "sp" ? 760 : 1000, border: "none", display: "block" }}
+                  title="デバイスプレビュー"
+                />
+              </div>
+            </div>
+          )}
 
         </div>
       </div>
