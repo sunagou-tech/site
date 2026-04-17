@@ -727,6 +727,7 @@ export interface SiteConfig {
   globalStyle?: GlobalStyle;  // 参考サイト解析 / AI 抽出デザインルール
   siteFont?: string;          // サイト全体のフォント (Google Fonts name)
   description?: string;       // サイト説明文 / meta description
+  logoUrl?: string;           // ナビ・フッターのロゴ画像 URL（未設定時はタイトル頭文字）
   favicon?: string;           // ファビコン URL
   ogImage?: string;           // OGP 画像 URL
   gaId?: string;              // Google Analytics 測定 ID

@@ -7,7 +7,7 @@ import {
 } from "@/types/site";
 import SitePreview from "@/components/preview/SitePreview";
 import BlockInsertModal from "@/components/admin/BlockInsertModal";
-import { RefreshCw, ExternalLink, Plus, Layout, Globe, Check, AlertCircle } from "lucide-react";
+import { RefreshCw, ExternalLink, Plus, Layout, Globe, Check, AlertCircle, Undo2 } from "lucide-react";
 import { EditingContext } from "@/contexts/EditingContext";
 import { publishSite, isSupabaseConfigured } from "@/lib/supabase";
 
@@ -21,6 +21,7 @@ function toSlug(title: string) {
 
 export default function AdminClient() {
   const [config, setConfig] = useState<SiteConfig>(defaultConfig);
+  const [undoStack, setUndoStack] = useState<SiteConfig[]>([]);
   const [activePageId, setActivePageId] = useState("home");
   const [renamingPageId, setRenamingPageId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState("");
@@ -71,6 +72,19 @@ export default function AdminClient() {
     if (siteSlug) localStorage.setItem("site-slug", siteSlug);
   }, [siteSlug]);
 
+  // ── Undo ──────────────────────────────────────────────────
+  function updateConfig(next: SiteConfig) {
+    setUndoStack((prev) => [...prev.slice(-49), config]); // 最大50件
+    setConfig(next);
+  }
+
+  function handleUndo() {
+    if (undoStack.length === 0) return;
+    const prev = undoStack[undoStack.length - 1];
+    setUndoStack((s) => s.slice(0, -1));
+    setConfig(prev);
+  }
+
   // ── Device switching ───────────────────────────────────────
   function switchDevice(mode: DeviceMode) {
     setDeviceMode(mode);
@@ -90,9 +104,9 @@ export default function AdminClient() {
 
   function handleActiveConfigChange(newConfig: SiteConfig) {
     if (activePageId === "home") {
-      setConfig(newConfig);
+      updateConfig(newConfig);
     } else {
-      setConfig({
+      updateConfig({
         ...newConfig,
         sections: config.sections,
         pages: config.pages.map((p) =>
@@ -109,9 +123,9 @@ export default function AdminClient() {
 
   function setActiveSections(sections: SectionBlock[]) {
     if (activePageId === "home") {
-      setConfig({ ...config, sections });
+      updateConfig({ ...config, sections });
     } else {
-      setConfig({
+      updateConfig({
         ...config,
         pages: config.pages.map((p) =>
           p.id === activePageId ? { ...p, sections } : p
@@ -204,7 +218,7 @@ export default function AdminClient() {
     : `/sites/${siteSlug}`;
 
   const activeSections = getActiveSections();
-  const u = (patch: Partial<SiteConfig>) => setConfig({ ...config, ...patch });
+  const u = (patch: Partial<SiteConfig>) => updateConfig({ ...config, ...patch });
 
   // ── Sidebar icons ──────────────────────────────────────────
   const SIDE_ICONS: { id: SidePanel; label: string; icon: React.ReactNode }[] = [
@@ -311,7 +325,15 @@ export default function AdminClient() {
             </div>
             <a href="/admin/column" style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: "#059669", padding: "5px 10px", borderRadius: 7, border: "1px solid #D1FAE5", background: "#F0FDF4", textDecoration: "none", fontWeight: 600, whiteSpace: "nowrap" }}>コラム</a>
             <a href="/admin/setup" style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: "#7C3AED", padding: "5px 10px", borderRadius: 7, border: "1px solid #DDD6FE", background: "#F5F3FF", textDecoration: "none", fontWeight: 600, whiteSpace: "nowrap" }}>AI生成</a>
-            <button onClick={() => setConfig(defaultConfig)}
+            <button onClick={handleUndo} disabled={undoStack.length === 0}
+              title={`元に戻す (${undoStack.length}件)`}
+              style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, padding: "5px 8px", borderRadius: 7, border: "1px solid #E2E8F0", background: "transparent", cursor: undoStack.length === 0 ? "not-allowed" : "pointer",
+                color: undoStack.length === 0 ? "#CBD5E1" : "#4F46E5",
+                borderColor: undoStack.length === 0 ? "#F1F5F9" : "#C7D2FE",
+              }}>
+              <Undo2 size={11} /> 元に戻す
+            </button>
+            <button onClick={() => { setUndoStack([]); setConfig(defaultConfig); }}
               style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: "#6B7280", padding: "5px 8px", borderRadius: 7, border: "1px solid #E2E8F0", background: "transparent", cursor: "pointer" }}>
               <RefreshCw size={11} /> リセット
             </button>
@@ -377,11 +399,32 @@ export default function AdminClient() {
                 {/* ── 設定パネル ── */}
                 {sidePanel === "settings" && (
                   <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-                    <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                      <span style={{ fontSize: 10, fontWeight: 600, color: "#64748B" }}>サイト名</span>
-                      <input value={config.title} onChange={e => u({ title: e.target.value })}
-                        style={{ fontSize: 12, padding: "7px 10px", border: "1px solid #E2E8F0", borderRadius: 7, outline: "none", color: "#111" }} />
-                    </label>
+
+                    {/* タイトル・ロゴ */}
+                    <div style={{ padding: "10px", background: "#F8FAFC", borderRadius: 8, display: "flex", flexDirection: "column", gap: 10 }}>
+                      <p style={{ fontSize: 10, fontWeight: 700, color: "#475569", margin: 0, letterSpacing: "0.05em" }}>タイトル・ロゴ</p>
+                      <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                        <span style={{ fontSize: 10, fontWeight: 600, color: "#64748B" }}>サイト名</span>
+                        <input value={config.title} onChange={e => u({ title: e.target.value })}
+                          style={{ fontSize: 12, padding: "7px 10px", border: "1px solid #E2E8F0", borderRadius: 7, outline: "none", color: "#111", background: "#fff" }} />
+                      </label>
+                      <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                        <span style={{ fontSize: 10, fontWeight: 600, color: "#64748B" }}>ロゴ画像 URL <span style={{ color: "#94A3B8", fontWeight: 400 }}>(任意)</span></span>
+                        <input value={config.logoUrl ?? ""} onChange={e => u({ logoUrl: e.target.value || undefined })}
+                          placeholder="https://example.com/logo.png"
+                          style={{ fontSize: 11, padding: "7px 10px", border: "1px solid #E2E8F0", borderRadius: 7, outline: "none", color: "#111", background: "#fff" }} />
+                        {config.logoUrl && (
+                          <div style={{ display: "flex", alignItems: "center", gap: 8, background: "#fff", border: "1px solid #E2E8F0", borderRadius: 7, padding: "6px 8px" }}>
+                            <img src={config.logoUrl} alt="logo preview" style={{ height: 28, maxWidth: 80, objectFit: "contain" }}
+                              onError={e => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
+                            <span style={{ fontSize: 10, color: "#94A3B8" }}>プレビュー</span>
+                            <button onClick={() => u({ logoUrl: undefined })}
+                              style={{ marginLeft: "auto", fontSize: 10, color: "#EF4444", background: "none", border: "none", cursor: "pointer" }}>削除</button>
+                          </div>
+                        )}
+                      </label>
+                    </div>
+
                     <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
                       <span style={{ fontSize: 10, fontWeight: 600, color: "#64748B" }}>ディスクリプション</span>
                       <textarea value={config.description ?? ""} onChange={e => u({ description: e.target.value })}

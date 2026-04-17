@@ -30,12 +30,16 @@ export default function NavBar({ config, onConfigChange }: Props) {
   return (
     <nav className="sticky top-0 z-20 bg-white border-b border-gray-100 px-8 py-3 flex items-center justify-between shadow-sm">
       <div className="flex items-center gap-2">
-        <div
-          className="w-8 h-8 rounded flex items-center justify-center text-white text-xs font-bold shadow"
-          style={{ backgroundColor: config.primaryColor }}
-        >
-          U
-        </div>
+        {config.logoUrl ? (
+          <img src={config.logoUrl} alt={config.title} className="h-8 w-auto object-contain" />
+        ) : (
+          <div
+            className="w-8 h-8 rounded flex items-center justify-center text-white text-xs font-bold shadow"
+            style={{ backgroundColor: config.primaryColor }}
+          >
+            {config.title?.charAt(0)?.toUpperCase() ?? "S"}
+          </div>
+        )}
         <EditableText
           tag="span"
           value={config.title}

@@ -31,12 +31,16 @@ export default function ProductionSiteView({ config, slug }: Props) {
       <nav className="sticky top-0 z-20 bg-white border-b border-gray-100 shadow-sm">
         <div className="px-4 md:px-8 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div
-              className="w-8 h-8 rounded flex items-center justify-center text-white text-xs font-bold shadow"
-              style={{ backgroundColor: config.primaryColor }}
-            >
-              {config.title?.charAt(0)?.toUpperCase() ?? "S"}
-            </div>
+            {config.logoUrl ? (
+              <img src={config.logoUrl} alt={config.title} className="h-8 w-auto object-contain" />
+            ) : (
+              <div
+                className="w-8 h-8 rounded flex items-center justify-center text-white text-xs font-bold shadow"
+                style={{ backgroundColor: config.primaryColor }}
+              >
+                {config.title?.charAt(0)?.toUpperCase() ?? "S"}
+              </div>
+            )}
             <a href="/" className="font-bold text-sm tracking-wide hover:opacity-80 transition-opacity">
               {config.title}
             </a>
