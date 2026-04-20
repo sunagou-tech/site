@@ -12,7 +12,7 @@ import { EditingContext } from "@/contexts/EditingContext";
 import { ImagePickContext } from "@/contexts/ImagePickContext";
 import { publishSite, isSupabaseConfigured } from "@/lib/supabase";
 
-type SidePanel = "settings" | "blocks" | "upload" | "ai-image" | "seo" | "html-edit";
+type SidePanel = "settings" | "blocks" | "upload" | "ai-image" | "seo";
 type DeviceMode = "pc" | "tablet" | "sp";
 interface PageTab { id: string; slug: string; title: string; isHome: boolean; }
 interface UploadedImage { id: string; name: string; url: string; uploadedAt: number; }
@@ -61,25 +61,11 @@ export default function AdminClient() {
   const [publishStatus, setPublishStatus] = useState<"idle" | "success" | "error">("idle");
   const [publishError, setPublishError] = useState("");
 
-  // HTML mode state
-  const [htmlMode,     setHtmlMode]     = useState(false);
-  const [siteHtml,     setSiteHtml]     = useState("");
-  const [htmlBlobUrl,  setHtmlBlobUrl]  = useState("");
-  const [editHtml,     setEditHtml]     = useState("");
-
   // Load from localStorage on mount
   useEffect(() => {
-    // HTML mode detection
-    const mode = localStorage.getItem("site-mode");
-    if (mode === "html") {
-      const html = localStorage.getItem("site-html") ?? "";
-      setHtmlMode(true);
-      setSiteHtml(html);
-      setEditHtml(html);
-      setSidePanel("html-edit");
-      localStorage.removeItem("site-mode"); // 一度だけ適用
-      return;
-    }
+    // 旧HTMLモードのフラグが残っていたら削除
+    localStorage.removeItem("site-mode");
+    localStorage.removeItem("site-html");
     const saved = localStorage.getItem("site-config");
     if (saved) try {
       const sanitized = saved.replace(/https:\/\/picsum\.photos[^"]*/g, "");
@@ -90,14 +76,6 @@ export default function AdminClient() {
     const savedImages = localStorage.getItem("uploaded-images");
     if (savedImages) try { setUploadedImages(JSON.parse(savedImages)); } catch {}
   }, []);
-
-  // HTML → Blob URL
-  useEffect(() => {
-    if (!siteHtml) return;
-    const url = URL.createObjectURL(new Blob([siteHtml], { type: "text/html" }));
-    setHtmlBlobUrl(url);
-    return () => URL.revokeObjectURL(url);
-  }, [siteHtml]);
 
   // ── Image upload ───────────────────────────────────────────
   function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -346,10 +324,6 @@ export default function AdminClient() {
 
   // ── Sidebar icons ──────────────────────────────────────────
   const SIDE_ICONS: { id: SidePanel; label: string; icon: React.ReactNode }[] = [
-    ...(htmlMode ? [{
-      id: "html-edit" as SidePanel, label: "HTML",
-      icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>,
-    }] : []),
     { id: "settings", label: "設定",
       icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> },
     { id: "blocks", label: "ブロック",
@@ -525,53 +499,11 @@ export default function AdminClient() {
                     : sidePanel === "blocks" ? "ブロック編集"
                     : sidePanel === "upload" ? "画像ライブラリ"
                     : sidePanel === "ai-image" ? "AI画像生成"
-                    : sidePanel === "html-edit" ? "HTMLを編集"
                     : "SEO / 集客設定"}
                 </p>
               </div>
 
               <div style={{ flex: 1, overflowY: "auto", padding: "12px" }}>
-
-                {/* ── HTML編集パネル ── */}
-                {sidePanel === "html-edit" && (
-                  <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                    <p style={{ fontSize: 10, color: "#64748B", lineHeight: 1.7, margin: 0 }}>
-                      HTMLを直接編集して「適用」を押すとプレビューに反映されます。
-                    </p>
-                    <textarea
-                      value={editHtml}
-                      onChange={e => setEditHtml(e.target.value)}
-                      spellCheck={false}
-                      style={{ width: "100%", height: 420, resize: "none", fontSize: 10, lineHeight: 1.6,
-                        fontFamily: "'Fira Code','Consolas',monospace", border: "1px solid #E2E8F0",
-                        borderRadius: 8, padding: "8px 10px", outline: "none", color: "#1E293B",
-                        background: "#F8FAFC", tabSize: 2 }}
-                    />
-                    <button
-                      onClick={() => setSiteHtml(editHtml)}
-                      style={{ fontSize: 12, fontWeight: 700, padding: "8px 0", borderRadius: 8,
-                        background: "#4F46E5", color: "#fff", border: "none", cursor: "pointer", width: "100%" }}>
-                      ✓ 適用してプレビュー更新
-                    </button>
-                    <div style={{ borderTop: "1px solid #F1F5F9", paddingTop: 10 }}>
-                      <button
-                        onClick={() => {
-                          const a = document.createElement("a");
-                          a.href = htmlBlobUrl;
-                          a.download = "landing-page.html";
-                          a.click();
-                        }}
-                        style={{ fontSize: 11, fontWeight: 600, padding: "7px 0", borderRadius: 8,
-                          background: "transparent", color: "#4F46E5", border: "1px solid #C7D2FE",
-                          cursor: "pointer", width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 5 }}>
-                        ↓ HTMLをダウンロード
-                      </button>
-                    </div>
-                    <p style={{ fontSize: 9, color: "#94A3B8", margin: 0 }}>
-                      {editHtml.split("\n").length} 行 / {editHtml.length.toLocaleString()} 文字
-                    </p>
-                  </div>
-                )}
 
                 {/* ── 設定パネル ── */}
                 {sidePanel === "settings" && (
@@ -901,13 +833,7 @@ export default function AdminClient() {
           </div>
 
           {/* ═══ Center: SitePreview / Device Preview ════ */}
-          {htmlMode && htmlBlobUrl ? (
-            <iframe
-              src={htmlBlobUrl}
-              style={{ flex: 1, border: "none", display: "block" }}
-              title="HTMLプレビュー"
-            />
-          ) : deviceMode === "pc" ? (
+          {deviceMode === "pc" ? (
             <SitePreview
               config={getActiveConfig()}
               onConfigChange={handleActiveConfigChange}
