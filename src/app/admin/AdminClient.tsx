@@ -72,32 +72,55 @@ export default function AdminClient() {
     const script = `<script>
 (function(){
   var style = document.createElement('style');
-  style.textContent = '.ce-hover{outline:2px dashed rgba(79,70,229,0.4)!important;cursor:text!important}.ce-active{outline:2px solid #4F46E5!important;background:rgba(79,70,229,0.04)!important}';
+  style.textContent =
+    '.ce-hover{outline:2px dashed rgba(79,70,229,0.45)!important;cursor:text!important;box-shadow:inset 0 0 0 999px rgba(79,70,229,0.03)!important}' +
+    '.ce-active{outline:2px solid #4F46E5!important;background:rgba(79,70,229,0.05)!important;box-shadow:none!important}';
   document.head.appendChild(style);
-  var sel = 'h1,h2,h3,h4,h5,h6,p,span,a,button,li,td,th,.logo,.hero-badge,.sec-label,.step-label,.step-desc,.result-num,.result-label,.voice-name,.voice-grade,.voice-text,.voice-result,.faq-q-text,.faq-a-text,.course-card h3,.sol-card h3,.prob-card h3';
+
+  // アンカー・ボタンのデフォルト動作を全て無効化（スクロール・遷移防止）
+  document.addEventListener('click', function(e){
+    var t = e.target;
+    while(t && t.tagName){
+      if(t.tagName==='A'||t.tagName==='BUTTON'||t.tagName==='FORM'){
+        e.preventDefault();
+        break;
+      }
+      t = t.parentNode;
+    }
+  }, true);
+
+  // ブロック要素タグ（コンテナはスキップ）
+  var BLOCK = ['DIV','SECTION','ARTICLE','ASIDE','HEADER','FOOTER','NAV','UL','OL','TABLE','TBODY','TR','FORM'];
+  var sel = 'h1,h2,h3,h4,h5,h6,p,a,button,li,td,th,label,span';
+
   document.querySelectorAll(sel).forEach(function(el){
-    if(el.children.length>2) return;
-    el.addEventListener('mouseenter',function(){el.classList.add('ce-hover')});
-    el.addEventListener('mouseleave',function(){el.classList.remove('ce-hover')});
-    el.addEventListener('click',function(e){
+    // ブロック要素の子を持つコンテナはスキップ
+    for(var i=0;i<el.children.length;i++){
+      if(BLOCK.indexOf(el.children[i].tagName)>=0) return;
+    }
+    // テキストノードが空の要素はスキップ
+    if(!el.textContent.trim()) return;
+
+    el.addEventListener('mouseenter', function(){ if(!el.classList.contains('ce-active')) el.classList.add('ce-hover'); });
+    el.addEventListener('mouseleave', function(){ el.classList.remove('ce-hover'); });
+    el.addEventListener('click', function(e){
+      e.preventDefault();
       e.stopPropagation();
       document.querySelectorAll('.ce-active').forEach(function(a){
-        a.contentEditable='false';a.classList.remove('ce-active');
+        a.contentEditable='false'; a.classList.remove('ce-active');
       });
       el.contentEditable='true';
+      el.classList.remove('ce-hover');
       el.classList.add('ce-active');
       el.focus();
-      var r=document.createRange(),s=window.getSelection();
-      r.selectNodeContents(el);s.removeAllRanges();s.addRange(r);
     });
-    el.addEventListener('blur',function(){
+    el.addEventListener('blur', function(){
       el.contentEditable='false';
       el.classList.remove('ce-active');
       window.parent.postMessage({type:'html-update',html:document.documentElement.outerHTML},'*');
     });
-    el.addEventListener('keydown',function(e){
-      if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();el.blur();}
-      if(e.key==='Escape'){el.blur();}
+    el.addEventListener('keydown', function(e){
+      if(e.key==='Escape'){ e.preventDefault(); el.blur(); }
     });
   });
 })();
@@ -117,18 +140,18 @@ export default function AdminClient() {
     return () => window.removeEventListener("message", handler);
   }, []);
 
-  // Load from localStorage on mount
+  // Load from sessionStorage (HTML mode) or localStorage (block mode) on mount
   useEffect(() => {
-    const mode = localStorage.getItem("site-mode");
+    const mode = sessionStorage.getItem("site-mode");
     if (mode === "html") {
-      const html = localStorage.getItem("site-html") ?? "";
+      const html = sessionStorage.getItem("site-html") ?? "";
       setHtmlMode(true);
       setSiteHtml(html);
-      setSidePanel("blocks"); // ブロックパネルをデフォルトに
-      localStorage.removeItem("site-mode");
+      setSidePanel("blocks");
+      // sessionStorageはリフレッシュでも残す（タブを閉じるまで保持）
       return;
     }
-    localStorage.removeItem("site-html");
+    sessionStorage.removeItem("site-html");
     const saved = localStorage.getItem("site-config");
     if (saved) try {
       const sanitized = saved.replace(/https:\/\/picsum\.photos[^"]*/g, "");

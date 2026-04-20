@@ -287,8 +287,8 @@ export default function SetupClient() {
 
       setGenPct(100);
       setTimeout(() => {
-        localStorage.setItem("site-html", data.html!);
-        localStorage.setItem("site-mode", "html");
+        sessionStorage.setItem("site-html", data.html!);
+        sessionStorage.setItem("site-mode", "html");
         router.push("/admin");
       }, 800);
     } catch (e) {
@@ -386,8 +386,8 @@ export default function SetupClient() {
     if (!generatedConfig) return;
     localStorage.setItem("site-config", JSON.stringify(generatedConfig));
     // HTMLモードの残留フラグを確実に消去してブロック編集に遷移
-    localStorage.removeItem("site-mode");
-    localStorage.removeItem("site-html");
+    sessionStorage.removeItem("site-mode");
+    sessionStorage.removeItem("site-html");
     router.push("/admin");
   }, [generatedConfig, router]);
 
