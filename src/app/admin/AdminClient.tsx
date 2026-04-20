@@ -65,6 +65,7 @@ export default function AdminClient() {
   const [htmlMode,    setHtmlMode]    = useState(false);
   const [siteHtml,    setSiteHtml]    = useState("");
   const [htmlBlobUrl, setHtmlBlobUrl] = useState("");
+  const latestHtmlRef = useRef("");
 
   // HTML → Blob URL（右パネル付きインライン編集）
   useEffect(() => {
@@ -83,9 +84,9 @@ export default function AdminClient() {
       if(node.classList&&node.classList.contains('ce-img')&&!foundCe)foundCe=node;
       node=node.parentNode;
     }
-    if(foundAnchor){
-      e.preventDefault();
-      e.stopImmediatePropagation();
+    if(foundAnchor) e.preventDefault();
+    if(foundCe||foundAnchor){
+      e.stopImmediatePropagation(); // beneseのすべてのクリックハンドラをブロック
       if(foundCe){
         if(foundCe.classList.contains('ce-img'))openImg(foundCe);
         else openText(foundCe);
@@ -97,10 +98,10 @@ export default function AdminClient() {
   var st=document.createElement('style');
   st.id='__ce_style';
   st.textContent=
-    '.ce{cursor:text!important}'+
+    '.ce{cursor:text!important;pointer-events:auto!important}'+
     '.ce:hover{box-shadow:0 0 0 2px rgba(79,70,229,0.5)!important}'+
     '.ce.on{box-shadow:0 0 0 2px #4F46E5!important;caret-color:#4F46E5!important}'+
-    '.ce-img{cursor:pointer!important}'+
+    '.ce-img{cursor:pointer!important;pointer-events:auto!important}'+
     '.ce-img:hover{box-shadow:0 0 0 3px rgba(79,70,229,0.5)!important;opacity:0.9!important}'+
     '.ce-img.on{box-shadow:0 0 0 3px #4F46E5!important}';
   document.head.appendChild(st);
@@ -305,8 +306,8 @@ export default function AdminClient() {
   useEffect(() => {
     const handler = (e: MessageEvent) => {
       if (e.data?.type === "html-update") {
-        setSiteHtml(e.data.html);
-        // 編集内容をsessionStorageに上書き保存（リフレッシュ後も反映）
+        // siteHtmlは更新しない（更新するとblob URLが再生成されiframeがリロードされ白くなる）
+        latestHtmlRef.current = e.data.html;
         try { sessionStorage.setItem("site-html", e.data.html); } catch {}
       }
     };
@@ -321,6 +322,7 @@ export default function AdminClient() {
       const html = sessionStorage.getItem("site-html") ?? "";
       setHtmlMode(true);
       setSiteHtml(html);
+      latestHtmlRef.current = html;
       setSidePanel("blocks");
       // sessionStorageはリフレッシュでも残す（タブを閉じるまで保持）
       return;
@@ -1110,10 +1112,14 @@ export default function AdminClient() {
                 <div style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
                   <button
                     onClick={() => {
+                      const cleanHtml = latestHtmlRef.current || siteHtml;
+                      const blob = new Blob([cleanHtml], { type: "text/html" });
+                      const url = URL.createObjectURL(blob);
                       const a = document.createElement("a");
-                      a.href = htmlBlobUrl;
+                      a.href = url;
                       a.download = "site.html";
                       a.click();
+                      setTimeout(() => URL.revokeObjectURL(url), 1000);
                     }}
                     style={{ fontSize: 11, fontWeight: 600, padding: "3px 12px", borderRadius: 6, border: "1px solid rgba(255,255,255,0.4)", background: "transparent", color: "white", cursor: "pointer" }}>
                     ↓ ダウンロード
