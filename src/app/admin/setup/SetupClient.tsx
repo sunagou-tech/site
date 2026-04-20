@@ -379,6 +379,9 @@ export default function SetupClient() {
   const startEditing = useCallback(() => {
     if (!generatedConfig) return;
     localStorage.setItem("site-config", JSON.stringify(generatedConfig));
+    // HTMLモードの残留フラグを確実に消去してブロック編集に遷移
+    localStorage.removeItem("site-mode");
+    localStorage.removeItem("site-html");
     router.push("/admin");
   }, [generatedConfig, router]);
 
