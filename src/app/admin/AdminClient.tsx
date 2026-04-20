@@ -75,10 +75,21 @@ export default function AdminClient() {
 
   /* ─ 1. ナビゲーション防止 ──────────────────────────────────── */
   document.addEventListener('click',function(e){
-    var t=e.target;
-    while(t&&t.tagName){
-      if(t.tagName==='A'||t.tagName==='FORM'){e.preventDefault();break;}
-      t=t.parentNode;
+    var node=e.target;
+    var foundAnchor=null,foundCe=null;
+    while(node&&node.tagName){
+      if((node.tagName==='A'||node.tagName==='FORM')&&!foundAnchor)foundAnchor=node;
+      if(node.classList&&node.classList.contains('ce')&&!foundCe)foundCe=node;
+      if(node.classList&&node.classList.contains('ce-img')&&!foundCe)foundCe=node;
+      node=node.parentNode;
+    }
+    if(foundAnchor){
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      if(foundCe){
+        if(foundCe.classList.contains('ce-img'))openImg(foundCe);
+        else openText(foundCe);
+      }
     }
   },true);
 
@@ -248,7 +259,7 @@ export default function AdminClient() {
   function openText(el){
     if(cur===el)return;if(cur)save();
     cur=el;origHtml=el.innerHTML;isImg=false;
-    el.contentEditable='true';el.classList.add('on');el.focus();
+    el.contentEditable='true';el.classList.add('on');el.focus({preventScroll:true});
     pH.textContent='✏️ テキスト編集';buildText(el);panel.style.display='flex';
   }
   function openImg(img){
