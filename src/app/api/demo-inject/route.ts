@@ -118,6 +118,7 @@ ${stripped}`;
               generationConfig: {
                 maxOutputTokens: 8192,
                 temperature: 0.4,
+                thinkingConfig: { thinkingBudget: 512 },
               },
             }),
             signal: AbortSignal.timeout(50000),

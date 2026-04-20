@@ -138,7 +138,7 @@ ${strengths ? `強み・特徴: ${strengths}` : ""}${colorHint}
         body: JSON.stringify({
           system_instruction: { parts: [{ text: SYSTEM }] },
           contents: [{ role: "user", parts: [{ text: userInput }] }],
-          generationConfig: { maxOutputTokens: 8192, temperature: 0.8 },
+          generationConfig: { maxOutputTokens: 8192, temperature: 0.8, thinkingConfig: { thinkingBudget: 1024 } },
         }),
         signal: AbortSignal.timeout(55000),
       }

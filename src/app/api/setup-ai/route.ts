@@ -6,7 +6,7 @@ export const maxDuration = 30;
 
 const API_KEY         = process.env.GEMINI_API_KEY ?? "";
 const GEMINI_BASE     = "https://generativelanguage.googleapis.com/v1beta/models";
-const GEMINI_MODELS   = ["gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-2.0-flash-lite"];
+const GEMINI_MODELS   = ["gemini-2.5-flash", "gemini-2.5-pro"];
 
 // ── Chat system prompt ───────────────────────────────────────
 const CHAT_SYSTEM = `あなたは日本市場向けウェブサイト制作の専門コンサルタントです。
@@ -1009,7 +1009,7 @@ export async function POST(req: NextRequest) {
           parts: [{ text: m.content }],
         }));
 
-    for (const model of ["gemini-2.0-flash-lite", "gemini-2.5-flash-lite", "gemini-2.5-flash"]) {
+    for (const model of ["gemini-2.5-flash", "gemini-2.5-pro"]) {
       try {
         const res = await fetch(
           `${GEMINI_BASE}/${model}:generateContent?key=${API_KEY}`,
