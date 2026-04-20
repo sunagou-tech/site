@@ -257,34 +257,40 @@ export default function SetupClient() {
     }
   }, [businessName, serviceDesc, target, strengths]);
 
-  // ─── デモテンプレートから生成（ブロック生成 → canvas editor）──────────────
+  // ─── デモテンプレートから生成（デモHTMLに事業情報注入 → /admin でクリック編集）──
   const generateFromDemo = useCallback(async () => {
     if (!selectedDemo || !demoBizName.trim() || !demoBizDesc.trim()) return;
     setPhase("generating");
     setGenPct(0);
-    setGenText("テンプレートのデザインを適用中...");
+    setGenText("デモデザインを読み込み中...");
 
-    GEN_STEPS.forEach(({ pct, text }, i) => {
-      setTimeout(() => { setGenPct(pct); setGenText(text); }, i * 1600);
+    const DEMO_STEPS = [
+      { pct: 15, text: "デモデザインを読み込み中..." },
+      { pct: 35, text: "事業情報をAIが解析中..." },
+      { pct: 55, text: "テキストコンテンツを差し替え中..." },
+      { pct: 75, text: "見出し・説明文を最適化中..." },
+      { pct: 90, text: "最終仕上げ中..." },
+    ];
+    DEMO_STEPS.forEach(({ pct, text }, i) => {
+      setTimeout(() => { setGenPct(pct); setGenText(text); }, i * 2000);
     });
 
     try {
-      const res = await fetch("/api/setup-ai", {
+      const res = await fetch("/api/demo-inject", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          phase: "form-generate",
-          formData: { businessName: demoBizName, serviceDesc: demoBizDesc, target: "", strengths: "" },
-          analysisResult: selectedDemo.style,
-        }),
+        body: JSON.stringify({ demoId: selectedDemo.id, bizName: demoBizName, bizDesc: demoBizDesc }),
       });
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      let data: { error?: string; config?: any };
+      let data: { error?: string; html?: string };
       try { data = await res.json(); } catch { throw new Error("サーバーエラーが発生しました。もう一度お試しください。"); }
       if (!res.ok || data.error) throw new Error(data.error ?? "生成に失敗しました");
 
       setGenPct(100);
-      setTimeout(() => { setGeneratedConfig(data.config); setPhase("preview"); }, 800);
+      setTimeout(() => {
+        localStorage.setItem("site-html", data.html!);
+        localStorage.setItem("site-mode", "html");
+        router.push("/admin");
+      }, 800);
     } catch (e) {
       setDemoError(e instanceof Error ? e.message : "生成に失敗しました");
       setPhase("form");

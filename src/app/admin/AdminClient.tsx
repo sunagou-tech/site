@@ -61,10 +61,73 @@ export default function AdminClient() {
   const [publishStatus, setPublishStatus] = useState<"idle" | "success" | "error">("idle");
   const [publishError, setPublishError] = useState("");
 
+  // HTML直接編集モード（デモ生成時）
+  const [htmlMode,    setHtmlMode]    = useState(false);
+  const [siteHtml,    setSiteHtml]    = useState("");
+  const [htmlBlobUrl, setHtmlBlobUrl] = useState("");
+
+  // HTML → Blob URL（contenteditable編集スクリプト注入済み）
+  useEffect(() => {
+    if (!siteHtml) return;
+    const script = `<script>
+(function(){
+  var style = document.createElement('style');
+  style.textContent = '.ce-hover{outline:2px dashed rgba(79,70,229,0.4)!important;cursor:text!important}.ce-active{outline:2px solid #4F46E5!important;background:rgba(79,70,229,0.04)!important}';
+  document.head.appendChild(style);
+  var sel = 'h1,h2,h3,h4,h5,h6,p,span,a,button,li,td,th,.logo,.hero-badge,.sec-label,.step-label,.step-desc,.result-num,.result-label,.voice-name,.voice-grade,.voice-text,.voice-result,.faq-q-text,.faq-a-text,.course-card h3,.sol-card h3,.prob-card h3';
+  document.querySelectorAll(sel).forEach(function(el){
+    if(el.children.length>2) return;
+    el.addEventListener('mouseenter',function(){el.classList.add('ce-hover')});
+    el.addEventListener('mouseleave',function(){el.classList.remove('ce-hover')});
+    el.addEventListener('click',function(e){
+      e.stopPropagation();
+      document.querySelectorAll('.ce-active').forEach(function(a){
+        a.contentEditable='false';a.classList.remove('ce-active');
+      });
+      el.contentEditable='true';
+      el.classList.add('ce-active');
+      el.focus();
+      var r=document.createRange(),s=window.getSelection();
+      r.selectNodeContents(el);s.removeAllRanges();s.addRange(r);
+    });
+    el.addEventListener('blur',function(){
+      el.contentEditable='false';
+      el.classList.remove('ce-active');
+      window.parent.postMessage({type:'html-update',html:document.documentElement.outerHTML},'*');
+    });
+    el.addEventListener('keydown',function(e){
+      if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();el.blur();}
+      if(e.key==='Escape'){el.blur();}
+    });
+  });
+})();
+<\/script>`;
+    const injected = siteHtml.replace('</body>', script + '</body>');
+    const url = URL.createObjectURL(new Blob([injected], { type: "text/html" }));
+    setHtmlBlobUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [siteHtml]);
+
+  // iframeからのテキスト変更を受け取る
+  useEffect(() => {
+    const handler = (e: MessageEvent) => {
+      if (e.data?.type === "html-update") setSiteHtml(e.data.html);
+    };
+    window.addEventListener("message", handler);
+    return () => window.removeEventListener("message", handler);
+  }, []);
+
   // Load from localStorage on mount
   useEffect(() => {
-    // 旧HTMLモードのフラグが残っていたら削除
-    localStorage.removeItem("site-mode");
+    const mode = localStorage.getItem("site-mode");
+    if (mode === "html") {
+      const html = localStorage.getItem("site-html") ?? "";
+      setHtmlMode(true);
+      setSiteHtml(html);
+      setSidePanel("blocks"); // ブロックパネルをデフォルトに
+      localStorage.removeItem("site-mode");
+      return;
+    }
     localStorage.removeItem("site-html");
     const saved = localStorage.getItem("site-config");
     if (saved) try {
@@ -575,6 +638,13 @@ export default function AdminClient() {
                 {/* ── ブロックパネル ── */}
                 {sidePanel === "blocks" && (
                   <div>
+                    {/* HTMLモード時の案内 */}
+                    {htmlMode && (
+                      <div style={{ marginBottom: 14, padding: "10px 12px", background: "#EEF2FF", borderRadius: 8, border: "1px solid #C7D2FE" }}>
+                        <p style={{ fontSize: 11, fontWeight: 700, color: "#4F46E5", margin: "0 0 4px" }}>✏️ テキストをクリックして編集</p>
+                        <p style={{ fontSize: 10, color: "#6366F1", margin: 0, lineHeight: 1.6 }}>右のプレビュー上でテキストを直接クリックすると編集できます。Enterまたはクリック外で確定。</p>
+                      </div>
+                    )}
                     {/* 配置済みブロック一覧 */}
                     {activeSections.length > 0 && (
                       <div style={{ marginBottom: 16 }}>
@@ -833,7 +903,34 @@ export default function AdminClient() {
           </div>
 
           {/* ═══ Center: SitePreview / Device Preview ════ */}
-          {deviceMode === "pc" ? (
+          {htmlMode && htmlBlobUrl ? (
+            <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+              {/* 編集ヒントバー */}
+              <div style={{ background: "#4F46E5", padding: "6px 16px", display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                <span style={{ color: "white", fontSize: 11, fontWeight: 600 }}>編集モード</span>
+                <span style={{ color: "rgba(255,255,255,0.75)", fontSize: 11 }}>テキストをクリックして直接編集できます</span>
+                <div style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
+                  <button
+                    onClick={() => {
+                      const a = document.createElement("a");
+                      a.href = htmlBlobUrl;
+                      a.download = "site.html";
+                      a.click();
+                    }}
+                    style={{ fontSize: 11, fontWeight: 600, padding: "3px 12px", borderRadius: 6, border: "1px solid rgba(255,255,255,0.4)", background: "transparent", color: "white", cursor: "pointer" }}>
+                    ↓ ダウンロード
+                  </button>
+                </div>
+              </div>
+              <iframe
+                key={htmlBlobUrl}
+                src={htmlBlobUrl}
+                style={{ flex: 1, border: "none", display: "block" }}
+                title="サイトプレビュー（クリックして編集）"
+              />
+            </div>
+          ) : deviceMode === "pc" ? (
             <SitePreview
               config={getActiveConfig()}
               onConfigChange={handleActiveConfigChange}
