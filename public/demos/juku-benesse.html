@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ライズ学習塾 | 個別指導で成績アップ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --red:#e50012;
+  --blue:#005bab;
+  --dark:#0c1530;
+  --bg:#ffffff;
+  --bg2:#f2f2f2;
+  --sub:#666666;
+  --border:#f2f2f2;
+}
+body{background:var(--bg);color:var(--dark);font-family:'Noto Sans JP',sans-serif;overflow-x:hidden;font-size:15px;line-height:1.8;letter-spacing:0.04em}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 48px;height:64px;background:#fff;border-bottom:1px solid var(--border);box-shadow:0 1px 4px rgba(0,0,0,.04)}
+.logo{font-weight:900;font-size:18px;color:var(--dark);letter-spacing:.05em}
+.logo span{color:var(--red)}
+nav ul{display:flex;list-style:none;gap:28px;align-items:center}
+nav a{color:var(--sub);text-decoration:none;font-size:13px;font-weight:500;transition:.2s}
+nav a:hover{color:var(--blue)}
+.nav-cta{background:var(--red)!important;color:#fff!important;padding:9px 22px;border-radius:6px;font-weight:700!important;font-size:13px!important;transition:.2s!important}
+.nav-cta:hover{opacity:.85!important}
+
+/* HERO */
+.hero{padding-top:64px;background:#fff;overflow:hidden}
+.hero-inner{display:grid;grid-template-columns:1fr 480px;gap:0;min-height:560px;max-width:1200px;margin:0 auto;padding:0 48px;align-items:center}
+.hero-text{padding:80px 0}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;background:#fff0f0;color:var(--red);font-size:11px;font-weight:700;letter-spacing:.15em;padding:5px 14px;border-radius:4px;margin-bottom:24px}
+.hero-badge::before{content:'';width:6px;height:6px;background:var(--red);border-radius:50%;display:inline-block}
+.hero h1{font-size:clamp(2rem,3.5vw,3rem);font-weight:900;line-height:1.35;color:var(--dark);margin-bottom:20px;letter-spacing:.02em}
+.hero h1 em{color:var(--red);font-style:normal}
+.hero-sub{font-size:15px;line-height:2;color:var(--sub);margin-bottom:36px;max-width:480px}
+.hero-btns{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.btn-primary{display:inline-flex;align-items:center;gap:8px;background:var(--red);color:#fff;font-weight:700;font-size:15px;padding:16px 36px;border-radius:6px;border:none;cursor:pointer;transition:.2s;text-decoration:none}
+.btn-primary:hover{opacity:.85;transform:translateY(-1px)}
+.btn-secondary{display:inline-flex;align-items:center;gap:8px;background:#fff;color:var(--blue);font-weight:700;font-size:15px;padding:15px 32px;border-radius:6px;border:1.5px solid var(--blue);cursor:pointer;transition:.2s;text-decoration:none}
+.btn-secondary:hover{background:#f0f6ff}
+.hero-img-wrap{position:relative;height:100%;display:flex;align-items:center;justify-content:flex-end}
+.hero-img-box{width:420px;height:420px;border-radius:20px;overflow:hidden;position:relative;background:#e8f0f8}
+.hero-img-box img{width:100%;height:100%;object-fit:cover}
+.hero-img-box::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(0,91,171,.08) 0%,rgba(229,0,18,.05) 100%)}
+.hero-accent{position:absolute;top:-20px;right:-20px;width:120px;height:120px;border-radius:50%;background:#fff0f0;z-index:-1}
+.hero-accent2{position:absolute;bottom:-30px;left:-30px;width:160px;height:160px;border-radius:50%;background:#e8f0f8;z-index:-1}
+.hero-stats{display:flex;gap:24px;margin-top:40px}
+.h-stat{text-align:center;padding:14px 20px;border-radius:10px;background:#f7f9fc;border:1px solid var(--border)}
+.h-stat-num{font-size:28px;font-weight:900;color:var(--blue);line-height:1}
+.h-stat-num span{font-size:14px;font-weight:700}
+.h-stat-label{font-size:10px;color:var(--sub);margin-top:4px;letter-spacing:.06em}
+
+/* STRIP */
+.strip{background:var(--blue);padding:14px 48px;display:flex;align-items:center;justify-content:center;gap:48px}
+.strip-item{display:flex;align-items:center;gap:10px;color:#fff;font-size:13px;font-weight:700}
+.strip-icon{width:28px;height:28px;background:rgba(255,255,255,.2);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px}
+
+/* SECTION BASE */
+section{padding:90px 48px}
+.sec-inner{max-width:1100px;margin:0 auto}
+.sec-label{display:inline-flex;align-items:center;gap:8px;font-size:11px;font-weight:700;letter-spacing:.2em;color:var(--blue);margin-bottom:10px}
+.sec-label::before{content:'';width:20px;height:2px;background:var(--blue)}
+.sec-title{font-size:clamp(1.5rem,2.5vw,2rem);font-weight:900;line-height:1.4;color:var(--dark);margin-bottom:16px}
+.sec-sub{font-size:14px;color:var(--sub);line-height:1.9;max-width:580px}
+
+/* PROBLEM */
+.problem{background:#f7f9fc}
+.problem .sec-sub{max-width:100%}
+.prob-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:48px}
+.prob-card{background:#fff;border-radius:16px;padding:28px 24px;border:1px solid var(--border);position:relative}
+.prob-num{width:36px;height:36px;background:var(--blue);color:#fff;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;margin-bottom:16px}
+.prob-card h3{font-size:15px;font-weight:700;color:var(--dark);margin-bottom:8px;line-height:1.5}
+.prob-card p{font-size:13px;color:var(--sub);line-height:1.9}
+.prob-arrow{text-align:center;margin-top:48px;color:var(--red);font-size:13px;font-weight:700}
+.prob-arrow::before{content:'';display:block;width:2px;height:40px;background:var(--red);margin:0 auto 12px}
+
+/* SOLUTION */
+.solution{background:#fff}
+.sol-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:56px}
+.sol-card{border-radius:16px;padding:32px 28px;border:1.5px solid var(--border);transition:.3s;position:relative;overflow:hidden}
+.sol-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:var(--blue)}
+.sol-card:hover{border-color:#ccd8e8;box-shadow:0 4px 24px rgba(0,91,171,.08);transform:translateY(-3px)}
+.sol-num{font-size:48px;font-weight:900;color:#e8f0f8;line-height:1;margin-bottom:12px}
+.sol-card h3{font-size:16px;font-weight:700;color:var(--dark);margin-bottom:10px}
+.sol-card p{font-size:13px;color:var(--sub);line-height:1.9}
+
+/* COURSE */
+.course{background:var(--blue)}
+.course .sec-label{color:rgba(255,255,255,.7)}
+.course .sec-label::before{background:rgba(255,255,255,.5)}
+.course .sec-title{color:#fff}
+.course .sec-sub{color:rgba(255,255,255,.75);max-width:100%}
+.course-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:56px}
+.course-card{background:#fff;border-radius:16px;padding:32px 28px}
+.course-badge{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.12em;padding:3px 10px;border-radius:4px;margin-bottom:16px;background:#fff0f0;color:var(--red)}
+.course-card h3{font-size:18px;font-weight:900;color:var(--dark);margin-bottom:10px}
+.course-card .grade{font-size:12px;color:var(--sub);margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border)}
+.course-list{list-style:none}
+.course-list li{font-size:13px;color:var(--sub);padding:7px 0;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
+.course-list li::before{content:'✓';color:var(--blue);font-weight:700;font-size:12px}
+.course-cta{margin-top:22px;display:block;text-align:center;background:var(--red);color:#fff;font-weight:700;font-size:14px;padding:12px 24px;border-radius:6px;text-decoration:none;transition:.2s}
+.course-cta:hover{opacity:.85}
+
+/* FLOW */
+.flow{background:#f7f9fc}
+.flow-steps{display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin-top:56px;position:relative}
+.flow-steps::before{content:'';position:absolute;top:36px;left:10%;right:10%;height:2px;background:linear-gradient(90deg,var(--blue),var(--red));z-index:0}
+.flow-step{text-align:center;position:relative;z-index:1}
+.step-circle{width:72px;height:72px;background:#fff;border:2.5px solid var(--blue);border-radius:50%;margin:0 auto 20px;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900;color:var(--blue)}
+.flow-step:last-child .step-circle{border-color:var(--red);color:var(--red)}
+.step-label{font-size:13px;font-weight:700;color:var(--dark);margin-bottom:6px}
+.step-desc{font-size:12px;color:var(--sub);line-height:1.7}
+
+/* RESULTS */
+.results{background:#fff}
+.result-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border-radius:12px;overflow:hidden;margin-top:56px}
+.result-item{background:#fff;padding:36px 24px;text-align:center}
+.result-num{font-size:40px;font-weight:900;color:var(--red);line-height:1}
+.result-num span{font-size:16px;font-weight:700}
+.result-label{font-size:12px;color:var(--sub);margin-top:8px;line-height:1.6}
+
+/* VOICE */
+.voice{background:#f7f9fc}
+.voice-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:56px}
+.voice-card{background:#fff;border-radius:16px;padding:28px 24px;border:1px solid var(--border)}
+.voice-head{display:flex;align-items:center;gap:14px;margin-bottom:16px}
+.voice-avatar{width:48px;height:48px;border-radius:50%;object-fit:cover;background:#e8f0f8}
+.voice-info{flex:1}
+.voice-name{font-size:14px;font-weight:700;color:var(--dark)}
+.voice-grade{font-size:11px;color:var(--sub)}
+.voice-stars{color:var(--red);font-size:13px;margin-bottom:12px}
+.voice-text{font-size:13px;color:var(--sub);line-height:1.9}
+.voice-result{display:inline-block;margin-top:14px;font-size:11px;font-weight:700;color:var(--blue);background:#e8f0f8;padding:4px 12px;border-radius:4px}
+
+/* FAQ */
+.faq{background:#fff}
+.faq-list{margin-top:56px;max-width:760px;margin-left:auto;margin-right:auto}
+.faq-item{border-bottom:1px solid var(--border);padding:24px 0}
+.faq-q{display:flex;align-items:flex-start;gap:16px;cursor:pointer}
+.faq-q-icon{width:28px;height:28px;background:var(--blue);color:#fff;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;margin-top:2px}
+.faq-q-text{font-size:15px;font-weight:700;color:var(--dark);line-height:1.5;flex:1}
+.faq-a{display:flex;align-items:flex-start;gap:16px;margin-top:14px;padding-left:44px}
+.faq-a-text{font-size:14px;color:var(--sub);line-height:1.9}
+
+/* CTA */
+.cta-section{background:var(--red)}
+.cta-inner{max-width:800px;margin:0 auto;text-align:center}
+.cta-section .sec-label{color:rgba(255,255,255,.7);justify-content:center}
+.cta-section .sec-label::before{background:rgba(255,255,255,.5)}
+.cta-title{font-size:clamp(1.6rem,2.8vw,2.4rem);font-weight:900;color:#fff;margin-bottom:16px;line-height:1.35}
+.cta-sub{font-size:14px;color:rgba(255,255,255,.8);line-height:2;margin-bottom:40px}
+.btn-cta-white{display:inline-flex;align-items:center;gap:8px;background:#fff;color:var(--red);font-weight:700;font-size:15px;padding:16px 40px;border-radius:6px;border:none;cursor:pointer;transition:.2s;text-decoration:none}
+.btn-cta-white:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.15)}
+.btn-cta-outline{display:inline-flex;align-items:center;gap:8px;background:transparent;color:#fff;font-weight:700;font-size:15px;padding:15px 36px;border-radius:6px;border:1.5px solid rgba(255,255,255,.6);cursor:pointer;transition:.2s;text-decoration:none;margin-left:14px}
+.btn-cta-outline:hover{background:rgba(255,255,255,.1)}
+.cta-note{margin-top:20px;font-size:12px;color:rgba(255,255,255,.6)}
+
+/* FOOTER */
+footer{background:var(--dark);padding:60px 48px 30px}
+.footer-inner{max-width:1100px;margin:0 auto}
+.footer-top{display:grid;grid-template-columns:280px 1fr;gap:60px;margin-bottom:48px}
+.footer-brand .logo{color:#fff;font-size:20px}
+.footer-brand p{font-size:13px;color:rgba(255,255,255,.5);line-height:1.9;margin-top:12px}
+.footer-nav-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:32px}
+.footer-nav-title{font-size:12px;font-weight:700;color:rgba(255,255,255,.4);letter-spacing:.15em;margin-bottom:14px}
+.footer-nav ul{list-style:none}
+.footer-nav li{margin-bottom:10px}
+.footer-nav a{font-size:13px;color:rgba(255,255,255,.55);text-decoration:none;transition:.2s}
+.footer-nav a:hover{color:#fff}
+.footer-bottom{padding-top:24px;border-top:1px solid rgba(255,255,255,.08);display:flex;align-items:center;justify-content:space-between}
+.footer-copy{font-size:12px;color:rgba(255,255,255,.3)}
+.footer-links{display:flex;gap:20px}
+.footer-links a{font-size:12px;color:rgba(255,255,255,.3);text-decoration:none}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="logo">ライズ<span>学習塾</span></div>
+  <ul>
+    <li><a href="#">特徴</a></li>
+    <li><a href="#">コース</a></li>
+    <li><a href="#">料金</a></li>
+    <li><a href="#">合格実績</a></li>
+    <li><a href="#">よくある質問</a></li>
+    <li><a href="#" class="nav-cta">無料体験授業</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-inner">
+    <div class="hero-text">
+      <div class="hero-badge">2026年度 生徒募集中</div>
+      <h1>一人ひとりの<br><em>「わかった！」</em>を<br>積み上げる個別指導</h1>
+      <p class="hero-sub">あなたのペースで、あなただけのカリキュラム。<br>苦手科目の克服から志望校合格まで、<br>担任制の個別指導でしっかりサポートします。</p>
+      <div class="hero-btns">
+        <a href="#" class="btn-primary">無料体験授業を申し込む →</a>
+        <a href="#" class="btn-secondary">資料を請求する</a>
+      </div>
+      <div class="hero-stats">
+        <div class="h-stat">
+          <div class="h-stat-num">98<span>%</span></div>
+          <div class="h-stat-label">成績向上率</div>
+        </div>
+        <div class="h-stat">
+          <div class="h-stat-num">15<span>年</span></div>
+          <div class="h-stat-label">指導実績</div>
+        </div>
+        <div class="h-stat">
+          <div class="h-stat-num">1,200<span>名+</span></div>
+          <div class="h-stat-label">累計卒業生</div>
+        </div>
+      </div>
+    </div>
+    <div class="hero-img-wrap">
+      <div class="hero-accent"></div>
+      <div class="hero-accent2"></div>
+      <div class="hero-img-box">
+        <img src="https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=840&auto=format&fit=crop&q=70" alt="勉強する生徒">
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- STRIP -->
+<div class="strip">
+  <div class="strip-item"><div class="strip-icon">✓</div>入塾金0円キャンペーン実施中</div>
+  <div class="strip-item"><div class="strip-icon">✓</div>初回授業は完全無料</div>
+  <div class="strip-item"><div class="strip-icon">✓</div>担任制で安心サポート</div>
+  <div class="strip-item"><div class="strip-icon">✓</div>オンライン・通塾どちらもOK</div>
+</div>
+
+<!-- PROBLEM -->
+<section class="problem">
+  <div class="sec-inner">
+    <div class="sec-label">こんなお悩みありませんか？</div>
+    <h2 class="sec-title">成績が伸び悩む原因は<br>「一人ひとりに合った学習」の欠如です</h2>
+    <p class="sec-sub">集団授業では拾えない「つまずき」が、やがて大きな学力差を生みます。</p>
+    <div class="prob-grid">
+      <div class="prob-card">
+        <div class="prob-num">01</div>
+        <h3>授業についていけない…</h3>
+        <p>学校の授業のスピードが速く、わからない部分が溜まる一方。誰にも聞けずに放置してしまっています。</p>
+      </div>
+      <div class="prob-card">
+        <div class="prob-num">02</div>
+        <h3>何から手をつければいいかわからない</h3>
+        <p>勉強しようとは思うけど、計画の立て方がわからず、結局できないまま試験を迎えてしまう。</p>
+      </div>
+      <div class="prob-card">
+        <div class="prob-num">03</div>
+        <h3>塾に通っても成績が上がらない</h3>
+        <p>集団塾に通っているけど、大人数の授業では自分のペースで理解できず、費用だけがかかっている気がする。</p>
+      </div>
+    </div>
+    <div class="prob-arrow">ライズ学習塾がすべて解決します</div>
+  </div>
+</section>
+
+<!-- SOLUTION -->
+<section class="solution">
+  <div class="sec-inner">
+    <div class="sec-label">ライズが選ばれる理由</div>
+    <h2 class="sec-title">成績が上がる、3つの仕組み</h2>
+    <p class="sec-sub">15年の指導実績から生まれた、確かな学習メソッドで一人ひとりの可能性を引き出します。</p>
+    <div class="sol-grid">
+      <div class="sol-card">
+        <div class="sol-num">01</div>
+        <h3>専任担任制による<br>完全個別カリキュラム</h3>
+        <p>入塾時の学力診断から始まり、生徒一人ひとりに合わせたオリジナルカリキュラムを作成。苦手分野を集中的に克服できます。</p>
+      </div>
+      <div class="sol-card">
+        <div class="sol-num">02</div>
+        <h3>週次レポートで<br>保護者と進捗共有</h3>
+        <p>毎週の学習状況・理解度・宿題の定着率をレポートでお届け。保護者の方もリアルタイムで成長を確認できます。</p>
+      </div>
+      <div class="sol-card">
+        <div class="sol-num">03</div>
+        <h3>自習室・質問対応で<br>わからないを即解決</h3>
+        <p>開塾時間中はいつでも自習室を利用可能。常駐スタッフへの質問も随時受付けているので、疑問をその日のうちに解消できます。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- COURSE -->
+<section class="course">
+  <div class="sec-inner">
+    <div class="sec-label">コース紹介</div>
+    <h2 class="sec-title">目標に合わせて選べる<br>3つの学習コース</h2>
+    <p class="sec-sub">お子さまの学年・目標・生活スタイルに合わせて最適なコースをご提案します。</p>
+    <div class="course-grid">
+      <div class="course-card">
+        <div class="course-badge">人気No.1</div>
+        <h3>定期テスト<br>対策コース</h3>
+        <p class="grade">小学4年生〜中学3年生</p>
+        <ul class="course-list">
+          <li>学校の授業に完全対応</li>
+          <li>テスト2週間前から集中対策</li>
+          <li>5教科フルサポート</li>
+          <li>前回比で平均+18点アップ</li>
+        </ul>
+        <a href="#" class="course-cta">詳しくはこちら</a>
+      </div>
+      <div class="course-card">
+        <div class="course-badge">高校受験</div>
+        <h3>受験合格<br>専門コース</h3>
+        <p class="grade">中学1年生〜中学3年生</p>
+        <ul class="course-list">
+          <li>志望校別の入試対策</li>
+          <li>模擬試験・過去問演習</li>
+          <li>出願・面接サポート</li>
+          <li>合格率94%の実績</li>
+        </ul>
+        <a href="#" class="course-cta">詳しくはこちら</a>
+      </div>
+      <div class="course-card">
+        <div class="course-badge">基礎固め</div>
+        <h3>苦手克服<br>集中コース</h3>
+        <p class="grade">小学1年生〜中学3年生</p>
+        <ul class="course-list">
+          <li>つまずいた単元まで遡る</li>
+          <li>反復演習で確実に定着</li>
+          <li>自己肯定感を育む指導</li>
+          <li>3ヶ月で苦手意識を解消</li>
+        </ul>
+        <a href="#" class="course-cta">詳しくはこちら</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FLOW -->
+<section class="flow">
+  <div class="sec-inner">
+    <div class="sec-label">入塾の流れ</div>
+    <h2 class="sec-title">まずは無料体験から<br>気軽にスタートできます</h2>
+    <div class="flow-steps">
+      <div class="flow-step">
+        <div class="step-circle">1</div>
+        <div class="step-label">無料体験申込</div>
+        <div class="step-desc">Webフォームまたは<br>お電話でご予約</div>
+      </div>
+      <div class="flow-step">
+        <div class="step-circle">2</div>
+        <div class="step-label">学力診断テスト</div>
+        <div class="step-desc">現在の学力と<br>課題を把握</div>
+      </div>
+      <div class="flow-step">
+        <div class="step-circle">3</div>
+        <div class="step-label">体験授業</div>
+        <div class="step-desc">担任との授業を<br>実際に体験</div>
+      </div>
+      <div class="flow-step">
+        <div class="step-circle" style="border-color:var(--red);color:var(--red)">4</div>
+        <div class="step-label">入塾・スタート</div>
+        <div class="step-desc">カリキュラム作成後<br>すぐに学習開始</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- RESULTS -->
+<section class="results">
+  <div class="sec-inner">
+    <div class="sec-label">合格・成績実績</div>
+    <h2 class="sec-title">数字が証明する、ライズの指導力</h2>
+    <div class="result-grid">
+      <div class="result-item">
+        <div class="result-num">94<span>%</span></div>
+        <div class="result-label">志望校合格率<br>（2025年度実績）</div>
+      </div>
+      <div class="result-item">
+        <div class="result-num">+18<span>点</span></div>
+        <div class="result-label">定期テスト<br>平均点アップ幅</div>
+      </div>
+      <div class="result-item">
+        <div class="result-num">98<span>%</span></div>
+        <div class="result-label">継続率<br>（6ヶ月以上）</div>
+      </div>
+      <div class="result-item">
+        <div class="result-num">1,200<span>名+</span></div>
+        <div class="result-label">累計指導<br>卒業生数</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- VOICE -->
+<section class="voice">
+  <div class="sec-inner">
+    <div class="sec-label">生徒・保護者の声</div>
+    <h2 class="sec-title">ライズで変わった、<br>子どもたちのリアルな声</h2>
+    <div class="voice-grid">
+      <div class="voice-card">
+        <div class="voice-head">
+          <img src="https://i.pravatar.cc/48?img=47" class="voice-avatar" alt="">
+          <div class="voice-info">
+            <div class="voice-name">田中 凛花さん（中3）</div>
+            <div class="voice-grade">受験合格コース卒業</div>
+          </div>
+        </div>
+        <div class="voice-stars">★★★★★</div>
+        <p class="voice-text">数学が大の苦手で、模試では毎回40点台でした。でも先生が「なぜそこで間違えるか」まで分析してくれて、3ヶ月後には75点が取れるようになりました。</p>
+        <span class="voice-result">第一志望合格！偏差値＋12</span>
+      </div>
+      <div class="voice-card">
+        <div class="voice-head">
+          <img src="https://i.pravatar.cc/48?img=32" class="voice-avatar" alt="">
+          <div class="voice-info">
+            <div class="voice-name">佐藤 健太さん（中2）</div>
+            <div class="voice-grade">定期テスト対策コース</div>
+          </div>
+        </div>
+        <div class="voice-stars">★★★★★</div>
+        <p class="voice-text">集団塾では「わからない」と言いにくかったけど、個別だと気軽に質問できて楽しくなりました。英語が一番上がって、最初の40点から85点になりました！</p>
+        <span class="voice-result">英語 40点→85点</span>
+      </div>
+      <div class="voice-card">
+        <div class="voice-head">
+          <img src="https://i.pravatar.cc/48?img=5" class="voice-avatar" alt="">
+          <div class="voice-info">
+            <div class="voice-name">山田 美咲さんのお母様</div>
+            <div class="voice-grade">保護者</div>
+          </div>
+        </div>
+        <div class="voice-stars">★★★★★</div>
+        <p class="voice-text">毎週届く学習レポートがとても丁寧で、子どもの様子が手に取るようにわかります。先生との連絡もLINEで手軽にできて、親としても安心して任せられています。</p>
+        <span class="voice-result">成績5段階→2が消え全科目3以上に</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="faq">
+  <div class="sec-inner">
+    <div class="sec-label">よくある質問</div>
+    <h2 class="sec-title">お気軽にご確認ください</h2>
+    <div class="faq-list">
+      <div class="faq-item">
+        <div class="faq-q">
+          <div class="faq-q-icon">Q</div>
+          <div class="faq-q-text">体験授業は本当に無料ですか？費用はかかりませんか？</div>
+        </div>
+        <div class="faq-a">
+          <div class="faq-a-text">はい、初回の体験授業（60分）は完全無料です。学力診断テストと授業がセットになっており、一切費用はかかりません。体験後に入塾を強制することもありませんので、お気軽にお申し込みください。</div>
+        </div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">
+          <div class="faq-q-icon">Q</div>
+          <div class="faq-q-text">授業は週に何回から通えますか？</div>
+        </div>
+        <div class="faq-a">
+          <div class="faq-a-text">週1回から通うことができます。学校の行事やクラブ活動に合わせてスケジュールを柔軟に組めますので、お子さまのペースに合わせてご相談ください。</div>
+        </div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">
+          <div class="faq-q-icon">Q</div>
+          <div class="faq-q-text">途中でコースを変更することはできますか？</div>
+        </div>
+        <div class="faq-a">
+          <div class="faq-a-text">もちろん可能です。受験が近づいてきたタイミングで「定期テスト対策コース」から「受験合格コース」へ切り替えるご家庭も多いです。担任の先生と相談しながら最適な時期に変更できます。</div>
+        </div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">
+          <div class="faq-q-icon">Q</div>
+          <div class="faq-q-text">オンライン授業にも対応していますか？</div>
+        </div>
+        <div class="faq-a">
+          <div class="faq-a-text">はい、Zoom・Google Meetを使ったオンライン個別指導も行っています。通塾とオンラインを週によって組み合わせることも可能です。遠方の方やお体の都合がある方もぜひご相談ください。</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+  <div class="sec-inner">
+    <div class="cta-inner">
+      <div class="sec-label">まずは無料体験から</div>
+      <h2 class="cta-title">今すぐ始めよう。<br>お子さまの可能性を広げる一歩を。</h2>
+      <p class="cta-sub">体験授業の申し込みから入塾まで、最短1週間。<br>お問い合わせはお電話・LINEでも受け付けています。</p>
+      <div>
+        <a href="#" class="btn-cta-white">無料体験授業を申し込む →</a>
+        <a href="#" class="btn-cta-outline">資料請求はこちら</a>
+      </div>
+      <p class="cta-note">※ 体験授業の参加に費用は一切かかりません　※ 入塾の強制はございません</p>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-top">
+      <div class="footer-brand">
+        <div class="logo" style="color:#fff">ライズ<span style="color:var(--red)">学習塾</span></div>
+        <p>〒000-0000<br>東京都渋谷区〇〇町1-2-3<br>TEL: 03-0000-0000<br>受付時間：平日13:00〜21:00</p>
+      </div>
+      <div class="footer-nav-grid">
+        <div class="footer-nav">
+          <div class="footer-nav-title">コース・料金</div>
+          <ul>
+            <li><a href="#">定期テスト対策コース</a></li>
+            <li><a href="#">受験合格専門コース</a></li>
+            <li><a href="#">苦手克服集中コース</a></li>
+            <li><a href="#">料金・費用</a></li>
+          </ul>
+        </div>
+        <div class="footer-nav">
+          <div class="footer-nav-title">ライズについて</div>
+          <ul>
+            <li><a href="#">塾の特徴</a></li>
+            <li><a href="#">合格実績</a></li>
+            <li><a href="#">講師紹介</a></li>
+            <li><a href="#">よくある質問</a></li>
+          </ul>
+        </div>
+        <div class="footer-nav">
+          <div class="footer-nav-title">お問い合わせ</div>
+          <ul>
+            <li><a href="#">無料体験申込</a></li>
+            <li><a href="#">資料請求</a></li>
+            <li><a href="#">アクセス</a></li>
+            <li><a href="#">お問い合わせ</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div class="footer-copy">© 2026 ライズ学習塾 All rights reserved.</div>
+      <div class="footer-links">
+        <a href="#">プライバシーポリシー</a>
+        <a href="#">利用規約</a>
+        <a href="#">運営会社</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
