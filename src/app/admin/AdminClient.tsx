@@ -84,6 +84,8 @@ export default function AdminClient() {
       if(node.classList&&node.classList.contains('ce-img')&&!foundCe)foundCe=node;
       node=node.parentNode;
     }
+    // ::before等の疑似要素がクリックを横取りする場合: 子孫のce-imgを探す
+    if(!foundCe){var t2=e.target;for(var d=0;d<3&&t2&&t2.querySelector;d++){var ci=t2.querySelector('.ce-img');if(ci){foundCe=ci;break;}t2=t2.parentElement;}}
     if(foundAnchor) e.preventDefault();
     if(foundCe||foundAnchor){
       e.stopImmediatePropagation(); // beneseのすべてのクリックハンドラをブロック
@@ -118,14 +120,20 @@ export default function AdminClient() {
   var pB=document.createElement('div');
   pB.style.cssText='flex:1;overflow-y:auto;padding:11px;display:flex;flex-direction:column;gap:9px;';
   var pF=document.createElement('div');
-  pF.style.cssText='padding:9px 11px;border-top:1px solid #F1F5F9;display:flex;gap:5px;flex-shrink:0;';
+  pF.style.cssText='padding:7px 10px;border-top:1px solid #F1F5F9;display:flex;gap:4px;flex-shrink:0;flex-wrap:wrap;';
   var bOk=document.createElement('button');
   bOk.textContent='✓ 確定';
-  bOk.style.cssText='flex:1;padding:7px;background:#4F46E5;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px;font-weight:700;';
+  bOk.style.cssText='flex:1;min-width:52px;padding:6px 4px;background:#4F46E5;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:11px;font-weight:700;';
   var bCnl=document.createElement('button');
-  bCnl.textContent='✕ キャンセル';
-  bCnl.style.cssText='flex:1;padding:7px;background:#fff;color:#6B7280;border:1px solid #D1D5DB;border-radius:6px;cursor:pointer;font-size:12px;';
-  pF.appendChild(bOk);pF.appendChild(bCnl);
+  bCnl.textContent='✕';
+  bCnl.style.cssText='padding:6px 9px;background:#fff;color:#6B7280;border:1px solid #D1D5DB;border-radius:6px;cursor:pointer;font-size:11px;';
+  var bDel=document.createElement('button');
+  bDel.textContent='🗑';bDel.title='削除';
+  bDel.style.cssText='padding:6px 9px;background:#FFF5F5;color:#EF4444;border:1px solid #FEE2E2;border-radius:6px;cursor:pointer;font-size:13px;';
+  var bClone=document.createElement('button');
+  bClone.textContent='＋複製';
+  bClone.style.cssText='padding:6px 7px;background:#F0FDF4;color:#059669;border:1px solid #D1FAE5;border-radius:6px;cursor:pointer;font-size:11px;';
+  pF.appendChild(bOk);pF.appendChild(bCnl);pF.appendChild(bDel);pF.appendChild(bClone);
   panel.appendChild(pH);panel.appendChild(pB);panel.appendChild(pF);
   document.body.appendChild(panel);
 
@@ -159,6 +167,47 @@ export default function AdminClient() {
   }
   bOk.addEventListener('click',function(e){e.stopPropagation();save();});
   bCnl.addEventListener('click',function(e){e.stopPropagation();discard();});
+  bDel.addEventListener('click',function(e){e.stopPropagation();deleteEl();});
+  bClone.addEventListener('click',function(e){e.stopPropagation();cloneEl();});
+
+  // 削除・複製対象を決定（小コンテナはブロックごと）
+  function getTarget(el){
+    if(el.tagName==='A'||el.tagName==='BUTTON')return el;
+    var par=el.parentElement;if(!par)return el;
+    var BIG=['BODY','SECTION','ARTICLE','HEADER','FOOTER','MAIN','NAV','ASIDE','FORM','UL','OL'];
+    if(BIG.indexOf(par.tagName)>=0)return el;
+    if(par.children.length<=4)return par;
+    return el;
+  }
+  function deleteEl(){
+    if(!cur)return;
+    if(cur&&!isImg)cur.contentEditable='false';
+    cur.classList.remove('on');
+    var t=isImg?cur:getTarget(cur);
+    panel.style.display='none';pB.innerHTML='';cur=null;origHtml='';isImg=false;
+    t.remove();
+    window.parent.postMessage({type:'html-update',html:getCleanHtml()},'*');
+  }
+  function cloneEl(){
+    if(!cur||isImg)return;
+    var t=getTarget(cur);
+    var clone=t.cloneNode(true);
+    clone.querySelectorAll('[contenteditable]').forEach(function(c){c.removeAttribute('contenteditable');});
+    clone.querySelectorAll('.on').forEach(function(c){c.classList.remove('on');});
+    if(clone.hasAttribute('contenteditable'))clone.removeAttribute('contenteditable');
+    clone.classList&&clone.classList.remove('on');
+    t.parentNode.insertBefore(clone,t.nextSibling);
+    save();
+  }
+  // Google Fontダイナミックロード
+  var loadedFonts={};
+  function loadFont(name){
+    if(!name||name==='inherit'||loadedFonts[name])return;
+    loadedFonts[name]=true;
+    var lk=document.createElement('link');lk.rel='stylesheet';
+    lk.href='https://fonts.googleapis.com/css2?family='+name.replace(/ /g,'+')+':wght@400;700;900&display=swap';
+    document.head.appendChild(lk);
+  }
 
   /* ─ 5. テキストパネル ─────────────────────────────────────── */
   function buildText(el){
@@ -214,16 +263,16 @@ export default function AdminClient() {
     ci.addEventListener('input',function(){el.style.color=ci.value;cl.textContent=ci.value;});
     cr.appendChild(ci);cr.appendChild(cl);pB.appendChild(cr);
 
-    // フォント
+    // フォント (14種類)
     pB.appendChild(lbl('フォント'));
     var fs=document.createElement('select');
     fs.style.cssText='width:100%;padding:5px 7px;border:1px solid #E2E8F0;border-radius:6px;font-size:11px;background:#fff;color:#111;';
-    ['inherit','Noto Sans JP','Noto Serif JP','M PLUS Rounded 1c','Zen Kaku Gothic New','Shippori Mincho'].forEach(function(f){
-      var o=document.createElement('option');o.value=f;o.textContent=f==='inherit'?'デフォルト':f;
-      if(f!=='inherit'&&cs.fontFamily.indexOf(f.split(' ')[0])>=0)o.selected=true;
+    [['inherit','デフォルト'],['Noto Sans JP','Noto Sans JP'],['Noto Serif JP','Noto Serif JP'],['M PLUS Rounded 1c','M PLUS 丸ゴシック'],['Zen Kaku Gothic New','Zen 角ゴシック'],['Shippori Mincho','しっぽり明朝'],['BIZ UDPGothic','BIZ UDゴシック'],['BIZ UDPMincho','BIZ UD明朝'],['Kaisei Decol','Kaisei Decol'],['Dela Gothic One','Dela Gothic (強調)'],['Yomogi','Yomogi (手書き)'],['Hachi Maru Pop','ハチマルポップ'],['RocknRoll One','RocknRoll One'],['Reggae One','Reggae One']].forEach(function(f){
+      var o=document.createElement('option');o.value=f[0];o.textContent=f[1];
+      if(f[0]!=='inherit'&&cs.fontFamily.indexOf(f[0].split(' ')[0])>=0)o.selected=true;
       fs.appendChild(o);
     });
-    fs.addEventListener('change',function(){el.style.fontFamily=fs.value==='inherit'?'':fs.value;});
+    fs.addEventListener('change',function(){loadFont(fs.value);el.style.fontFamily=fs.value==='inherit'?'':fs.value;});
     pB.appendChild(fs);
 
     // 行間
@@ -234,6 +283,25 @@ export default function AdminClient() {
     lhr.appendChild(lhd);
     lhr.appendChild(numBtn('+',function(){lhv=+(lhv+0.1).toFixed(1);el.style.lineHeight=lhv;lhd.textContent=lhv.toFixed(1);}));
     pB.appendChild(lhr);
+
+    // 背景色
+    pB.appendChild(lbl('背景色'));
+    var bgr=rw();
+    var bgi=document.createElement('input');bgi.type='color';bgi.value=rgb2hex(cs.backgroundColor);
+    bgi.style.cssText='width:34px;height:28px;border:1px solid #E2E8F0;border-radius:6px;cursor:pointer;padding:2px;';
+    var bgl=document.createElement('span');bgl.style.cssText='font-size:11px;font-family:monospace;color:#374151;';bgl.textContent=bgi.value;
+    bgi.addEventListener('input',function(){el.style.backgroundColor=bgi.value;bgl.textContent=bgi.value;});
+    bgr.appendChild(bgi);bgr.appendChild(bgl);pB.appendChild(bgr);
+
+    // リンクURL (A/BUTTONのとき表示)
+    if(el.tagName==='A'||el.tagName==='BUTTON'){
+      pB.appendChild(lbl('リンクURL'));
+      var li=document.createElement('input');li.type='url';
+      li.value=el.getAttribute('href')||'';li.placeholder='https://example.com';
+      li.style.cssText='width:100%;padding:5px 7px;border:1px solid #E2E8F0;border-radius:6px;font-size:10px;color:#111;box-sizing:border-box;';
+      li.addEventListener('input',function(){el.setAttribute('href',li.value);});
+      pB.appendChild(li);
+    }
   }
 
   /* ─ 6. 画像パネル ────────────────────────────────────────── */
@@ -278,13 +346,11 @@ export default function AdminClient() {
     if(!el.textContent.trim())return;
     for(var i=0;i<el.children.length;i++){if(SKIP.indexOf(el.children[i].tagName)>=0)return;}
     el.classList.add('ce');
-    el.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();openText(el);});
     el.addEventListener('keydown',function(e){if(e.key==='Escape'){e.preventDefault();discard();}});
   });
   document.querySelectorAll('img').forEach(function(img){
     if(img.closest('#__ce_panel'))return;
     img.classList.add('ce-img');
-    img.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();openImg(img);});
   });
 
   /* ─ 9. パネル外クリックで保存 ──────────────────────────── */
