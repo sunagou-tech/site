@@ -100,34 +100,53 @@ export async function POST(req: NextRequest) {
 【差し替え対象のHTML（CSSとJSはプレースホルダで省略済み）】
 ${stripped}`;
 
-  // ── Gemini API 呼び出し ───────────────────────────────────
+  // ── Gemini API 呼び出し（503時は最大3回リトライ）────────────
   let raw = "";
-  try {
-    const res = await fetch(
-      `${GEMINI_BASE}/${MODEL}:generateContent?key=${API_KEY}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          system_instruction: { parts: [{ text: systemPrompt }] },
-          contents: [{ role: "user", parts: [{ text: userPrompt }] }],
-          generationConfig: {
-            maxOutputTokens: 8192,
-            temperature: 0.4,
-            thinkingConfig: { thinkingBudget: 0 },
-          },
-        }),
-        signal: AbortSignal.timeout(50000),
+  const MAX_RETRY = 3;
+  let lastErr = "";
+  for (let attempt = 1; attempt <= MAX_RETRY; attempt++) {
+    try {
+      const res = await fetch(
+        `${GEMINI_BASE}/${MODEL}:generateContent?key=${API_KEY}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            system_instruction: { parts: [{ text: systemPrompt }] },
+            contents: [{ role: "user", parts: [{ text: userPrompt }] }],
+            generationConfig: {
+              maxOutputTokens: 8192,
+              temperature: 0.4,
+              thinkingConfig: { thinkingBudget: 0 },
+            },
+          }),
+          signal: AbortSignal.timeout(50000),
+        }
+      );
+      if (res.status === 503 || res.status === 429) {
+        lastErr = `Gemini APIエラー (attempt ${attempt}): ${res.status}`;
+        if (attempt < MAX_RETRY) {
+          await new Promise(r => setTimeout(r, attempt * 3000)); // 3s, 6s
+          continue;
+        }
+        const errText = await res.text();
+        return NextResponse.json({ error: `Gemini APIが混雑しています。しばらく待ってから再試行してください。` }, { status: 503 });
       }
-    );
-    if (!res.ok) {
-      const err = await res.text();
-      return NextResponse.json({ error: `Gemini APIエラー: ${err.slice(0, 200)}` }, { status: 503 });
+      if (!res.ok) {
+        const err = await res.text();
+        return NextResponse.json({ error: `Gemini APIエラー: ${err.slice(0, 200)}` }, { status: 503 });
+      }
+      const data = await res.json();
+      raw = data.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
+      break; // 成功
+    } catch (e) {
+      lastErr = e instanceof Error ? e.message : "生成失敗";
+      if (attempt < MAX_RETRY) {
+        await new Promise(r => setTimeout(r, attempt * 3000));
+        continue;
+      }
+      return NextResponse.json({ error: lastErr }, { status: 500 });
     }
-    const data = await res.json();
-    raw = data.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
-  } catch (e) {
-    return NextResponse.json({ error: e instanceof Error ? e.message : "生成失敗" }, { status: 500 });
   }
 
   // ── HTMLを抽出 ────────────────────────────────────────────
