@@ -130,6 +130,8 @@ export default function SetupClient() {
   const [selectedDemo,   setSelectedDemo] = useState<DemoTemplate | null>(null);
   const [demoBizName,    setDemoBizName]  = useState("");
   const [demoBizDesc,    setDemoBizDesc]  = useState("");
+  const [htmlEditorOpen, setHtmlEditorOpen] = useState(false);
+  const [editingHtml,    setEditingHtml]    = useState("");
 
   const [chatMessages,   setChatMessages] = useState<ChatMessage[]>([]);
   const [chatInput,      setChatInput]    = useState("");
@@ -551,6 +553,15 @@ export default function SetupClient() {
       a.click();
     };
 
+    const openEditor = () => {
+      setEditingHtml(htmlContent);
+      setHtmlEditorOpen(true);
+    };
+
+    const applyEdit = () => {
+      setHtmlContent(editingHtml);
+    };
+
     return (
       <div style={{ height: "100vh", display: "flex", flexDirection: "column", background: "#0D0D0D", fontFamily: "'Noto Sans JP', sans-serif" }}>
         <FontLinks />
@@ -576,6 +587,18 @@ export default function SetupClient() {
               <MsIcon name="refresh" size={14} color="#A1A1AA" />
               やり直す
             </button>
+            {/* 編集パネル トグル */}
+            <button
+              onClick={() => htmlEditorOpen ? setHtmlEditorOpen(false) : openEditor()}
+              className="flex items-center gap-1.5 text-xs px-3 py-2 rounded-lg transition-colors"
+              style={{
+                color: htmlEditorOpen ? "#FFFFFF" : "#A1A1AA",
+                border: `1px solid ${htmlEditorOpen ? "#6366F1" : "#3F3F46"}`,
+                background: htmlEditorOpen ? "#4F46E5" : "transparent",
+              }}>
+              <MsIcon name="edit" size={14} color={htmlEditorOpen ? "#FFFFFF" : "#A1A1AA"} />
+              HTMLを編集
+            </button>
             <button onClick={downloadHtml}
               className="flex items-center gap-2 text-sm font-semibold px-4 py-2 rounded-xl transition-all"
               style={{ background: "#FFFFFF", color: "#111827" }}
@@ -587,15 +610,67 @@ export default function SetupClient() {
           </div>
         </div>
 
-        {/* iframeプレビュー */}
-        <div style={{ flex: 1, position: "relative", overflow: "hidden" }}>
-          {blobUrl && (
-            <iframe
-              src={blobUrl}
-              style={{ width: "100%", height: "100%", border: "none", display: "block" }}
-              title="生成されたLP"
-            />
+        {/* メインエリア: エディタ + プレビュー */}
+        <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
+
+          {/* 左: HTMLエディタパネル */}
+          {htmlEditorOpen && (
+            <div style={{
+              width: 480, flexShrink: 0, display: "flex", flexDirection: "column",
+              background: "#1E1E2E", borderRight: "1px solid #27272A",
+            }}>
+              {/* エディタヘッダ */}
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between",
+                padding: "8px 14px", background: "#16161E", borderBottom: "1px solid #27272A", flexShrink: 0 }}>
+                <span className="text-xs font-mono" style={{ color: "#7C7C9E" }}>index.html</span>
+                <button
+                  onClick={applyEdit}
+                  className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg transition-all"
+                  style={{ background: "#4F46E5", color: "#FFFFFF" }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "#4338CA"; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "#4F46E5"; }}>
+                  <MsIcon name="check" size={12} color="#FFFFFF" />
+                  適用してプレビュー更新
+                </button>
+              </div>
+
+              {/* テキストエリア */}
+              <textarea
+                value={editingHtml}
+                onChange={e => setEditingHtml(e.target.value)}
+                spellCheck={false}
+                style={{
+                  flex: 1, resize: "none", border: "none", outline: "none",
+                  background: "#1E1E2E", color: "#CDD6F4",
+                  fontFamily: "'JetBrains Mono', 'Fira Code', 'Consolas', monospace",
+                  fontSize: 12, lineHeight: 1.7, padding: "14px 16px",
+                  tabSize: 2,
+                }}
+              />
+
+              {/* エディタフッタ */}
+              <div style={{ padding: "6px 14px", background: "#16161E", borderTop: "1px solid #27272A",
+                display: "flex", alignItems: "center", gap: 12 }}>
+                <span className="text-[10px]" style={{ color: "#585878" }}>
+                  {editingHtml.split("\n").length} 行 / {editingHtml.length.toLocaleString()} 文字
+                </span>
+                <span className="text-[10px]" style={{ color: "#585878" }}>
+                  ※ 編集後「適用してプレビュー更新」を押してください
+                </span>
+              </div>
+            </div>
           )}
+
+          {/* 右: iframeプレビュー */}
+          <div style={{ flex: 1, position: "relative", overflow: "hidden" }}>
+            {blobUrl && (
+              <iframe
+                src={blobUrl}
+                style={{ width: "100%", height: "100%", border: "none", display: "block" }}
+                title="生成されたLP"
+              />
+            )}
+          </div>
         </div>
       </div>
     );
