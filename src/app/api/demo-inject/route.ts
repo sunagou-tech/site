@@ -7,7 +7,7 @@ export const maxDuration = 60;
 const API_KEY     = process.env.GEMINI_API_KEY ?? "";
 const GEMINI_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
 // 503/429 時はフォールバックモデルに自動切り替え
-const MODELS = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-2.0-flash-lite"];
+const MODELS = ["gemini-2.5-flash", "gemini-2.5-pro"];
 
 // ── CSSとJSを抜き出して「テキストだけのHTML」を作る ─────────────
 function stripStyleScript(html: string): {
