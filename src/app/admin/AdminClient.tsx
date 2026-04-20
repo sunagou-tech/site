@@ -66,6 +66,7 @@ export default function AdminClient() {
   const [siteHtml,    setSiteHtml]    = useState("");
   const [htmlBlobUrl, setHtmlBlobUrl] = useState("");
   const latestHtmlRef = useRef("");
+  const htmlIframeRef = useRef<HTMLIFrameElement>(null);
 
   // HTML → Blob URL（右パネル付きインライン編集）
   useEffect(() => {
@@ -73,6 +74,29 @@ export default function AdminClient() {
     const script = `<script>
 (function(){
   if(document.getElementById('__ce_panel'))return;
+
+  /* ─ 0. 親との画像同期 ─────────────────────────────────────── */
+  var pendingUrl='';
+  function applyImg(img,url){
+    img.src=url;img.style.visibility='';img.style.display='';
+    img.classList.remove('on');
+    window.parent.postMessage({type:'html-update',html:getCleanHtml()},'*');
+    window.parent.postMessage({type:'clear-picked-url'},'*');
+    pendingUrl='';
+  }
+  window.addEventListener('message',function(ev){
+    if(!ev.data)return;
+    if(ev.data.type==='set-pending-url'){pendingUrl=ev.data.url||'';}
+    if(ev.data.type==='drop-image'){
+      var el=document.elementFromPoint(ev.data.x,ev.data.y);
+      for(var i=0;i<5&&el&&el!==document.body;i++){
+        if(el.classList&&el.classList.contains('ce-img')){applyImg(el,ev.data.url);return;}
+        var ci=el.querySelector&&el.querySelector('.ce-img');
+        if(ci){applyImg(ci,ev.data.url);return;}
+        el=el.parentElement;
+      }
+    }
+  });
 
   /* ─ 1. ナビゲーション防止 ──────────────────────────────────── */
   document.addEventListener('click',function(e){
@@ -181,9 +205,16 @@ export default function AdminClient() {
   }
   function deleteEl(){
     if(!cur)return;
-    if(cur&&!isImg)cur.contentEditable='false';
     cur.classList.remove('on');
-    var t=isImg?cur:getTarget(cur);
+    if(isImg){
+      // 画像は非表示（ドラッグ&ドロップで復元可能）
+      cur.style.visibility='hidden';
+      panel.style.display='none';pB.innerHTML='';cur=null;origHtml='';isImg=false;
+      window.parent.postMessage({type:'html-update',html:getCleanHtml()},'*');
+      return;
+    }
+    cur.contentEditable='false';
+    var t=getTarget(cur);
     panel.style.display='none';pB.innerHTML='';cur=null;origHtml='';isImg=false;
     t.remove();
     window.parent.postMessage({type:'html-update',html:getCleanHtml()},'*');
@@ -332,6 +363,8 @@ export default function AdminClient() {
     pH.textContent='✏️ テキスト編集';buildText(el);panel.style.display='flex';
   }
   function openImg(img){
+    // ライブラリから画像が選択済みならそのまま適用
+    if(pendingUrl){applyImg(img,pendingUrl);return;}
     if(cur===img)return;if(cur)save();
     cur=img;isImg=true;img.classList.add('on');
     pH.textContent='🖼️ 画像編集';buildImg(img);panel.style.display='flex';
@@ -372,14 +405,24 @@ export default function AdminClient() {
   useEffect(() => {
     const handler = (e: MessageEvent) => {
       if (e.data?.type === "html-update") {
-        // siteHtmlは更新しない（更新するとblob URLが再生成されiframeがリロードされ白くなる）
         latestHtmlRef.current = e.data.html;
         try { sessionStorage.setItem("site-html", e.data.html); } catch {}
+      }
+      if (e.data?.type === "clear-picked-url") {
+        setPickedUrl(null);
       }
     };
     window.addEventListener("message", handler);
     return () => window.removeEventListener("message", handler);
   }, []);
+
+  // pickedUrl をiframeに同期（HTMLモードでクリック配置を可能にする）
+  useEffect(() => {
+    if (!htmlMode) return;
+    htmlIframeRef.current?.contentWindow?.postMessage(
+      { type: "set-pending-url", url: pickedUrl ?? "" }, "*"
+    );
+  }, [pickedUrl, htmlMode]);
 
   // Load from sessionStorage (HTML mode) or localStorage (block mode) on mount
   useEffect(() => {
@@ -1003,8 +1046,10 @@ export default function AdminClient() {
                         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
                           {uploadedImages.map((img) => (
                             <div key={img.id}
+                              draggable
+                              onDragStart={e => { e.dataTransfer.setData("text/plain", img.url); e.dataTransfer.effectAllowed = "copy"; setPickedUrl(img.url); }}
                               onClick={() => setPickedUrl(pickedUrl === img.url ? null : img.url)}
-                              style={{ position: "relative", borderRadius: 8, overflow: "hidden", border: pickedUrl === img.url ? "2.5px solid #4F46E5" : "1px solid #E2E8F0", background: "#F8FAFC", cursor: "pointer", boxShadow: pickedUrl === img.url ? "0 0 0 3px #C7D2FE" : "none" }}>
+                              style={{ position: "relative", borderRadius: 8, overflow: "hidden", border: pickedUrl === img.url ? "2.5px solid #4F46E5" : "1px solid #E2E8F0", background: "#F8FAFC", cursor: "grab", boxShadow: pickedUrl === img.url ? "0 0 0 3px #C7D2FE" : "none" }}>
                               {pickedUrl === img.url && (
                                 <div style={{ position: "absolute", top: 4, right: 4, zIndex: 10, background: "#4F46E5", borderRadius: "50%", width: 16, height: 16, display: "flex", alignItems: "center", justifyContent: "center" }}>
                                   <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><polyline points="1.5,5 3.8,7.5 8.5,2" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
@@ -1030,7 +1075,7 @@ export default function AdminClient() {
                           ))}
                         </div>
                         <p style={{ fontSize: 10, color: "#94A3B8", textAlign: "center", margin: "4px 0 0" }}>
-                          クリックで選択 → プレビューの画像エリアをクリックで配置
+                          クリック選択 or ドラッグ → プレビューの画像にドロップ
                         </p>
                       </>
                     )}
@@ -1193,10 +1238,23 @@ export default function AdminClient() {
                 </div>
               </div>
               <iframe
+                ref={htmlIframeRef}
                 key={htmlBlobUrl}
                 src={htmlBlobUrl}
                 style={{ flex: 1, border: "none", display: "block" }}
                 title="サイトプレビュー（クリックして編集）"
+                onDragOver={e => { e.preventDefault(); (e.dataTransfer as DataTransfer).dropEffect = "copy"; }}
+                onDrop={e => {
+                  e.preventDefault();
+                  const url = e.dataTransfer.getData("text/plain");
+                  if (!url || !htmlIframeRef.current) return;
+                  const rect = htmlIframeRef.current.getBoundingClientRect();
+                  const scrollY = htmlIframeRef.current.contentWindow?.scrollY ?? 0;
+                  htmlIframeRef.current.contentWindow?.postMessage(
+                    { type: "drop-image", url, x: e.clientX - rect.left, y: e.clientY - rect.top + scrollY }, "*"
+                  );
+                  setPickedUrl(null);
+                }}
               />
             </div>
           ) : deviceMode === "pc" ? (
