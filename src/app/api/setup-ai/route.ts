@@ -540,7 +540,7 @@ function buildSectionsFromData(data: SectionData): SectionBlock[] {
       heading: data.problem.heading ?? "",
       subheading: "",
       items: data.problem.items.map((item) => ({
-        icon: { kind: "emoji" as const, value: "😔" },
+        icon: { kind: "emoji" as const, value: "" },
         title: item.title,
         desc: item.desc,
       })),
