@@ -290,10 +290,10 @@ export default function SetupClient() {
       if (!res.ok || data.error) throw new Error(data.error ?? "生成に失敗しました");
 
       setGenPct(100);
-      setBusinessName(demoBizName);
       setTimeout(() => {
-        setHtmlContent(data.html!);
-        setPhase("html-preview");
+        localStorage.setItem("site-html", data.html!);
+        localStorage.setItem("site-mode", "html");
+        router.push("/admin");
       }, 800);
     } catch (e) {
       setDemoError(e instanceof Error ? e.message : "生成に失敗しました");
