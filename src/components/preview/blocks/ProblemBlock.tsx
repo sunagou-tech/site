@@ -48,9 +48,9 @@ export default function ProblemBlockComponent({ block, config, onChange }: Props
             const hasIcon = iconValue.value !== "";
 
             return (
-              <div key={i} className="bg-white rounded-2xl p-8 shadow-2xl flex flex-col gap-4">
-                {/* ─── アイコンエリア ─── */}
-                {hasIcon ? (
+              <div key={i} className="relative bg-white rounded-2xl p-8 shadow-2xl flex flex-col gap-4 group/card">
+                {/* ─── アイコンエリア（フローに影響しない） ─── */}
+                {hasIcon && (
                   <div className="group/icon relative inline-flex self-start">
                     <IconDisplay
                       icon={iconValue}
@@ -73,23 +73,24 @@ export default function ProblemBlockComponent({ block, config, onChange }: Props
                       </button>
                     )}
                   </div>
-                ) : (
-                  isEditing && (
-                    <button
-                      type="button"
-                      className="w-10 h-10 rounded-xl flex items-center justify-center border border-dashed border-gray-200 text-gray-300 hover:border-indigo-300 hover:text-indigo-400 transition-colors text-sm self-start"
-                      onClick={() => updateItem(i, "icon", { kind: "emoji", value: "❗", size: 36 })}
-                      title="アイコンを追加"
-                    >
-                      +
-                    </button>
-                  )
                 )}
 
                 <EditableText tag="h3" value={item.title} onChange={(v) => updateItem(i, "title", v)}
                   className={`text-base font-bold text-gray-900 block ${fontClass}`} />
                 <EditableText tag="p" value={item.desc} onChange={(v) => updateItem(i, "desc", v)}
                   multiline className="text-sm text-gray-500 leading-relaxed block" />
+
+                {/* アイコンなし時の追加ボタン（絶対配置 → レイアウトに影響しない） */}
+                {!hasIcon && isEditing && (
+                  <button
+                    type="button"
+                    className="absolute top-3 right-3 w-7 h-7 rounded-lg flex items-center justify-center border border-dashed border-gray-300 text-gray-300 hover:border-indigo-400 hover:text-indigo-400 transition-colors text-xs opacity-0 group-hover/card:opacity-100"
+                    onClick={() => updateItem(i, "icon", { kind: "emoji", value: "❗", size: 36 })}
+                    title="アイコンを追加"
+                  >
+                    +
+                  </button>
+                )}
               </div>
             );
           })}

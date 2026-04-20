@@ -10,6 +10,7 @@ interface Props { block: HeroCenteredBlock; config: SiteConfig; onChange: (b: He
 export default function HeroCenteredBlockComponent({ block, config, onChange }: Props) {
   const isEditing = useEditing();
   const u = (patch: Partial<HeroCenteredBlock>) => onChange({ ...block, ...patch });
+  const hasBtn2 = !!block.buttonText2?.trim();
   const fontClass = config.fontFamily === "serif" ? "font-serif" : config.fontFamily === "mono" ? "font-mono" : "font-sans";
 
   return (
@@ -57,14 +58,28 @@ export default function HeroCenteredBlockComponent({ block, config, onChange }: 
             onUrlChange={(v) => u({ buttonUrl: v })}
             className="px-7 py-3.5 rounded-full text-sm font-bold shadow-lg hover:opacity-90 transition-opacity"
             style={{ backgroundColor: config.accentColor, color: config.primaryColor }}
+            onDelete={isEditing ? () => u({ buttonText: "" }) : undefined}
           />
-          <LinkableButton
-            label={block.buttonText2}
-            url={block.buttonUrl2 ?? ""}
-            onLabelChange={(v) => u({ buttonText2: v })}
-            onUrlChange={(v) => u({ buttonUrl2: v })}
-            className="px-7 py-3.5 rounded-full text-sm font-medium border border-white/40 text-white hover:bg-white/10 transition-colors"
-          />
+          {/* 2nd button: hidden when empty (non-editing), add button when editing */}
+          {hasBtn2 ? (
+            <LinkableButton
+              label={block.buttonText2}
+              url={block.buttonUrl2 ?? ""}
+              onLabelChange={(v) => u({ buttonText2: v })}
+              onUrlChange={(v) => u({ buttonUrl2: v })}
+              className="px-7 py-3.5 rounded-full text-sm font-medium border border-white/40 text-white hover:bg-white/10 transition-colors"
+              onDelete={isEditing ? () => u({ buttonText2: "", buttonUrl2: "" }) : undefined}
+            />
+          ) : (
+            isEditing && (
+              <button
+                onClick={() => u({ buttonText2: "詳しく見る", buttonUrl2: "#features" })}
+                className="px-5 py-3 rounded-full text-xs font-medium border border-dashed border-white/30 text-white/40 hover:border-white/60 hover:text-white/70 transition-colors"
+              >
+                + ボタンを追加
+              </button>
+            )
+          )}
         </div>
       </div>
     </section>

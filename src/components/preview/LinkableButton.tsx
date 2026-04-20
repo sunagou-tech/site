@@ -12,6 +12,7 @@ interface Props {
   onUrlChange: (v: string) => void;
   className?: string;
   style?: React.CSSProperties;
+  onDelete?: () => void;
 }
 
 const QUICK_LINKS = [
@@ -22,7 +23,7 @@ const QUICK_LINKS = [
   { label: "お問い合わせ", url: "/contact" },
 ];
 
-export default function LinkableButton({ label, url, onLabelChange, onUrlChange, className = "", style }: Props) {
+export default function LinkableButton({ label, url, onLabelChange, onUrlChange, className = "", style, onDelete }: Props) {
   const [editing, setEditing] = useState(false);
   const isEditing = useEditing();
 
@@ -56,6 +57,17 @@ export default function LinkableButton({ label, url, onLabelChange, onUrlChange,
       >
         <Link2 size={9} className="text-white" />
       </button>
+
+      {/* Delete button */}
+      {onDelete && (
+        <button
+          onClick={(e) => { e.stopPropagation(); onDelete(); }}
+          className="absolute -top-2.5 -left-2.5 w-5 h-5 rounded-full bg-red-500 text-white flex items-center justify-center z-20 shadow-md transition-all opacity-0 group-hover/lbtn:opacity-100 text-[9px] leading-none"
+          title="ボタンを削除"
+        >
+          ✕
+        </button>
+      )}
 
       {/* URL editor popover */}
       {editing && (
