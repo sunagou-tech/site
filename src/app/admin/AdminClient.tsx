@@ -66,149 +66,110 @@ export default function AdminClient() {
   const [siteHtml,    setSiteHtml]    = useState("");
   const [htmlBlobUrl, setHtmlBlobUrl] = useState("");
 
-  // HTML → Blob URL（フローティング編集ポップアップ注入）
+  // HTML → Blob URL（インライン contenteditable 編集）
   useEffect(() => {
     if (!siteHtml) return;
     const script = `<script>
 (function(){
-  // ── ホバー用CSS（レイアウト非破壊）─────────────────────────────
-  var style = document.createElement('style');
-  style.textContent =
-    '.ce-hover{outline:2px dashed rgba(79,70,229,0.5)!important;cursor:pointer!important;}' +
-    '.ce-selected{outline:2px solid #4F46E5!important;}';
-  document.head.appendChild(style);
-
-  // ── アンカー・フォームのデフォルト動作を無効化 ─────────────────
-  document.addEventListener('click', function(e){
-    var t = e.target;
-    while(t && t.tagName){
-      if(t.tagName==='A'||t.tagName==='FORM'){ e.preventDefault(); break; }
-      t = t.parentNode;
+  /* ─ 1. リンク・フォームのナビ防止 ─────────────────────────── */
+  document.addEventListener('click',function(e){
+    var t=e.target;
+    while(t&&t.tagName){
+      if(t.tagName==='A'||t.tagName==='FORM'){e.preventDefault();break;}
+      t=t.parentNode;
     }
-  }, true);
+  },true);
 
-  // ── フローティングポップアップ ─────────────────────────────────
-  var activeEl = null;
-  var popup = null;
+  /* ─ 2. CSS（box-shadow のみ使用 = レイアウト非破壊） ────────── */
+  var st=document.createElement('style');
+  st.textContent=
+    '.ce{cursor:text!important}' +
+    '.ce:hover{box-shadow:0 0 0 2px rgba(79,70,229,0.45)!important;' +
+      'background:rgba(79,70,229,0.03)!important}' +
+    '.ce.on{box-shadow:0 0 0 2px #4F46E5!important;' +
+      'background:rgba(79,70,229,0.05)!important;caret-color:#4F46E5!important}';
+  document.head.appendChild(st);
 
-  function removePopup(){
-    if(popup){ popup.remove(); popup = null; }
-    if(activeEl){ activeEl.classList.remove('ce-selected'); activeEl = null; }
+  /* ─ 3. 状態 ──────────────────────────────────────────────── */
+  var cur=null,origHtml='',btns=null;
+
+  function moveBtns(){
+    if(!cur||!btns)return;
+    var r=cur.getBoundingClientRect();
+    btns.style.top=Math.max(4,r.top-28)+'px';
+    btns.style.left=Math.max(4,r.right-54)+'px';
   }
 
-  function openPopup(el){
-    removePopup();
-    activeEl = el;
-    el.classList.add('ce-selected');
-
-    var rect = el.getBoundingClientRect();
-    var popW = Math.max(rect.width, 260);
-    var popLeft = Math.min(rect.left, window.innerWidth - popW - 8);
-    if(popLeft < 4) popLeft = 4;
-    var spaceBelow = window.innerHeight - rect.bottom;
-    var popTop = spaceBelow > 130 ? rect.bottom + 6 : rect.top - 130;
-    if(popTop < 4) popTop = 4;
-
-    popup = document.createElement('div');
-    popup.id = '__ce_popup';
-    popup.style.cssText =
-      'position:fixed;z-index:2147483647;' +
-      'top:' + popTop + 'px;left:' + popLeft + 'px;width:' + popW + 'px;' +
-      'background:#fff;border:2px solid #4F46E5;border-radius:8px;' +
-      'box-shadow:0 4px 24px rgba(79,70,229,0.25);overflow:hidden;';
-
-    var ta = document.createElement('textarea');
-    ta.value = el.innerText;
-    ta.style.cssText =
-      'display:block;width:100%;min-height:64px;max-height:200px;padding:10px;' +
-      'border:none;outline:none;resize:vertical;font:inherit;font-size:13px;' +
-      'color:#111;background:#fff;box-sizing:border-box;line-height:1.5;';
-
-    var bar = document.createElement('div');
-    bar.style.cssText =
-      'display:flex;gap:6px;padding:7px 8px;background:#EEF2FF;' +
-      'border-top:1px solid #C7D2FE;';
-
-    var btnOk = document.createElement('button');
-    btnOk.textContent = '✓ 確定（Enter）';
-    btnOk.style.cssText =
-      'flex:1;padding:5px 8px;background:#4F46E5;color:#fff;border:none;' +
-      'border-radius:5px;cursor:pointer;font-size:11px;font-weight:700;';
-
-    var btnCancel = document.createElement('button');
-    btnCancel.textContent = 'キャンセル';
-    btnCancel.style.cssText =
-      'padding:5px 8px;background:transparent;color:#6B7280;' +
-      'border:1px solid #D1D5DB;border-radius:5px;cursor:pointer;font-size:11px;';
-
-    bar.appendChild(btnOk); bar.appendChild(btnCancel);
-    popup.appendChild(ta); popup.appendChild(bar);
-    document.body.appendChild(popup);
-    ta.focus(); ta.select();
-
-    function commit(){
-      // テキストノードのみ置換（HTMLタグ構造はそのまま）
-      var newText = ta.value;
-      var nodes = el.childNodes;
-      var replaced = false;
-      for(var i=0;i<nodes.length;i++){
-        if(nodes[i].nodeType===3 && nodes[i].textContent.trim()){
-          nodes[i].textContent = newText;
-          replaced = true;
-          break;
-        }
-      }
-      if(!replaced) el.innerText = newText;
-      removePopup();
-      window.parent.postMessage({type:'html-update',html:document.documentElement.outerHTML},'*');
-    }
-
-    btnOk.addEventListener('mousedown', function(e){ e.preventDefault(); commit(); });
-    btnCancel.addEventListener('mousedown', function(e){ e.preventDefault(); removePopup(); });
-    ta.addEventListener('keydown', function(e){
-      if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); commit(); }
-      if(e.key==='Escape'){ removePopup(); }
-    });
-
-    // ポップアップ外クリックで閉じる
-    setTimeout(function(){
-      function outsideClick(e){
-        if(popup && !popup.contains(e.target) && e.target !== el){
-          removePopup();
-          document.removeEventListener('mousedown', outsideClick);
-        }
-      }
-      document.addEventListener('mousedown', outsideClick);
-    }, 200);
+  function commit(){
+    if(!cur)return;
+    cur.contentEditable='false';
+    cur.classList.remove('on');
+    if(btns){btns.remove();btns=null;}
+    cur=null;origHtml='';
+    window.parent.postMessage({type:'html-update',html:document.documentElement.outerHTML},'*');
   }
 
-  // ── テキスト要素を全て検索してホバー+クリック設定 ───────────────
-  var BLOCK = ['DIV','SECTION','ARTICLE','ASIDE','HEADER','FOOTER','NAV',
-               'UL','OL','TABLE','TBODY','TR','FORM','IFRAME'];
-  var sel = 'h1,h2,h3,h4,h5,h6,p,a,button,li,td,th,label,span,dt,dd,figcaption,blockquote,small,strong,em';
+  function cancel(){
+    if(!cur)return;
+    cur.innerHTML=origHtml;
+    cur.contentEditable='false';
+    cur.classList.remove('on');
+    if(btns){btns.remove();btns=null;}
+    cur=null;origHtml='';
+  }
 
-  document.querySelectorAll(sel).forEach(function(el){
-    if(!el.textContent.trim()) return;
-    // ブロック要素の子を含むコンテナはスキップ
+  function mkBtn(ch,bg,fn){
+    var b=document.createElement('button');
+    b.textContent=ch;
+    b.style.cssText=
+      'width:22px;height:22px;border:none;border-radius:50%;cursor:pointer;' +
+      'background:'+bg+';color:#fff;font-size:12px;font-weight:700;' +
+      'box-shadow:0 2px 6px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;';
+    b.addEventListener('mousedown',function(e){e.preventDefault();e.stopPropagation();fn();});
+    return b;
+  }
+
+  function open(el){
+    if(cur===el)return;
+    if(cur)commit();
+    cur=el;origHtml=el.innerHTML;
+    el.contentEditable='true';
+    el.classList.add('on');
+    el.focus();
+
+    btns=document.createElement('div');
+    btns.style.cssText='position:fixed;z-index:2147483647;display:flex;gap:3px;pointer-events:all;';
+    moveBtns();
+    btns.appendChild(mkBtn('✓','#4F46E5',commit));
+    btns.appendChild(mkBtn('✕','#EF4444',cancel));
+    document.body.appendChild(btns);
+  }
+
+  /* ─ 4. 対象要素 ───────────────────────────────────────────── */
+  var SKIP=['DIV','SECTION','ARTICLE','ASIDE','HEADER','FOOTER',
+            'NAV','UL','OL','TABLE','TBODY','TR','FORM'];
+  document.querySelectorAll(
+    'h1,h2,h3,h4,h5,h6,p,li,td,th,label,dt,dd,figcaption,span,small,strong,em,a,button'
+  ).forEach(function(el){
+    if(!el.textContent.trim())return;
     for(var i=0;i<el.children.length;i++){
-      if(BLOCK.indexOf(el.children[i].tagName)>=0) return;
+      if(SKIP.indexOf(el.children[i].tagName)>=0)return;
     }
-    // ポップアップ自身はスキップ
-    if(el.closest && el.closest('#__ce_popup')) return;
-
-    el.addEventListener('mouseenter', function(){
-      if(el !== activeEl) el.classList.add('ce-hover');
+    el.classList.add('ce');
+    el.addEventListener('click',function(e){
+      e.preventDefault();e.stopPropagation();open(el);
     });
-    el.addEventListener('mouseleave', function(){
-      el.classList.remove('ce-hover');
-    });
-    el.addEventListener('click', function(e){
-      e.preventDefault();
-      e.stopPropagation();
-      el.classList.remove('ce-hover');
-      openPopup(el);
+    el.addEventListener('keydown',function(e){
+      if(e.key==='Escape'){e.preventDefault();cancel();}
     });
   });
+
+  /* ─ 5. 外クリックで保存 / スクロールでボタン追従 ─────────── */
+  document.addEventListener('mousedown',function(e){
+    if(!cur)return;
+    if(!cur.contains(e.target)&&(!btns||!btns.contains(e.target)))commit();
+  });
+  document.addEventListener('scroll',moveBtns,true);
 })();
 <\/script>`;
     const injected = siteHtml.replace('</body>', script + '</body>');
