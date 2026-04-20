@@ -77,31 +77,33 @@ export default function HeroDiagonalBlockComponent({ block, config, onChange }: 
       </div>
 
       {/* Bottom-right buttons */}
-      <div className="absolute bottom-10 right-10 z-30 flex flex-col sm:flex-row items-start sm:items-center gap-3">
-        <LinkableButton
-          label={block.buttonText}
-          url={block.buttonUrl ?? ""}
-          onLabelChange={(v) => u({ buttonText: v })}
-          onUrlChange={(v) => u({ buttonUrl: v })}
-          className="inline-flex items-center gap-2 text-sm font-bold px-8 py-4 rounded-full transition-all hover:scale-105 hover:opacity-90"
-          style={{ backgroundColor: config.accentColor, color: config.primaryColor }}
-        />
-        {hasBtn2 ? (
+      <div className="absolute bottom-10 right-10 z-30 flex flex-col items-end gap-2">
+        <div className="flex flex-row items-center gap-3">
           <LinkableButton
-            label={block.buttonText2}
-            url={block.buttonUrl2 ?? ""}
-            onLabelChange={(v) => u({ buttonText2: v })}
-            onUrlChange={(v) => u({ buttonUrl2: v })}
-            className="inline-flex items-center gap-2 text-sm font-bold px-8 py-4 rounded-full border border-white/40 text-white transition-all hover:scale-105 hover:bg-white/10"
-            onDelete={isEditing ? () => u({ buttonText2: "", buttonUrl2: "" }) : undefined}
+            label={block.buttonText}
+            url={block.buttonUrl ?? ""}
+            onLabelChange={(v) => u({ buttonText: v })}
+            onUrlChange={(v) => u({ buttonUrl: v })}
+            className="inline-flex items-center gap-2 text-sm font-bold px-8 py-4 rounded-full transition-all hover:scale-105 hover:opacity-90"
+            style={{ backgroundColor: config.accentColor, color: config.primaryColor }}
+            onDelete={isEditing ? () => u({ buttonText: "" }) : undefined}
           />
-        ) : (
-          isEditing && (
-            <button onClick={() => u({ buttonText2: "詳しく見る", buttonUrl2: "#features" })}
-              className="px-5 py-3 rounded-full text-xs border border-dashed border-white/30 text-white/40 hover:border-white/60 hover:text-white/60 transition-colors">
-              + ボタンを追加
-            </button>
-          )
+          {hasBtn2 && (
+            <LinkableButton
+              label={block.buttonText2}
+              url={block.buttonUrl2 ?? ""}
+              onLabelChange={(v) => u({ buttonText2: v })}
+              onUrlChange={(v) => u({ buttonUrl2: v })}
+              className="inline-flex items-center gap-2 text-sm font-bold px-8 py-4 rounded-full border border-white/40 text-white transition-all hover:scale-105 hover:bg-white/10"
+              onDelete={isEditing ? () => u({ buttonText2: "", buttonUrl2: "" }) : undefined}
+            />
+          )}
+        </div>
+        {!hasBtn2 && isEditing && (
+          <button onClick={() => u({ buttonText2: "詳しく見る", buttonUrl2: "#features" })}
+            className="px-4 py-1.5 rounded-full text-[11px] border border-dashed border-white/25 text-white/35 hover:border-white/50 hover:text-white/60 transition-colors">
+            + ボタンを追加
+          </button>
         )}
       </div>
 
