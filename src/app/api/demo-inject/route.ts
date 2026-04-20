@@ -6,7 +6,7 @@ export const maxDuration = 60;
 
 const API_KEY     = process.env.GEMINI_API_KEY ?? "";
 const GEMINI_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
-const MODEL       = "gemini-2.0-flash";
+const MODEL       = "gemini-2.5-flash";
 
 // ── CSSとJSを抜き出して「テキストだけのHTML」を作る ─────────────
 function stripStyleScript(html: string): {
@@ -111,7 +111,11 @@ ${stripped}`;
         body: JSON.stringify({
           system_instruction: { parts: [{ text: systemPrompt }] },
           contents: [{ role: "user", parts: [{ text: userPrompt }] }],
-          generationConfig: { maxOutputTokens: 8192, temperature: 0.4 },
+          generationConfig: {
+            maxOutputTokens: 8192,
+            temperature: 0.4,
+            thinkingConfig: { thinkingBudget: 0 },
+          },
         }),
         signal: AbortSignal.timeout(50000),
       }
