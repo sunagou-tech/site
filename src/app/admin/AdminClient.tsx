@@ -750,6 +750,65 @@ export default function AdminClient() {
     setRenamingPageId(null);
   }
 
+  // ── HTMLからサイト設定を同期 ────────────────────────────────
+  function syncConfigFromHtml() {
+    if (!siteHtml) return;
+    try {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(siteHtml, "text/html");
+
+      // 1. サイト名: ロゴテキスト → <title> の順で取得
+      const logoEl = doc.querySelector("header a, .logo, .brand, .navbar-brand, .site-name, .site-title");
+      const logoText = logoEl?.textContent?.trim();
+      const pageTitle = doc.title?.trim();
+      const newTitle = (logoText && logoText.length < 30 ? logoText : null) || pageTitle || config.title;
+
+      // 2. ナビリンク: header/nav の <a> を抽出
+      const navEl = doc.querySelector("header nav, nav, header ul, .nav-links, .navbar-menu");
+      let newNavLinks = config.navLinks;
+      if (navEl) {
+        const links = Array.from(navEl.querySelectorAll("a[href]"))
+          .map(a => ({
+            id: uid(),
+            label: a.textContent.trim(),
+            url: (a.getAttribute("href") || "/"),
+          }))
+          .filter(l =>
+            l.label.length > 0 &&
+            l.label.length < 25 &&
+            !l.url.startsWith("http") &&
+            !l.url.startsWith("mailto") &&
+            !l.url.startsWith("tel") &&
+            l.url !== "#"
+          );
+        if (links.length > 0) newNavLinks = links;
+      }
+
+      // 3. メインカラー: CSSから抽出（変数 → header/nav背景色 の順）
+      let newPrimaryColor = config.primaryColor;
+      const styleEls = Array.from(doc.querySelectorAll("style"));
+      outerLoop: for (const styleEl of styleEls) {
+        const css = styleEl.textContent || "";
+        // CSS変数パターン
+        const varMatch = css.match(/(?:--primary|--primary-color|--color-primary|--brand|--main-color)[^:]*:\s*(#[0-9a-fA-F]{3,6})/);
+        if (varMatch) { newPrimaryColor = varMatch[1]; break; }
+        // header/navの背景色パターン
+        const headerRules = css.match(/(?:header|\.header|nav|\.nav|\.navbar)[^{]*\{([^}]+)\}/g) || [];
+        for (const rule of headerRules) {
+          const bgMatch = rule.match(/background(?:-color)?:\s*(#[0-9a-fA-F]{3,6})/);
+          if (bgMatch && !["#ffffff","#fff","#f8f8f8","#f9f9f9","#fafafa"].includes(bgMatch[1].toLowerCase())) {
+            newPrimaryColor = bgMatch[1];
+            break outerLoop;
+          }
+        }
+      }
+
+      updateConfig({ ...config, title: newTitle, navLinks: newNavLinks, primaryColor: newPrimaryColor });
+    } catch (e) {
+      console.error("HTML sync error:", e);
+    }
+  }
+
   // ── Publish ────────────────────────────────────────────────
   async function handlePublish() {
     if (!siteSlug) return;
@@ -978,6 +1037,20 @@ export default function AdminClient() {
                 {/* ── 設定パネル ── */}
                 {sidePanel === "settings" && (
                   <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+
+                  {/* HTMLモード同期バナー */}
+                  {htmlMode && activePageId === "home" && (
+                    <div style={{ padding: "10px 12px", background: "#FFF7ED", borderRadius: 8, border: "1px solid #FED7AA" }}>
+                      <p style={{ fontSize: 10, fontWeight: 700, color: "#C2410C", margin: "0 0 4px" }}>HTMLモードで動作中</p>
+                      <p style={{ fontSize: 10, color: "#9A3412", margin: "0 0 8px", lineHeight: 1.5 }}>
+                        サイト名・ナビ・カラーをHTMLから読み取って設定に反映します。他のページのナビが統一されます。
+                      </p>
+                      <button onClick={syncConfigFromHtml}
+                        style={{ fontSize: 11, fontWeight: 600, color: "#fff", background: "#EA580C", border: "none", borderRadius: 6, padding: "6px 14px", cursor: "pointer", width: "100%" }}>
+                        HTMLからナビ設定を同期
+                      </button>
+                    </div>
+                  )}
 
                   {/* ── ページ別設定（サブページ選択時） ── */}
                   {activePageId !== "home" && (() => {
