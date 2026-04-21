@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import {
-  defaultConfig, SiteConfig, SitePage, SectionBlock,
+  defaultConfig, SiteConfig, SitePage, SectionBlock, Article,
   uid, BLOCK_META,
 } from "@/types/site";
 import SitePreview from "@/components/preview/SitePreview";
@@ -12,7 +12,7 @@ import { EditingContext } from "@/contexts/EditingContext";
 import { ImagePickContext } from "@/contexts/ImagePickContext";
 import { publishSite, isSupabaseConfigured } from "@/lib/supabase";
 
-type SidePanel = "settings" | "blocks" | "upload" | "ai-image" | "seo";
+type SidePanel = "settings" | "blocks" | "upload" | "ai-image" | "seo" | "column";
 type DeviceMode = "pc" | "tablet" | "sp";
 interface PageTab { id: string; slug: string; title: string; isHome: boolean; }
 interface UploadedImage { id: string; name: string; url: string; uploadedAt: number; }
@@ -645,7 +645,10 @@ export default function AdminClient() {
   function getActiveConfig(): SiteConfig {
     if (activePageId === "home") return config;
     const page = config.pages.find((p) => p.id === activePageId);
-    return { ...config, sections: page?.sections ?? [] };
+    // フッターはホームと共通 — サブページのsectionsからフッターを除き、ホームのフッターを末尾に追加
+    const homeFooter = config.sections.filter((s) => s.type === "footer");
+    const pageSections = (page?.sections ?? []).filter((s) => s.type !== "footer");
+    return { ...config, sections: [...pageSections, ...homeFooter] };
   }
 
   function handleActiveConfigChange(newConfig: SiteConfig) {
@@ -664,7 +667,8 @@ export default function AdminClient() {
 
   function getActiveSections(): SectionBlock[] {
     if (activePageId === "home") return config.sections;
-    return config.pages.find((p) => p.id === activePageId)?.sections ?? [];
+    // サブページはフッター除外（フッターはホーム共通）
+    return (config.pages.find((p) => p.id === activePageId)?.sections ?? []).filter((s) => s.type !== "footer");
   }
 
   function setActiveSections(sections: SectionBlock[]) {
@@ -778,6 +782,8 @@ export default function AdminClient() {
       icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L9.09 8.26L2 9.27L7 14.14L5.82 21L12 17.77L18.18 21L17 14.14L22 9.27L14.91 8.26L12 2Z"/></svg> },
     { id: "seo", label: "SEO",
       icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> },
+    { id: "column", label: "コラム",
+      icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg> },
   ];
 
   return (
@@ -958,6 +964,7 @@ export default function AdminClient() {
                     : sidePanel === "blocks" ? "ブロック編集"
                     : sidePanel === "upload" ? "画像ライブラリ"
                     : sidePanel === "ai-image" ? "AI画像生成"
+                    : sidePanel === "column" ? "コラム管理"
                     : "SEO / 集客設定"}
                 </p>
               </div>
@@ -1188,6 +1195,18 @@ export default function AdminClient() {
                       </div>
                     )}
 
+                    {/* フッター共通表示（サブページ） */}
+                    {activePageId !== "home" && (
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 10px", borderRadius: 8, border: "1px solid #E2E8F0", background: "#F8FAFC", marginBottom: 2, opacity: 0.7 }}>
+                        <svg width="10" height="14" viewBox="0 0 10 14" fill="#CBD5E1" style={{ flexShrink: 0 }}>
+                          <circle cx="3" cy="2.5" r="1.3"/><circle cx="7" cy="2.5" r="1.3"/>
+                          <circle cx="3" cy="7" r="1.3"/><circle cx="7" cy="7" r="1.3"/>
+                          <circle cx="3" cy="11.5" r="1.3"/><circle cx="7" cy="11.5" r="1.3"/>
+                        </svg>
+                        <span style={{ fontSize: 10, color: "#94A3B8", flex: 1 }}>フッター（ホームと共通）</span>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#CBD5E1" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                      </div>
+                    )}
                     {/* ブロックを追加 */}
                     <button
                       onClick={() => { setInsertPosition(null); setShowBlockModal(true); }}
@@ -1390,6 +1409,14 @@ export default function AdminClient() {
                   </div>
                 )}
 
+                {/* ── コラム管理パネル ── */}
+                {sidePanel === "column" && (
+                  <ColumnPanel
+                    articles={config.articles}
+                    onChange={(articles) => updateConfig({ ...config, articles })}
+                  />
+                )}
+
               </div>
             </div>
           </div>
@@ -1525,5 +1552,130 @@ export default function AdminClient() {
       )}
     </ImagePickContext.Provider>
     </EditingContext.Provider>
+  );
+}
+
+// ─── コラム管理パネル ──────────────────────────────────────────
+function ColumnPanel({ articles, onChange }: { articles: Article[]; onChange: (a: Article[]) => void }) {
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [form, setForm] = useState<Partial<Article>>({});
+
+  function startNew() {
+    const a: Article = {
+      id: uid(), slug: "", title: "新しい記事", date: new Date().toISOString().slice(0, 10),
+      category: "コラム", author: "", excerpt: "", body: "", imageUrl: "", published: false,
+    };
+    onChange([...articles, a]);
+    setEditingId(a.id);
+    setForm(a);
+  }
+
+  function startEdit(a: Article) {
+    if (editingId === a.id) { setEditingId(null); return; }
+    setEditingId(a.id);
+    setForm({ ...a });
+  }
+
+  function saveEdit() {
+    if (!editingId) return;
+    onChange(articles.map((a) => a.id === editingId ? { ...a, ...form } as Article : a));
+    setEditingId(null);
+  }
+
+  function deleteArticle(id: string) {
+    onChange(articles.filter((a) => a.id !== id));
+    if (editingId === id) setEditingId(null);
+  }
+
+  function togglePublished(id: string) {
+    onChange(articles.map((a) => a.id === id ? { ...a, published: !a.published } : a));
+  }
+
+  const f = (patch: Partial<Article>) => setForm((prev) => ({ ...prev, ...patch }));
+  const inp: React.CSSProperties = { fontSize: 11, padding: "6px 9px", border: "1px solid #E2E8F0", borderRadius: 6, outline: "none", color: "#111", width: "100%", boxSizing: "border-box" };
+  const lbl: React.CSSProperties = { fontSize: 10, fontWeight: 600, color: "#64748B", display: "block", marginBottom: 3 };
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      <button onClick={startNew}
+        style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, width: "100%", padding: "9px 0", borderRadius: 8, border: "1.5px dashed #C7D2FE", background: "#EEF2FF", cursor: "pointer", color: "#4F46E5", fontWeight: 700, fontSize: 11 }}>
+        <span style={{ fontSize: 14 }}>+</span> 記事を追加
+      </button>
+
+      {articles.length === 0 && (
+        <p style={{ fontSize: 11, color: "#94A3B8", textAlign: "center", padding: "16px 0" }}>記事がありません</p>
+      )}
+
+      {articles.map((a) => (
+        <div key={a.id} style={{ border: "1px solid #E2E8F0", borderRadius: 8, overflow: "hidden" }}>
+          {/* 記事ヘッダー行 */}
+          <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 10px", background: "#FAFAFA", cursor: "pointer" }}
+            onClick={() => startEdit(a)}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{ fontSize: 11, fontWeight: 600, color: "#1E293B", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{a.title}</p>
+              <p style={{ fontSize: 9, color: "#94A3B8", margin: 0 }}>{a.date} · {a.category}</p>
+            </div>
+            {/* 公開トグル */}
+            <button onClick={e => { e.stopPropagation(); togglePublished(a.id); }}
+              style={{ fontSize: 9, padding: "2px 7px", borderRadius: 10, border: "none", cursor: "pointer", flexShrink: 0,
+                background: a.published ? "#DCFCE7" : "#F1F5F9", color: a.published ? "#16A34A" : "#94A3B8", fontWeight: 700 }}>
+              {a.published ? "公開中" : "下書き"}
+            </button>
+            <button onClick={e => { e.stopPropagation(); deleteArticle(a.id); }}
+              style={{ width: 20, height: 20, border: "1px solid #FEE2E2", borderRadius: 4, background: "#FFF5F5", color: "#EF4444", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, flexShrink: 0 }}>×</button>
+          </div>
+
+          {/* 編集フォーム */}
+          {editingId === a.id && (
+            <div style={{ padding: "10px", display: "flex", flexDirection: "column", gap: 8, borderTop: "1px solid #E2E8F0" }}>
+              <div>
+                <span style={lbl}>タイトル</span>
+                <input style={inp} value={form.title ?? ""} onChange={e => f({ title: e.target.value })} />
+              </div>
+              <div style={{ display: "flex", gap: 6 }}>
+                <div style={{ flex: 1 }}>
+                  <span style={lbl}>日付</span>
+                  <input style={inp} type="date" value={form.date ?? ""} onChange={e => f({ date: e.target.value })} />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <span style={lbl}>カテゴリ</span>
+                  <input style={inp} value={form.category ?? ""} onChange={e => f({ category: e.target.value })} />
+                </div>
+              </div>
+              <div>
+                <span style={lbl}>スラッグ（URL）</span>
+                <input style={inp} value={form.slug ?? ""} onChange={e => f({ slug: e.target.value })} placeholder="my-article" />
+              </div>
+              <div>
+                <span style={lbl}>著者</span>
+                <input style={inp} value={form.author ?? ""} onChange={e => f({ author: e.target.value })} />
+              </div>
+              <div>
+                <span style={lbl}>アイキャッチ画像 URL</span>
+                <input style={inp} value={form.imageUrl ?? ""} onChange={e => f({ imageUrl: e.target.value })} placeholder="https://..." />
+              </div>
+              <div>
+                <span style={lbl}>抜粋（一覧表示用）</span>
+                <textarea style={{ ...inp, resize: "vertical", minHeight: 56 }} value={form.excerpt ?? ""} onChange={e => f({ excerpt: e.target.value })} />
+              </div>
+              <div>
+                <span style={lbl}>本文（HTML可）</span>
+                <textarea style={{ ...inp, resize: "vertical", minHeight: 100, fontFamily: "monospace", fontSize: 10 }} value={form.body ?? ""} onChange={e => f({ body: e.target.value })} />
+              </div>
+              <div style={{ display: "flex", gap: 6 }}>
+                <button onClick={saveEdit}
+                  style={{ flex: 1, padding: "8px 0", borderRadius: 7, border: "none", background: "#4F46E5", color: "#fff", fontWeight: 700, fontSize: 11, cursor: "pointer" }}>
+                  保存
+                </button>
+                <button onClick={() => setEditingId(null)}
+                  style={{ flex: 1, padding: "8px 0", borderRadius: 7, border: "1px solid #E2E8F0", background: "#fff", color: "#64748B", fontSize: 11, cursor: "pointer" }}>
+                  キャンセル
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
   );
 }

@@ -32,7 +32,11 @@ export default function ProductionSiteView({ config, slug, siteSlug }: Props) {
   if (slug) {
     const page = config.pages.find((p) => p.slug === slug);
     if (!page) pageNotFound = true;
-    else sections = page.sections;
+    else {
+      // フッターはホームと共通 — サブページのフッターを除き、ホームのフッターを末尾に追加
+      const homeFooter = config.sections.filter((s) => s.type === "footer");
+      sections = [...page.sections.filter((s) => s.type !== "footer"), ...homeFooter];
+    }
   }
 
   return (
