@@ -625,6 +625,11 @@ export interface SitePage {
   slug: string;
   title: string;
   sections: SectionBlock[];
+  // SEO（ページ個別設定）
+  metaTitle?: string;        // <title>タグ（未設定時はtitleを使用）
+  metaDescription?: string;  // meta description
+  ogImage?: string;          // OGP画像URL
+  noindex?: boolean;         // 検索エンジンのインデックス除外
 }
 
 // ─── コラム記事 ─────────────────────────────────────────────────

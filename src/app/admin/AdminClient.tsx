@@ -67,6 +67,12 @@ export default function AdminClient() {
   const [htmlBlobUrl, setHtmlBlobUrl] = useState("");
   const latestHtmlRef = useRef("");
   const htmlIframeRef = useRef<HTMLIFrameElement>(null);
+  // ドラッグ&ドロップ用
+  const [isDragging, setIsDragging] = useState(false);
+  const dragUrlRef = useRef("");
+  // HTML編集モードのアンドゥ
+  const [htmlUndoCount, setHtmlUndoCount] = useState(0);
+  const htmlUndoStackRef = useRef<string[]>([]);
 
   // HTML → Blob URL（右パネル付きインライン編集）
   useEffect(() => {
@@ -133,14 +139,21 @@ export default function AdminClient() {
   document.head.appendChild(st);
 
   /* ─ 3. 右パネル ────────────────────────────────────────────── */
+  var isNarrow=window.innerWidth<768;
   var panel=document.createElement('div');
   panel.id='__ce_panel';
-  panel.style.cssText='position:fixed;top:0;right:0;width:216px;height:100vh;background:#fff;'+
-    'border-left:1.5px solid #E2E8F0;box-shadow:-4px 0 20px rgba(0,0,0,0.1);'+
-    'z-index:2147483646;display:none;flex-direction:column;font-family:system-ui,sans-serif;font-size:12px;';
+  panel.style.cssText=isNarrow
+    ?'position:fixed;bottom:0;left:0;right:0;width:100%;max-height:56vh;background:#fff;border-top:2.5px solid #4F46E5;box-shadow:0 -4px 28px rgba(0,0,0,0.22);z-index:2147483646;display:none;flex-direction:column;font-family:system-ui,sans-serif;font-size:12px;overflow:hidden;border-radius:12px 12px 0 0;'
+    :'position:fixed;top:0;right:0;width:216px;height:100vh;background:#fff;border-left:1.5px solid #E2E8F0;box-shadow:-4px 0 20px rgba(0,0,0,0.1);z-index:2147483646;display:none;flex-direction:column;font-family:system-ui,sans-serif;font-size:12px;';
+  /* 広い画面ではコンテンツがパネルに隠れないようpaddingを確保 */
+  if(!isNarrow){document.body.style.paddingRight='216px';}
   var pH=document.createElement('div');
-  pH.style.cssText='padding:11px 13px;background:#4F46E5;color:#fff;font-size:12px;font-weight:700;flex-shrink:0;';
-  pH.textContent='✏️ 編集';
+  pH.style.cssText='padding:9px 10px;background:#4F46E5;color:#fff;font-size:12px;font-weight:700;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;gap:4px;'+(isNarrow?'cursor:pointer;':'');
+  var pHText=document.createElement('span');pHText.textContent='✏️ 編集';
+  var pHClose=document.createElement('button');pHClose.innerHTML='✕&nbsp;閉じる';
+  pHClose.style.cssText='background:rgba(255,255,255,0.18);border:1px solid rgba(255,255,255,0.28);color:#fff;border-radius:6px;padding:3px 8px;cursor:pointer;font-size:10px;white-space:nowrap;line-height:1.4;flex-shrink:0;';
+  pHClose.addEventListener('click',function(e){e.stopPropagation();discard();});
+  pH.appendChild(pHText);pH.appendChild(pHClose);
   var pB=document.createElement('div');
   pB.style.cssText='flex:1;overflow-y:auto;padding:11px;display:flex;flex-direction:column;gap:9px;';
   var pF=document.createElement('div');
@@ -172,8 +185,15 @@ export default function AdminClient() {
   function getCleanHtml(){
     var s=document.getElementById('__ce_style'),p=document.getElementById('__ce_panel');
     if(s)s.remove();if(p)p.remove();
+    // body に追加したpadding等をHTMLに焼き付けないよう一時退避
+    var origPR=document.body.style.paddingRight;
+    var origPB=document.body.style.paddingBottom;
+    document.body.style.paddingRight='';
+    document.body.style.paddingBottom='';
     var h=document.documentElement.outerHTML;
     if(s)document.head.appendChild(s);if(p)document.body.appendChild(p);
+    document.body.style.paddingRight=origPR;
+    document.body.style.paddingBottom=origPB;
     return h;
   }
 
@@ -194,13 +214,17 @@ export default function AdminClient() {
   bDel.addEventListener('click',function(e){e.stopPropagation();deleteEl();});
   bClone.addEventListener('click',function(e){e.stopPropagation();cloneEl();});
 
-  // 削除・複製対象を決定（小コンテナはブロックごと）
+  // 削除・複製対象を決定（コンテンツブロックは自分ごと、アイコン系は親ごと）
   function getTarget(el){
     if(el.tagName==='A'||el.tagName==='BUTTON')return el;
     var par=el.parentElement;if(!par)return el;
-    var BIG=['BODY','SECTION','ARTICLE','HEADER','FOOTER','MAIN','NAV','ASIDE','FORM','UL','OL'];
-    if(BIG.indexOf(par.tagName)>=0)return el;
-    if(par.children.length<=4)return par;
+    var PROTECT=['BODY','SECTION','ARTICLE','ASIDE','HEADER','FOOTER','MAIN','NAV','FORM','UL','OL','A','BUTTON'];
+    if(PROTECT.indexOf(par.tagName)>=0)return el;
+    // 子なし＆テキスト5文字以内 → アイコン/記号 → 親ブロックごと削除
+    var isIcon=(el.children.length===0&&el.textContent.trim().length<5);
+    if(isIcon&&par.children.length<=4)return par;
+    // コンテンツブロック（子あり or テキスト長め） → 自分自身を削除
+    if(!isIcon&&par.children.length<=2)return par;
     return el;
   }
   function deleteEl(){
@@ -346,13 +370,35 @@ export default function AdminClient() {
     pB.appendChild(lbl('alt テキスト'));
     var ai=document.createElement('input');ai.type='text';ai.value=img.alt||'';ai.style.cssText=ui.style.cssText;
     ai.addEventListener('input',function(){img.alt=ai.value;});pB.appendChild(ai);
-    pB.appendChild(lbl('横幅'));
-    var wr=rw();var wv=img.offsetWidth||200;
-    var wd=document.createElement('span');wd.style.cssText='flex:1;text-align:center;font-size:13px;font-weight:600;';wd.textContent=wv+'px';
-    wr.appendChild(numBtn('−',function(){wv=Math.max(50,wv-10);img.style.width=wv+'px';wd.textContent=wv+'px';}));
-    wr.appendChild(wd);
-    wr.appendChild(numBtn('+',function(){wv+=10;img.style.width=wv+'px';wd.textContent=wv+'px';}));
-    pB.appendChild(wr);
+    // object-fit
+    pB.appendChild(lbl('フィット'));
+    var ftr=rw();var cs2=window.getComputedStyle(img);var curFit=img.style.objectFit||cs2.objectFit||'cover';
+    ['cover','contain','fill'].forEach(function(fit){
+      var b=document.createElement('button');b.textContent=fit;
+      var a=curFit===fit;
+      b.style.cssText='flex:1;padding:5px 2px;border-radius:6px;cursor:pointer;font-size:10px;background:'+(a?'#4F46E5':'#F8FAFC')+';color:'+(a?'#fff':'#374151')+';border:1px solid '+(a?'#4F46E5':'#E2E8F0')+';';
+      b.addEventListener('click',function(){
+        img.style.objectFit=fit;curFit=fit;
+        ftr.querySelectorAll('button').forEach(function(btn){var x=btn.textContent===fit;btn.style.background=x?'#4F46E5':'#F8FAFC';btn.style.color=x?'#fff':'#374151';btn.style.border='1px solid '+(x?'#4F46E5':'#E2E8F0');});
+      });
+      ftr.appendChild(b);
+    });pB.appendChild(ftr);
+    // object-position
+    pB.appendChild(lbl('表示位置'));
+    var pgrid=document.createElement('div');pgrid.style.cssText='display:grid;grid-template-columns:repeat(3,1fr);gap:3px;';
+    var curPos=img.style.objectPosition||'center center';
+    [['left top','↖'],['center top','↑'],['right top','↗'],['left center','←'],['center center','・'],['right center','→'],['left bottom','↙'],['center bottom','↓'],['right bottom','↘']].forEach(function(p){
+      var b=document.createElement('button');b.textContent=p[1];
+      var a=curPos.replace('center','center center').indexOf(p[0])>=0||curPos===p[0];
+      b.style.cssText='padding:6px;border-radius:5px;cursor:pointer;font-size:14px;line-height:1;background:'+(a?'#4F46E5':'#F8FAFC')+';color:'+(a?'#fff':'#374151')+';border:1px solid '+(a?'#4F46E5':'#E2E8F0')+';';
+      b.addEventListener('click',function(){
+        img.style.objectPosition=p[0];curPos=p[0];
+        pgrid.querySelectorAll('button').forEach(function(btn,j){var x=btn.textContent===p[1];btn.style.background=x?'#4F46E5':'#F8FAFC';btn.style.color=x?'#fff':'#374151';btn.style.border='1px solid '+(x?'#4F46E5':'#E2E8F0');});
+      });
+      pgrid.appendChild(b);
+    });pB.appendChild(pgrid);
+    // ヒント
+    var hint=document.createElement('p');hint.style.cssText='font-size:9px;color:#94A3B8;margin:6px 0 0;line-height:1.5;';hint.textContent='💡 左ライブラリから画像をドラッグしてこのエリアにドロップすると差し替えできます';pB.appendChild(hint);
   }
 
   /* ─ 7. 要素を開く ───────────────────────────────────────── */
@@ -360,24 +406,39 @@ export default function AdminClient() {
     if(cur===el)return;if(cur)save();
     cur=el;origHtml=el.innerHTML;isImg=false;
     el.contentEditable='true';el.classList.add('on');el.focus({preventScroll:true});
-    pH.textContent='✏️ テキスト編集';buildText(el);panel.style.display='flex';
+    pHText.textContent='✏️ テキスト編集';buildText(el);panel.style.display='flex';
   }
   function openImg(img){
     // ライブラリから画像が選択済みならそのまま適用
     if(pendingUrl){applyImg(img,pendingUrl);return;}
     if(cur===img)return;if(cur)save();
     cur=img;isImg=true;img.classList.add('on');
-    pH.textContent='🖼️ 画像編集';buildImg(img);panel.style.display='flex';
+    pHText.textContent='🖼️ 画像編集';buildImg(img);panel.style.display='flex';
   }
 
   /* ─ 8. 対象要素にイベント付与 ──────────────────────────── */
-  var SKIP=['DIV','SECTION','ARTICLE','ASIDE','HEADER','FOOTER','NAV','UL','OL','TABLE','TBODY','TR','FORM'];
+  var SKIP=['SECTION','ARTICLE','ASIDE','HEADER','FOOTER','NAV','UL','OL','TABLE','TBODY','TR','FORM'];
+  // ブロック要素タグ（DIVが直接これらを子に持つ場合はレイアウトラッパーと判定）
+  var BLOCK_TAGS=['DIV','P','H1','H2','H3','H4','H5','H6','SECTION','ARTICLE','ASIDE','HEADER','FOOTER','NAV','MAIN','UL','OL','DL','BLOCKQUOTE','PRE'];
   document.querySelectorAll(
     'h1,h2,h3,h4,h5,h6,p,li,td,th,label,dt,dd,figcaption,span,small,strong,em,a,button,div'
   ).forEach(function(el){
     if(el.closest('#__ce_panel'))return;
     if(!el.textContent.trim())return;
     for(var i=0;i<el.children.length;i++){if(SKIP.indexOf(el.children[i].tagName)>=0)return;}
+    // DIV判定: ブロック子要素を直接持ち、かつ直接テキストノードも持たない場合はレイアウトラッパー
+    // → バッジ・ラベル系(子なし or インラインのみ)は直接テキストがなくてもOK
+    if(el.tagName==='DIV'){
+      var hasDT=Array.from(el.childNodes).some(function(n){return n.nodeType===3&&n.textContent.trim();});
+      if(!hasDT){
+        // ブロック子要素があるか確認
+        var hasBC=false;
+        for(var j=0;j<el.children.length;j++){if(BLOCK_TAGS.indexOf(el.children[j].tagName)>=0){hasBC=true;break;}}
+        if(hasBC)return; // ブロック子あり＋直接テキストなし → レイアウトラッパーとして除外
+        // インライン子のみ(spanなどで包まれたバッジ等) → 子要素が多すぎる場合は除外
+        if(el.children.length>6)return;
+      }
+    }
     el.classList.add('ce');
     el.addEventListener('keydown',function(e){if(e.key==='Escape'){e.preventDefault();discard();}});
   });
@@ -405,6 +466,11 @@ export default function AdminClient() {
   useEffect(() => {
     const handler = (e: MessageEvent) => {
       if (e.data?.type === "html-update") {
+        // アンドゥスタック: 変更前のHTMLを積む
+        if (latestHtmlRef.current) {
+          htmlUndoStackRef.current = [...htmlUndoStackRef.current.slice(-19), latestHtmlRef.current];
+          setHtmlUndoCount(htmlUndoStackRef.current.length);
+        }
         latestHtmlRef.current = e.data.html;
         try { sessionStorage.setItem("site-html", e.data.html); } catch {}
       }
@@ -423,6 +489,13 @@ export default function AdminClient() {
       { type: "set-pending-url", url: pickedUrl ?? "" }, "*"
     );
   }, [pickedUrl, htmlMode]);
+
+  // ドラッグ終了時にisDraggingをリセット（ドロップせずに終わった場合も）
+  useEffect(() => {
+    const handler = () => { setIsDragging(false); dragUrlRef.current = ""; };
+    document.addEventListener("dragend", handler);
+    return () => document.removeEventListener("dragend", handler);
+  }, []);
 
   // Load from sessionStorage (HTML mode) or localStorage (block mode) on mount
   useEffect(() => {
@@ -710,6 +783,20 @@ export default function AdminClient() {
   return (
     <EditingContext.Provider value={true}>
     <ImagePickContext.Provider value={{ pickedUrl, pick: setPickedUrl, clear: () => setPickedUrl(null) }}>
+      <style>{`
+        @media (max-width: 900px) {
+          .admin-left-panel { display: none !important; }
+          .admin-topbar-slug { display: none !important; }
+          .admin-topbar-undo { display: none !important; }
+          .admin-topbar-reset { display: none !important; }
+          .admin-topbar-collab { display: none !important; }
+          .admin-device-switcher { display: none !important; }
+          .admin-pagetabs { display: none !important; }
+        }
+        @media (max-width: 600px) {
+          .admin-ai-btn { display: none !important; }
+        }
+      `}</style>
       <div style={{ display: "flex", flexDirection: "column", height: "100vh", overflow: "hidden" }}>
 
         {/* ─── Top bar ─────────────────────────────────── */}
@@ -724,7 +811,7 @@ export default function AdminClient() {
           <div style={{ width: 1, height: 20, background: "#E2E8F0", flexShrink: 0 }} />
 
           {/* Page tabs */}
-          <div style={{ display: "flex", alignItems: "center", gap: 2, flex: 1, overflowX: "auto", minWidth: 0 }}>
+          <div className="admin-pagetabs" style={{ display: "flex", alignItems: "center", gap: 2, flex: 1, overflowX: "auto", minWidth: 0 }}>
             {allPageTabs.map((page) => (
               <div key={page.id} className="relative group/tab flex-shrink-0">
                 {renamingPageId === page.id ? (
@@ -762,7 +849,7 @@ export default function AdminClient() {
           </div>
 
           {/* Device switcher */}
-          <div style={{ display: "flex", alignItems: "center", gap: 1, background: "#F1F5F9", borderRadius: 8, padding: 3, flexShrink: 0 }}>
+          <div className="admin-device-switcher" style={{ display: "flex", alignItems: "center", gap: 1, background: "#F1F5F9", borderRadius: 8, padding: 3, flexShrink: 0 }}>
             {([
               { mode: "pc" as DeviceMode, label: "PC",
                 icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><polyline points="8 21 12 17 16 21"/><line x1="12" y1="17" x2="12" y2="21"/></svg> },
@@ -785,7 +872,7 @@ export default function AdminClient() {
 
           {/* Right actions */}
           <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 5, background: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: 8, padding: "4px 10px" }}>
+            <div className="admin-topbar-slug" style={{ display: "flex", alignItems: "center", gap: 5, background: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: 8, padding: "4px 10px" }}>
               <Globe size={10} style={{ color: "#94A3B8" }} />
               {editingSlug ? (
                 <input autoFocus value={siteSlug}
@@ -801,9 +888,9 @@ export default function AdminClient() {
                 </button>
               )}
             </div>
-            <a href="/admin/column" style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: "#059669", padding: "5px 10px", borderRadius: 7, border: "1px solid #D1FAE5", background: "#F0FDF4", textDecoration: "none", fontWeight: 600, whiteSpace: "nowrap" }}>コラム</a>
-            <a href="/admin/setup" style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: "#7C3AED", padding: "5px 10px", borderRadius: 7, border: "1px solid #DDD6FE", background: "#F5F3FF", textDecoration: "none", fontWeight: 600, whiteSpace: "nowrap" }}>AI生成</a>
-            <button onClick={handleUndo} disabled={undoStack.length === 0}
+            <a className="admin-topbar-collab" href="/admin/column" style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: "#059669", padding: "5px 10px", borderRadius: 7, border: "1px solid #D1FAE5", background: "#F0FDF4", textDecoration: "none", fontWeight: 600, whiteSpace: "nowrap" }}>コラム</a>
+            <a className="admin-ai-btn" href="/admin/setup" style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: "#7C3AED", padding: "5px 10px", borderRadius: 7, border: "1px solid #DDD6FE", background: "#F5F3FF", textDecoration: "none", fontWeight: 600, whiteSpace: "nowrap" }}>AI生成</a>
+            <button className="admin-topbar-undo" onClick={handleUndo} disabled={undoStack.length === 0}
               title={`元に戻す (${undoStack.length}件)`}
               style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, padding: "5px 8px", borderRadius: 7, border: "1px solid #E2E8F0", background: "transparent", cursor: undoStack.length === 0 ? "not-allowed" : "pointer",
                 color: undoStack.length === 0 ? "#CBD5E1" : "#4F46E5",
@@ -811,7 +898,7 @@ export default function AdminClient() {
               }}>
               <Undo2 size={11} /> 元に戻す
             </button>
-            <button onClick={() => { setUndoStack([]); setConfig(defaultConfig); }}
+            <button className="admin-topbar-reset" onClick={() => { setUndoStack([]); setConfig(defaultConfig); }}
               style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: "#6B7280", padding: "5px 8px", borderRadius: 7, border: "1px solid #E2E8F0", background: "transparent", cursor: "pointer" }}>
               <RefreshCw size={11} /> リセット
             </button>
@@ -863,10 +950,11 @@ export default function AdminClient() {
             </div>
 
             {/* White content panel */}
-            <div style={{ width: 240, background: "#FFFFFF", borderRight: "1px solid #E2E8F0", display: "flex", flexDirection: "column", flexShrink: 0, overflow: "hidden" }}>
+            <div className="admin-left-panel" style={{ width: 240, background: "#FFFFFF", borderRight: "1px solid #E2E8F0", display: "flex", flexDirection: "column", flexShrink: 0, overflow: "hidden" }}>
               <div style={{ padding: "12px 14px 8px", borderBottom: "1px solid #F1F5F9", flexShrink: 0 }}>
                 <p style={{ fontSize: 11, fontWeight: 700, color: "#0F172A", margin: 0 }}>
-                  {sidePanel === "settings" ? "サイト全体設定"
+                  {sidePanel === "settings"
+                    ? activePageId === "home" ? "サイト全体設定" : "ページ設定"
                     : sidePanel === "blocks" ? "ブロック編集"
                     : sidePanel === "upload" ? "画像ライブラリ"
                     : sidePanel === "ai-image" ? "AI画像生成"
@@ -880,6 +968,99 @@ export default function AdminClient() {
                 {sidePanel === "settings" && (
                   <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
 
+                  {/* ── ページ別設定（サブページ選択時） ── */}
+                  {activePageId !== "home" && (() => {
+                    const activePage = config.pages.find(p => p.id === activePageId);
+                    if (!activePage) return null;
+                    const updatePage = (patch: Partial<typeof activePage>) => {
+                      updateConfig({
+                        ...config,
+                        pages: config.pages.map(p => p.id === activePageId ? { ...p, ...patch } : p),
+                      });
+                    };
+                    const updatePageSlug = (newSlug: string) => {
+                      const sanitized = newSlug.replace(/[^a-z0-9-]/g, "");
+                      updateConfig({
+                        ...config,
+                        pages: config.pages.map(p => p.id === activePageId ? { ...p, slug: sanitized } : p),
+                        navLinks: config.navLinks.map(l =>
+                          l.url === `/${activePage.slug}` ? { ...l, url: `/${sanitized}` } : l
+                        ),
+                      });
+                    };
+                    return (
+                      <>
+                        <div style={{ padding: "10px", background: "#EEF2FF", borderRadius: 8, display: "flex", flexDirection: "column", gap: 10 }}>
+                          <p style={{ fontSize: 10, fontWeight: 700, color: "#4F46E5", margin: 0, letterSpacing: "0.05em" }}>ページ情報</p>
+                          <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                            <span style={{ fontSize: 10, fontWeight: 600, color: "#64748B" }}>ページタイトル</span>
+                            <input value={activePage.title}
+                              onChange={e => updatePage({ title: e.target.value })}
+                              style={{ fontSize: 12, padding: "7px 10px", border: "1px solid #C7D2FE", borderRadius: 7, outline: "none", color: "#111", background: "#fff" }} />
+                          </label>
+                          <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                            <span style={{ fontSize: 10, fontWeight: 600, color: "#64748B" }}>URL スラッグ <span style={{ color: "#94A3B8", fontWeight: 400 }}>(英数字・ハイフン)</span></span>
+                            <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                              <span style={{ fontSize: 10, color: "#94A3B8", whiteSpace: "nowrap" }}>/</span>
+                              <input value={activePage.slug}
+                                onChange={e => updatePageSlug(e.target.value)}
+                                style={{ fontSize: 11, padding: "7px 10px", border: "1px solid #C7D2FE", borderRadius: 7, outline: "none", color: "#111", background: "#fff", width: "100%", fontFamily: "monospace" }} />
+                            </div>
+                          </label>
+                        </div>
+
+                        <div style={{ padding: "10px", background: "#F8FAFC", borderRadius: 8, display: "flex", flexDirection: "column", gap: 10 }}>
+                          <p style={{ fontSize: 10, fontWeight: 700, color: "#475569", margin: 0, letterSpacing: "0.05em" }}>SEO設定（このページ）</p>
+                          <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                            <span style={{ fontSize: 10, fontWeight: 600, color: "#64748B" }}>タイトルタグ <span style={{ color: "#94A3B8", fontWeight: 400 }}>(未入力=ページタイトル)</span></span>
+                            <input value={activePage.metaTitle ?? ""}
+                              onChange={e => updatePage({ metaTitle: e.target.value || undefined })}
+                              placeholder={activePage.title}
+                              style={{ fontSize: 11, padding: "7px 10px", border: "1px solid #E2E8F0", borderRadius: 7, outline: "none", color: "#111", background: "#fff" }} />
+                          </label>
+                          <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                            <span style={{ fontSize: 10, fontWeight: 600, color: "#64748B" }}>ディスクリプション</span>
+                            <textarea value={activePage.metaDescription ?? ""}
+                              onChange={e => updatePage({ metaDescription: e.target.value || undefined })}
+                              rows={3} placeholder="検索結果に表示される説明文 (120文字以内)"
+                              style={{ fontSize: 11, padding: "7px 10px", border: "1px solid #E2E8F0", borderRadius: 7, outline: "none", resize: "none", color: "#111", lineHeight: 1.6 }} />
+                          </label>
+                          <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                            <span style={{ fontSize: 10, fontWeight: 600, color: "#64748B" }}>OGP画像URL</span>
+                            <input value={activePage.ogImage ?? ""}
+                              onChange={e => updatePage({ ogImage: e.target.value || undefined })}
+                              placeholder="https://..."
+                              style={{ fontSize: 11, padding: "7px 10px", border: "1px solid #E2E8F0", borderRadius: 7, outline: "none", color: "#111", background: "#fff" }} />
+                          </label>
+                          <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
+                            <input type="checkbox" checked={activePage.noindex ?? false}
+                              onChange={e => updatePage({ noindex: e.target.checked || undefined })}
+                              style={{ width: 14, height: 14, accentColor: "#4F46E5" }} />
+                            <span style={{ fontSize: 10, fontWeight: 600, color: "#64748B" }}>検索エンジンにインデックスさせない (noindex)</span>
+                          </label>
+                        </div>
+
+                        {/* ページプレビューURL */}
+                        <div style={{ padding: "8px 10px", background: "#F1F5F9", borderRadius: 7 }}>
+                          <p style={{ fontSize: 9, color: "#94A3B8", margin: "0 0 3px", fontWeight: 600 }}>公開URL</p>
+                          <p style={{ fontSize: 10, color: "#4F46E5", margin: 0, fontFamily: "monospace", wordBreak: "break-all" }}>
+                            /sites/{siteSlug}/{activePage.slug}
+                          </p>
+                        </div>
+
+                        <div style={{ height: 1, background: "#E2E8F0" }} />
+                      </>
+                    );
+                  })()}
+
+                  {/* サイト全体設定はホームのみ表示（サブページでは折りたたみ） */}
+                  {activePageId !== "home" && (
+                    <p style={{ fontSize: 10, color: "#94A3B8", margin: 0, textAlign: "center" }}>
+                      サイト全体設定は「ホーム」タブで変更できます
+                    </p>
+                  )}
+
+                  {activePageId === "home" && <>
                     {/* タイトル・ロゴ */}
                     <div style={{ padding: "10px", background: "#F8FAFC", borderRadius: 8, display: "flex", flexDirection: "column", gap: 10 }}>
                       <p style={{ fontSize: 10, fontWeight: 700, color: "#475569", margin: 0, letterSpacing: "0.05em" }}>タイトル・ロゴ</p>
@@ -940,6 +1121,7 @@ export default function AdminClient() {
                         <option value="Shippori Mincho">Shippori Mincho（しっぽり明朝）</option>
                       </select>
                     </label>
+                  </>}
                   </div>
                 )}
 
@@ -1047,7 +1229,7 @@ export default function AdminClient() {
                           {uploadedImages.map((img) => (
                             <div key={img.id}
                               draggable
-                              onDragStart={e => { e.dataTransfer.setData("text/plain", img.url); e.dataTransfer.effectAllowed = "copy"; setPickedUrl(img.url); }}
+                              onDragStart={e => { e.dataTransfer.setData("text/plain", img.url); e.dataTransfer.effectAllowed = "copy"; setPickedUrl(img.url); setIsDragging(true); dragUrlRef.current = img.url; }}
                               onClick={() => setPickedUrl(pickedUrl === img.url ? null : img.url)}
                               style={{ position: "relative", borderRadius: 8, overflow: "hidden", border: pickedUrl === img.url ? "2.5px solid #4F46E5" : "1px solid #E2E8F0", background: "#F8FAFC", cursor: "grab", boxShadow: pickedUrl === img.url ? "0 0 0 3px #C7D2FE" : "none" }}>
                               {pickedUrl === img.url && (
@@ -1213,7 +1395,7 @@ export default function AdminClient() {
           </div>
 
           {/* ═══ Center: SitePreview / Device Preview ════ */}
-          {htmlMode && htmlBlobUrl ? (
+          {htmlMode && htmlBlobUrl && activePageId === "home" ? (
             <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
               {/* 編集ヒントバー */}
               <div style={{ background: "#4F46E5", padding: "6px 16px", display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
@@ -1221,6 +1403,19 @@ export default function AdminClient() {
                 <span style={{ color: "white", fontSize: 11, fontWeight: 600 }}>編集モード</span>
                 <span style={{ color: "rgba(255,255,255,0.75)", fontSize: 11 }}>テキストをクリックして直接編集できます</span>
                 <div style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
+                  <button
+                    onClick={() => {
+                      if (!htmlUndoStackRef.current.length) return;
+                      const prev = htmlUndoStackRef.current.pop()!;
+                      setHtmlUndoCount(htmlUndoStackRef.current.length);
+                      setSiteHtml(prev);
+                      latestHtmlRef.current = prev;
+                      try { sessionStorage.setItem("site-html", prev); } catch {}
+                    }}
+                    disabled={htmlUndoCount === 0}
+                    style={{ fontSize: 11, fontWeight: 600, padding: "3px 12px", borderRadius: 6, border: "1px solid rgba(255,255,255,0.4)", background: "transparent", color: htmlUndoCount === 0 ? "rgba(255,255,255,0.35)" : "white", cursor: htmlUndoCount === 0 ? "not-allowed" : "pointer" }}>
+                    ↩ 元に戻す
+                  </button>
                   <button
                     onClick={() => {
                       const cleanHtml = latestHtmlRef.current || siteHtml;
@@ -1237,25 +1432,41 @@ export default function AdminClient() {
                   </button>
                 </div>
               </div>
-              <iframe
-                ref={htmlIframeRef}
-                key={htmlBlobUrl}
-                src={htmlBlobUrl}
-                style={{ flex: 1, border: "none", display: "block" }}
-                title="サイトプレビュー（クリックして編集）"
-                onDragOver={e => { e.preventDefault(); (e.dataTransfer as DataTransfer).dropEffect = "copy"; }}
-                onDrop={e => {
-                  e.preventDefault();
-                  const url = e.dataTransfer.getData("text/plain");
-                  if (!url || !htmlIframeRef.current) return;
-                  const rect = htmlIframeRef.current.getBoundingClientRect();
-                  const scrollY = htmlIframeRef.current.contentWindow?.scrollY ?? 0;
-                  htmlIframeRef.current.contentWindow?.postMessage(
-                    { type: "drop-image", url, x: e.clientX - rect.left, y: e.clientY - rect.top + scrollY }, "*"
-                  );
-                  setPickedUrl(null);
-                }}
-              />
+              <div style={{ flex: 1, position: "relative", overflow: "hidden" }}>
+                <iframe
+                  ref={htmlIframeRef}
+                  key={htmlBlobUrl}
+                  src={htmlBlobUrl}
+                  style={{ width: "100%", height: "100%", border: "none", display: "block" }}
+                  title="サイトプレビュー（クリックして編集）"
+                />
+                {/* ドラッグ中のみ表示するオーバーレイ（クロスiframe DnDに必須） */}
+                {isDragging && (
+                  <div
+                    style={{ position: "absolute", inset: 0, zIndex: 20, background: "rgba(79,70,229,0.10)", border: "3px dashed #4F46E5", display: "flex", alignItems: "center", justifyContent: "center", cursor: "copy", transition: "background 0.15s" }}
+                    onDragOver={e => { e.preventDefault(); e.dataTransfer.dropEffect = "copy"; }}
+                    onDrop={e => {
+                      e.preventDefault();
+                      const url = dragUrlRef.current || e.dataTransfer.getData("text/plain");
+                      if (!url || !htmlIframeRef.current) return;
+                      const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                      // elementFromPoint はビューポート座標（スクロール加算不要）
+                      htmlIframeRef.current.contentWindow?.postMessage(
+                        { type: "drop-image", url, x: e.clientX - rect.left, y: e.clientY - rect.top }, "*"
+                      );
+                      setPickedUrl(null);
+                      setIsDragging(false);
+                      dragUrlRef.current = "";
+                    }}
+                  >
+                    <div style={{ background: "white", borderRadius: 14, padding: "18px 28px", textAlign: "center", boxShadow: "0 8px 32px rgba(79,70,229,0.18)", pointerEvents: "none" }}>
+                      <div style={{ fontSize: 36, marginBottom: 8 }}>🖼️</div>
+                      <p style={{ fontSize: 14, fontWeight: 700, color: "#4F46E5", margin: "0 0 4px" }}>ここにドロップ</p>
+                      <p style={{ fontSize: 11, color: "#6366F1", margin: 0 }}>配置したい画像エリアの上に落とす</p>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           ) : deviceMode === "pc" ? (
             <SitePreview

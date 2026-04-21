@@ -176,6 +176,93 @@ footer{background:var(--dark);padding:60px 48px 30px}
 .footer-copy{font-size:12px;color:rgba(255,255,255,.3)}
 .footer-links{display:flex;gap:20px}
 .footer-links a{font-size:12px;color:rgba(255,255,255,.3);text-decoration:none}
+
+/* ── HAMBURGER ── */
+.hamburger{display:none;flex-direction:column;justify-content:center;gap:5px;background:none;border:none;cursor:pointer;padding:8px;width:40px;height:40px;flex-shrink:0}
+.hamburger span{display:block;width:22px;height:2px;background:var(--dark);border-radius:2px;transition:.3s;transform-origin:center}
+.hamburger.open span:nth-child(1){transform:translateY(7px) rotate(45deg)}
+.hamburger.open span:nth-child(2){opacity:0}
+.hamburger.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+
+/* ── RESPONSIVE ── */
+@media(max-width:768px){
+  /* NAV */
+  nav{padding:0 20px}
+  .hamburger{display:flex}
+  nav ul{
+    display:none;position:fixed;top:64px;left:0;right:0;
+    background:#fff;border-bottom:1px solid var(--border);
+    box-shadow:0 8px 24px rgba(0,0,0,.10);
+    flex-direction:column;gap:0;padding:12px 16px 20px;
+    list-style:none;z-index:99;
+  }
+  nav ul.open{display:flex}
+  nav ul li{width:100%;border-bottom:1px solid var(--border)}
+  nav ul li:last-child{border:none;padding-top:8px}
+  nav a{display:block;padding:14px 8px;font-size:14px;color:var(--dark)}
+  .nav-cta{display:block;text-align:center;padding:12px!important;border-radius:6px;margin-top:0}
+
+  /* HERO */
+  .hero-inner{grid-template-columns:1fr;padding:0 20px;min-height:auto}
+  .hero-text{padding:40px 0 32px}
+  .hero h1{font-size:clamp(1.6rem,6vw,2.2rem)}
+  .hero-img-wrap{display:none}
+  .hero-stats{gap:10px;flex-wrap:wrap}
+  .h-stat{flex:1;min-width:80px;padding:10px 12px}
+  .h-stat-num{font-size:22px}
+
+  /* STRIP */
+  .strip{padding:14px 20px;gap:10px;flex-wrap:wrap;justify-content:flex-start}
+  .strip-item{font-size:12px}
+
+  /* SECTIONS */
+  section{padding:56px 20px}
+
+  /* PROBLEM */
+  .prob-grid{grid-template-columns:1fr;gap:12px;margin-top:32px}
+
+  /* SOLUTION */
+  .sol-grid{grid-template-columns:1fr;gap:14px;margin-top:32px}
+  .sol-card{padding:24px 20px}
+  .sol-num{font-size:36px;margin-bottom:8px}
+
+  /* COURSE */
+  .course-grid{grid-template-columns:1fr;gap:14px;margin-top:32px}
+
+  /* FLOW */
+  .flow-steps{grid-template-columns:repeat(2,1fr);gap:28px 16px;margin-top:32px}
+  .flow-steps::before{display:none}
+  .step-circle{width:58px;height:58px;font-size:18px}
+
+  /* RESULTS */
+  .result-grid{grid-template-columns:repeat(2,1fr);margin-top:32px}
+  .result-num{font-size:32px}
+
+  /* VOICE */
+  .voice-grid{grid-template-columns:1fr;gap:12px;margin-top:32px}
+
+  /* CTA */
+  .cta-section .sec-inner{padding:0}
+  .cta-title{font-size:clamp(1.4rem,5vw,2rem)}
+  .btn-cta-white,.btn-cta-outline{width:100%;justify-content:center;margin:0}
+  .cta-section div:has(.btn-cta-white){display:flex;flex-direction:column;gap:12px;align-items:stretch}
+
+  /* FOOTER */
+  footer{padding:48px 20px 24px}
+  .footer-top{grid-template-columns:1fr;gap:28px}
+  .footer-nav-grid{grid-template-columns:repeat(2,1fr);gap:16px}
+  .footer-bottom{flex-direction:column;gap:10px;text-align:center}
+  .footer-links{justify-content:center;flex-wrap:wrap}
+}
+
+@media(max-width:480px){
+  .hero-btns{flex-direction:column;align-items:stretch}
+  .btn-primary,.btn-secondary{justify-content:center}
+  .hero-stats{justify-content:center}
+  .flow-steps{grid-template-columns:1fr}
+  .footer-nav-grid{grid-template-columns:1fr}
+  .prob-grid,.sol-grid,.course-grid,.voice-grid{gap:10px}
+}
 </style>
 </head>
 <body>
@@ -183,7 +270,10 @@ footer{background:var(--dark);padding:60px 48px 30px}
 <!-- NAV -->
 <nav>
   <div class="logo">ライズ<span>学習塾</span></div>
-  <ul>
+  <button class="hamburger" id="nav-toggle" aria-label="メニュー">
+    <span></span><span></span><span></span>
+  </button>
+  <ul id="nav-menu">
     <li><a href="#">特徴</a></li>
     <li><a href="#">コース</a></li>
     <li><a href="#">料金</a></li>
@@ -550,5 +640,64 @@ footer{background:var(--dark);padding:60px 48px 30px}
   </div>
 </footer>
 
+<script>
+// ─ ハンバーガーメニュー ─
+(function(){
+  var toggle = document.getElementById('nav-toggle');
+  var menu   = document.getElementById('nav-menu');
+  if(!toggle || !menu) return;
+  toggle.addEventListener('click', function(e){
+    e.stopPropagation();
+    var isOpen = menu.classList.toggle('open');
+    toggle.classList.toggle('open', isOpen);
+  });
+  // メニュー外クリックで閉じる
+  document.addEventListener('click', function(){
+    menu.classList.remove('open');
+    toggle.classList.remove('open');
+  });
+  menu.addEventListener('click', function(e){ e.stopPropagation(); });
+})();
+
+// ─ FAQアコーディオン ─
+(function(){
+  document.querySelectorAll('.faq-q').forEach(function(q){
+    var a = q.nextElementSibling;
+    if(!a) return;
+    // 初期は閉じた状態
+    a.style.display = 'none';
+    // トグルアイコン追加
+    var icon = document.createElement('span');
+    icon.style.cssText = 'margin-left:auto;font-size:20px;line-height:1;color:var(--blue);flex-shrink:0;transition:.2s;';
+    icon.textContent = '+';
+    q.appendChild(icon);
+    q.addEventListener('click', function(){
+      var isOpen = a.style.display !== 'none';
+      // 全部閉じる
+      document.querySelectorAll('.faq-a').forEach(function(fa){ fa.style.display='none'; });
+      document.querySelectorAll('.faq-q span:last-child').forEach(function(ic){ ic.textContent='+'; ic.style.transform=''; });
+      // クリックしたものだけ開く
+      if(!isOpen){
+        a.style.display = 'flex';
+        icon.textContent = '−';
+      }
+    });
+  });
+})();
+
+// ─ スクロールフェードイン ─
+(function(){
+  var style = document.createElement('style');
+  style.textContent = '.fade-up{opacity:0;transform:translateY(24px);transition:opacity .6s ease,transform .6s ease}.fade-up.visible{opacity:1;transform:none}';
+  document.head.appendChild(style);
+  document.querySelectorAll('.prob-card,.sol-card,.course-card,.voice-card,.result-item,.flow-step').forEach(function(el){
+    el.classList.add('fade-up');
+  });
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(en){ if(en.isIntersecting) en.target.classList.add('visible'); });
+  },{threshold:0.15});
+  document.querySelectorAll('.fade-up').forEach(function(el){ io.observe(el); });
+})();
+</script>
 </body>
 </html>

@@ -6,11 +6,21 @@ import BlockRenderer from "@/components/preview/blocks/BlockRenderer";
 
 interface Props {
   config: SiteConfig;
-  slug?: string; // undefined = home, else sub-page slug
+  slug?: string;     // undefined = home, else sub-page slug
+  siteSlug?: string; // 公開サイトのスラッグ（ナビURLの解決に使用）
 }
 
-export default function ProductionSiteView({ config, slug }: Props) {
+export default function ProductionSiteView({ config, slug, siteSlug }: Props) {
   const [menuOpen, setMenuOpen] = useState(false);
+
+  // siteSlugがある場合、相対URLをサイトベースURLに解決する
+  function resolveUrl(url: string): string {
+    if (!siteSlug) return url;
+    if (!url || url === "/") return `/sites/${siteSlug}`;
+    if (url.startsWith("http") || url.startsWith("//")) return url;
+    return `/sites/${siteSlug}${url.startsWith("/") ? url : `/${url}`}`;
+  }
+
   const fontClass =
     config.fontFamily === "serif" ? "font-serif"
     : config.fontFamily === "mono" ? "font-mono"
@@ -41,7 +51,7 @@ export default function ProductionSiteView({ config, slug }: Props) {
                 {config.title?.charAt(0)?.toUpperCase() ?? "S"}
               </div>
             )}
-            <a href="/" className="font-bold text-sm tracking-wide hover:opacity-80 transition-opacity">
+            <a href={resolveUrl("/")} className="font-bold text-sm tracking-wide hover:opacity-80 transition-opacity">
               {config.title}
             </a>
           </div>
@@ -49,12 +59,12 @@ export default function ProductionSiteView({ config, slug }: Props) {
           {/* Desktop nav */}
           <div className="hidden md:flex items-center gap-4">
             {config.navLinks.map((link) => (
-              <a key={link.id} href={link.url} className="text-xs text-gray-600 hover:text-gray-900 transition-colors">
+              <a key={link.id} href={resolveUrl(link.url)} className="text-xs text-gray-600 hover:text-gray-900 transition-colors">
                 {link.label}
               </a>
             ))}
             <a
-              href="/contact"
+              href={resolveUrl("/contact")}
               className="text-xs text-white px-4 py-2 rounded-full font-medium shadow-sm hover:opacity-90 transition-opacity"
               style={{ backgroundColor: config.primaryColor }}
             >
@@ -86,12 +96,12 @@ export default function ProductionSiteView({ config, slug }: Props) {
         {menuOpen && (
           <div className="md:hidden border-t border-gray-100 px-4 py-3 flex flex-col gap-1 bg-white">
             {config.navLinks.map((link) => (
-              <a key={link.id} href={link.url} className="text-sm text-gray-700 hover:text-gray-900 py-2 border-b border-gray-50 transition-colors">
+              <a key={link.id} href={resolveUrl(link.url)} className="text-sm text-gray-700 hover:text-gray-900 py-2 border-b border-gray-50 transition-colors">
                 {link.label}
               </a>
             ))}
             <a
-              href="/contact"
+              href={resolveUrl("/contact")}
               className="mt-2 text-sm text-white px-4 py-2.5 rounded-full font-medium text-center hover:opacity-90 transition-opacity"
               style={{ backgroundColor: config.primaryColor }}
             >
