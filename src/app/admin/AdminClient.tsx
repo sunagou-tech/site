@@ -1727,6 +1727,37 @@ export default function AdminClient() {
                             </div>
                           ))}
                         </div>
+
+                        {/* フッタープレビュー */}
+                        <div>
+                          <p style={{ fontSize: 10, fontWeight: 700, color: "#475569", margin: "0 0 5px" }}>プレビュー</p>
+                          <div style={{ background: "#0f172a", borderRadius: 8, padding: "12px 14px", color: "#fff" }}>
+                            <p style={{ fontSize: 13, fontWeight: 800, margin: "0 0 5px", color: "#fff" }}>{fnc.companyName || "会社名"}</p>
+                            {fnc.address ? (
+                              <p style={{ fontSize: 10, color: "rgba(255,255,255,0.6)", margin: "0 0 10px", lineHeight: 1.6, whiteSpace: "pre-line" }}>
+                                {fnc.address.split("\n").slice(0, 3).join("\n")}
+                              </p>
+                            ) : null}
+                            {fnc.columns.length > 0 && (
+                              <div style={{ display: "flex", gap: 14, flexWrap: "wrap", borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: 10 }}>
+                                {fnc.columns.slice(0, 4).map(col => (
+                                  <div key={col.id}>
+                                    <p style={{ fontSize: 9, color: "rgba(255,255,255,0.45)", margin: "0 0 4px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>{col.heading}</p>
+                                    {col.links.slice(0, 4).map(link => (
+                                      <p key={link.id} style={{ fontSize: 10, color: "rgba(255,255,255,0.7)", margin: "0 0 3px" }}>{link.label}</p>
+                                    ))}
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                            <p style={{ fontSize: 9, color: "rgba(255,255,255,0.3)", margin: "10px 0 0", borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: 6, textAlign: "center" }}>
+                              © {new Date().getFullYear()} {fnc.companyName}
+                            </p>
+                          </div>
+                          <p style={{ fontSize: 10, color: "#64748B", margin: "5px 0 0" }}>
+                            ※ フッターはページ最下部に表示されます（プレビューで下にスクロールすると確認できます）
+                          </p>
+                        </div>
                       </>}
                     </div>
                   );
