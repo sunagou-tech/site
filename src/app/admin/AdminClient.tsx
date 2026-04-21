@@ -828,7 +828,7 @@ export default function AdminClient() {
                     style={{ fontSize: 12, background: "#F8FAFC", color: "#111827", borderRadius: 6, padding: "4px 8px", outline: "none", border: "1.5px solid #4F46E5", width: 100 }} />
                 ) : (
                   <button
-                    onClick={() => setActivePageId(page.id)}
+                    onClick={() => { setActivePageId(page.id); setSidePanel("blocks"); }}
                     onDoubleClick={() => !page.isHome && (setRenamingPageId(page.id), setRenameValue(page.title))}
                     style={{ fontSize: 12, padding: "4px 10px", borderRadius: 6, border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 5, whiteSpace: "nowrap", transition: "all 0.12s",
                       background: activePageId === page.id ? "#EEF2FF" : "transparent",
