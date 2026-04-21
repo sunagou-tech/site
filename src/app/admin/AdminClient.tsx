@@ -458,16 +458,42 @@ export default function AdminClient() {
   });
 })();
 <\/script>`;
-    // footerNavConfigがある場合はHTMLからfooterを除去し、代わりに統一フッターを注入
+    // AI HTMLを処理: header/nav/footerを除去して統一ナビ・フッターを注入
     let processedHtml = siteHtml;
+    try {
+      const parser2 = new DOMParser();
+      const doc2 = parser2.parseFromString(siteHtml, "text/html");
+      // AI生成のheader/nav/footerをすべて除去
+      doc2.querySelector("body > header")?.remove();
+      doc2.querySelector("body > nav")?.remove();
+      doc2.querySelector("footer")?.remove();
+      // 固定・スティッキーのナビ要素も除去（AIがheader以外に置くケース）
+      doc2.querySelectorAll("header, [class*='navbar'], [class*='nav-bar'], [id*='navbar'], [id*='nav-bar']").forEach(el => el.remove());
+      processedHtml = doc2.documentElement.outerHTML;
+    } catch {}
+
+    // 統一ナビ HTML（config.navLinksベース — サブページと同じ情報）
+    const logoHtml = config.logoUrl
+      ? `<img src="${config.logoUrl}" alt="${config.title}" style="height:32px;width:auto;object-fit:contain" />`
+      : `<div style="width:32px;height:32px;border-radius:6px;background:${config.primaryColor};display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:800">${(config.title?.charAt(0) ?? "S").toUpperCase()}</div>`;
+    const navLinksHtml = config.navLinks.map(link =>
+      `<a href="${link.url}" style="font-size:12px;color:#374151;text-decoration:none;white-space:nowrap">${link.label}</a>`
+    ).join("");
+    const navInjection = `
+      <nav data-tsukurie style="position:relative;z-index:50;background:#fff;border-bottom:1px solid #f1f5f9;padding:12px 32px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 1px 3px rgba(0,0,0,0.05)">
+        <div style="display:flex;align-items:center;gap:8px">
+          ${logoHtml}
+          <a href="/" style="font-weight:700;font-size:14px;text-decoration:none;color:#111">${config.title}</a>
+        </div>
+        <div style="display:flex;align-items:center;gap:16px">
+          ${navLinksHtml}
+          <a href="/contact" style="font-size:12px;color:#fff;padding:7px 18px;border-radius:20px;background:${config.primaryColor};text-decoration:none;font-weight:600">お問い合わせ</a>
+        </div>
+      </nav>`;
+
+    // 統一フッター HTML
     let footerInjection = "";
     if (config.footerNavConfig?.show) {
-      try {
-        const parser2 = new DOMParser();
-        const doc2 = parser2.parseFromString(siteHtml, "text/html");
-        doc2.querySelector("footer")?.remove();
-        processedHtml = doc2.documentElement.outerHTML;
-      } catch {}
       const fnc = config.footerNavConfig;
       const addressLines = fnc.address.split("\n").filter(Boolean);
       const colsHtml = fnc.columns.map(col => `
@@ -492,20 +518,13 @@ export default function AdminClient() {
             <p style="font-size:11px;color:rgba(255,255,255,0.35);margin:0">© ${new Date().getFullYear()} ${fnc.companyName}</p>
           </div>
         </div>`;
-    } else if (config.footerNavConfig && !config.footerNavConfig.show) {
-      // show:false の場合はHTMLのfooterも除去
-      try {
-        const parser2 = new DOMParser();
-        const doc2 = parser2.parseFromString(siteHtml, "text/html");
-        doc2.querySelector("footer")?.remove();
-        processedHtml = doc2.documentElement.outerHTML;
-      } catch {}
     }
-    const injected = processedHtml.replace('</body>', footerInjection + script + '</body>');
+
+    const injected = processedHtml.replace('<body', `<body data-tsukurie`).replace('data-tsukurie>', `data-tsukurie>${navInjection}`).replace('</body>', footerInjection + script + '</body>');
     const url = URL.createObjectURL(new Blob([injected], { type: "text/html" }));
     setHtmlBlobUrl(url);
     return () => URL.revokeObjectURL(url);
-  }, [siteHtml, JSON.stringify(config.footerNavConfig)]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [siteHtml, JSON.stringify(config.footerNavConfig), JSON.stringify(config.navLinks), config.title, config.primaryColor, config.logoUrl]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // iframeからのテキスト変更を受け取る（編集後のHTMLをsessionStorageに保存）
   useEffect(() => {
