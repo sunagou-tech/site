@@ -406,8 +406,8 @@ export default function SitePreview({ config, onConfigChange, onInsertRequest, l
         </div>
       </div>
 
-      {/* サイト本体 */}
-      <div className="gs-root mx-4 my-4 bg-white shadow-xl rounded-b-lg overflow-hidden border-t-2 border-green-400">
+      {/* サイト本体 — transform: translateZ(0) で position:fixed 要素をこのコンテナに封じ込める */}
+      <div className="gs-root mx-4 my-4 bg-white shadow-xl rounded-b-lg overflow-hidden border-t-2 border-green-400" style={{ transform: "translateZ(0)" }}>
         <GlobalStyleInjector style={config.globalStyle} />
         {editableSections.length === 0 && !globalFooter && (
           <div className="flex flex-col items-center justify-center h-64 text-gray-400 gap-3">
