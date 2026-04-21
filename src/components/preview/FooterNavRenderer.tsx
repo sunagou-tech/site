@@ -20,7 +20,7 @@ export default function FooterNavRenderer({ config, siteSlug }: Props) {
   const addressLines = config.address.split("\n").filter(Boolean);
 
   return (
-    <footer style={{ background: "#0f172a", color: "#fff" }}>
+    <div style={{ background: "#0f172a", color: "#fff" }}>
       <div style={{ maxWidth: 1200, margin: "0 auto", padding: "48px 32px 32px", display: "grid", gridTemplateColumns: config.columns.length > 0 ? "1fr 2fr" : "1fr", gap: 48 }}>
 
         {/* 左：会社情報 */}
@@ -70,6 +70,6 @@ export default function FooterNavRenderer({ config, siteSlug }: Props) {
           © {new Date().getFullYear()} {config.companyName}
         </p>
       </div>
-    </footer>
+    </div>
   );
 }
