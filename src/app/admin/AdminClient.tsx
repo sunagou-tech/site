@@ -6,6 +6,7 @@ import {
   uid, BLOCK_META,
 } from "@/types/site";
 import SitePreview from "@/components/preview/SitePreview";
+import BlockRenderer from "@/components/preview/blocks/BlockRenderer";
 import BlockInsertModal from "@/components/admin/BlockInsertModal";
 import { RefreshCw, ExternalLink, Plus, Layout, Globe, Check, AlertCircle, Undo2, Image, Copy, Trash2 } from "lucide-react";
 import { EditingContext } from "@/contexts/EditingContext";
@@ -456,7 +457,10 @@ export default function AdminClient() {
   });
 })();
 <\/script>`;
-    const injected = siteHtml.replace('</body>', script + '</body>');
+    // HTMLのナビ・フッターを非表示にしてブロック共通のものを使用
+    const hideStyle = '<style>header:not(#__ce_panel *),body>nav:first-of-type,body>footer{display:none!important}</style>';
+    const htmlWithHide = siteHtml.includes('</head>') ? siteHtml.replace('</head>', hideStyle + '</head>') : hideStyle + siteHtml;
+    const injected = htmlWithHide.replace('</body>', script + '</body>');
     const url = URL.createObjectURL(new Blob([injected], { type: "text/html" }));
     setHtmlBlobUrl(url);
     return () => URL.revokeObjectURL(url);
@@ -1424,6 +1428,29 @@ export default function AdminClient() {
           {/* ═══ Center: SitePreview / Device Preview ════ */}
           {htmlMode && htmlBlobUrl && activePageId === "home" ? (
             <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+              {/* ─── ブロック共通ナビバー ─── */}
+              <nav style={{ background: "#fff", borderBottom: "1px solid #E2E8F0", padding: "0 32px", display: "flex", alignItems: "center", gap: 16, height: 56, flexShrink: 0, boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  {config.logoUrl ? (
+                    <img src={config.logoUrl} alt={config.title} style={{ height: 32, width: "auto", objectFit: "contain" }} />
+                  ) : (
+                    <div style={{ width: 32, height: 32, borderRadius: 6, background: config.primaryColor, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 12, fontWeight: 700 }}>
+                      {config.title?.charAt(0)?.toUpperCase() ?? "S"}
+                    </div>
+                  )}
+                  <span style={{ fontWeight: 700, fontSize: 14, letterSpacing: "-0.01em", color: "#111" }}>{config.title}</span>
+                </div>
+                <div style={{ flex: 1 }} />
+                <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
+                  {config.navLinks.map(link => (
+                    <span key={link.id} style={{ fontSize: 13, color: "#6B7280" }}>{link.label}</span>
+                  ))}
+                  <div style={{ background: config.primaryColor, color: "#fff", fontSize: 12, padding: "6px 16px", borderRadius: 20, fontWeight: 600, whiteSpace: "nowrap" }}>
+                    お問い合わせ
+                  </div>
+                </div>
+              </nav>
+
               {/* 編集ヒントバー */}
               <div style={{ background: "#4F46E5", padding: "6px 16px", display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
@@ -1494,6 +1521,12 @@ export default function AdminClient() {
                   </div>
                 )}
               </div>
+              {/* ─── ブロック共通フッター ─── */}
+              {config.sections.filter(s => s.type === "footer").map(block => (
+                <div key={block.id} style={{ flexShrink: 0 }}>
+                  <BlockRenderer block={block} config={config} onChange={() => {}} />
+                </div>
+              ))}
             </div>
           ) : deviceMode === "pc" ? (
             <SitePreview
