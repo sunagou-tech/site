@@ -26,7 +26,7 @@ import {
   arrayMove,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { useState, useCallback, memo, useRef } from "react";
+import { useState, useCallback, memo, useRef, useMemo } from "react";
 import GlobalFormatBar from "./GlobalFormatBar";
 import GlobalStyleInjector from "./GlobalStyleInjector";
 
@@ -34,6 +34,7 @@ interface Props {
   config: SiteConfig;
   onConfigChange: (config: SiteConfig) => void;
   onInsertRequest: (position: number) => void;
+  lockedBlockIds?: string[];  // これらのIDのブロックはホームと共通（読み取り専用で表示）
 }
 
 function blockLabel(block: SectionBlock) {
@@ -320,8 +321,13 @@ const SortableBlock = memo(function SortableBlock({
 });
 
 // ─── メイン ──────────────────────────────────────────────────
-export default function SitePreview({ config, onConfigChange, onInsertRequest }: Props) {
+export default function SitePreview({ config, onConfigChange, onInsertRequest, lockedBlockIds }: Props) {
   const [activeId, setActiveId] = useState<string | null>(null);
+
+  // ロック済みブロック（ホームと共通）と編集可能ブロックを分離
+  const lockedSet = useMemo(() => new Set(lockedBlockIds ?? []), [lockedBlockIds]);
+  const editableSections = useMemo(() => config.sections.filter(b => !lockedSet.has(b.id)), [config.sections, lockedSet]);
+  const lockedSections = useMemo(() => config.sections.filter(b => lockedSet.has(b.id)), [config.sections, lockedSet]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } })
@@ -339,12 +345,12 @@ export default function SitePreview({ config, onConfigChange, onInsertRequest }:
   }, [config, onConfigChange]);
 
   const moveBlock = useCallback((idx: number, dir: -1 | 1) => {
-    const next = [...config.sections];
+    const next = [...editableSections];
     const target = idx + dir;
     if (target < 0 || target >= next.length) return;
     [next[idx], next[target]] = [next[target], next[idx]];
-    onConfigChange({ ...config, sections: next });
-  }, [config, onConfigChange]);
+    onConfigChange({ ...config, sections: [...next, ...lockedSections] });
+  }, [config, editableSections, lockedSections, onConfigChange]);
 
   const updateBlockStyle = useCallback((id: string, style: BlockStyle | null) => {
     const next = { ...(config.blockStyles ?? {}) };
@@ -360,12 +366,12 @@ export default function SitePreview({ config, onConfigChange, onInsertRequest }:
     const { active, over } = event;
     setActiveId(null);
     if (!over || active.id === over.id) return;
-    const oldIdx = config.sections.findIndex((b) => b.id === active.id);
-    const newIdx = config.sections.findIndex((b) => b.id === over.id);
-    onConfigChange({ ...config, sections: arrayMove(config.sections, oldIdx, newIdx) });
+    const oldIdx = editableSections.findIndex((b) => b.id === active.id);
+    const newIdx = editableSections.findIndex((b) => b.id === over.id);
+    onConfigChange({ ...config, sections: [...arrayMove(editableSections, oldIdx, newIdx), ...lockedSections] });
   }
 
-  const activeBlock = activeId ? config.sections.find((b) => b.id === activeId) : null;
+  const activeBlock = activeId ? editableSections.find((b) => b.id === activeId) : null;
 
   return (
     <div className="flex-1 bg-gray-200 overflow-y-auto">
@@ -398,7 +404,7 @@ export default function SitePreview({ config, onConfigChange, onInsertRequest }:
       {/* サイト本体 */}
       <div className="gs-root mx-4 my-4 bg-white shadow-xl rounded-b-lg overflow-hidden border-t-2 border-green-400">
         <GlobalStyleInjector style={config.globalStyle} />
-        {config.sections.length === 0 && (
+        {editableSections.length === 0 && lockedSections.length === 0 && (
           <div className="flex flex-col items-center justify-center h-64 text-gray-400 gap-3">
             <p className="text-sm">ブロックがありません</p>
             <button
@@ -419,17 +425,17 @@ export default function SitePreview({ config, onConfigChange, onInsertRequest }:
           onDragEnd={handleDragEnd}
           onDragCancel={() => setActiveId(null)}
         >
-          <SortableContext items={config.sections.map((b) => b.id)} strategy={verticalListSortingStrategy}>
-            {config.sections.length > 0 && (
+          <SortableContext items={editableSections.map((b) => b.id)} strategy={verticalListSortingStrategy}>
+            {editableSections.length > 0 && (
               <InsertButton onClick={() => onInsertRequest(0)} />
             )}
 
-            {config.sections.map((block, idx) => (
+            {editableSections.map((block, idx) => (
               <div key={block.id}>
                 <SortableBlock
                   block={block}
                   index={idx}
-                  total={config.sections.length}
+                  total={editableSections.length}
                   config={config}
                   onChangeBlock={(nb) => updateBlock(block.id, nb)}
                   onDelete={() => deleteBlock(block.id)}
@@ -439,6 +445,18 @@ export default function SitePreview({ config, onConfigChange, onInsertRequest }:
                 <InsertButton onClick={() => onInsertRequest(idx + 1)} />
               </div>
             ))}
+
+            {editableSections.length === 0 && lockedSections.length > 0 && (
+              <div className="flex flex-col items-center justify-center h-32 text-gray-400 gap-2">
+                <p className="text-xs">ブロックがありません</p>
+                <button
+                  onClick={() => onInsertRequest(0)}
+                  className="flex items-center gap-1.5 text-xs border border-dashed border-indigo-300 text-indigo-400 px-4 py-2 rounded-full hover:border-indigo-400"
+                >
+                  <Plus size={12} /> ブロックを追加
+                </button>
+              </div>
+            )}
           </SortableContext>
 
           <DragOverlay>
@@ -455,6 +473,25 @@ export default function SitePreview({ config, onConfigChange, onInsertRequest }:
             )}
           </DragOverlay>
         </DndContext>
+
+        {/* ロック済みブロック（ホームと共通 — 読み取り専用） */}
+        {lockedSections.length > 0 && (
+          <div>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "5px 14px", background: "#F1F5F9", borderTop: "1px dashed #CBD5E1" }}>
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth="2.5">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              </svg>
+              <span style={{ fontSize: 10, color: "#64748B", fontWeight: 600 }}>ホームと共通（フッターを変更するにはホームタブから）</span>
+            </div>
+            <div style={{ pointerEvents: "none", opacity: 0.88 }}>
+              {lockedSections.map(block => (
+                <BlockRenderer key={block.id} block={block} config={config} onChange={() => {}} />
+              ))}
+            </div>
+          </div>
+        )}
+
         <StickyContactBar primaryColor={config.primaryColor} />
       </div>
     </div>

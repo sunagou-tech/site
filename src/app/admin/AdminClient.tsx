@@ -656,11 +656,14 @@ export default function AdminClient() {
     if (activePageId === "home") {
       updateConfig(newConfig);
     } else {
+      // ロック済みブロック（ホームのフッター）をサブページのsectionsから除外して保存
+      const homeFooterIds = new Set(config.sections.filter(s => s.type === "footer").map(b => b.id));
+      const pageOnlySections = newConfig.sections.filter(s => !homeFooterIds.has(s.id));
       updateConfig({
         ...newConfig,
         sections: config.sections,
         pages: config.pages.map((p) =>
-          p.id === activePageId ? { ...p, sections: newConfig.sections } : p
+          p.id === activePageId ? { ...p, sections: pageOnlySections } : p
         ),
       });
     }
@@ -1501,6 +1504,9 @@ export default function AdminClient() {
               config={getActiveConfig()}
               onConfigChange={handleActiveConfigChange}
               onInsertRequest={handleInsertRequest}
+              lockedBlockIds={activePageId !== "home"
+                ? config.sections.filter(s => s.type === "footer").map(b => b.id)
+                : undefined}
             />
           ) : (
             <div style={{ flex: 1, overflowY: "auto", background: "#E2E8F0", display: "flex", flexDirection: "column", alignItems: "center", paddingTop: 20, paddingBottom: 20, gap: 12 }}>
