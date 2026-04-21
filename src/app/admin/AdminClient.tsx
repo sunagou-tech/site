@@ -1558,7 +1558,6 @@ export default function AdminClient() {
 // ─── コラム管理パネル ──────────────────────────────────────────
 function ColumnPanel({ articles, onChange }: { articles: Article[]; onChange: (a: Article[]) => void }) {
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [form, setForm] = useState<Partial<Article>>({});
 
   function startNew() {
     const a: Article = {
@@ -1567,22 +1566,10 @@ function ColumnPanel({ articles, onChange }: { articles: Article[]; onChange: (a
     };
     onChange([...articles, a]);
     setEditingId(a.id);
-    setForm(a);
-  }
-
-  function startEdit(a: Article) {
-    if (editingId === a.id) { setEditingId(null); return; }
-    setEditingId(a.id);
-    setForm({ ...a });
-  }
-
-  function saveEdit() {
-    if (!editingId) return;
-    onChange(articles.map((a) => a.id === editingId ? { ...a, ...form } as Article : a));
-    setEditingId(null);
   }
 
   function deleteArticle(id: string) {
+    if (!confirm("この記事を削除しますか？")) return;
     onChange(articles.filter((a) => a.id !== id));
     if (editingId === id) setEditingId(null);
   }
@@ -1591,91 +1578,169 @@ function ColumnPanel({ articles, onChange }: { articles: Article[]; onChange: (a
     onChange(articles.map((a) => a.id === id ? { ...a, published: !a.published } : a));
   }
 
-  const f = (patch: Partial<Article>) => setForm((prev) => ({ ...prev, ...patch }));
-  const inp: React.CSSProperties = { fontSize: 11, padding: "6px 9px", border: "1px solid #E2E8F0", borderRadius: 6, outline: "none", color: "#111", width: "100%", boxSizing: "border-box" };
-  const lbl: React.CSSProperties = { fontSize: 10, fontWeight: 600, color: "#64748B", display: "block", marginBottom: 3 };
+  const editingArticle = articles.find((a) => a.id === editingId) ?? null;
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-      <button onClick={startNew}
-        style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, width: "100%", padding: "9px 0", borderRadius: 8, border: "1.5px dashed #C7D2FE", background: "#EEF2FF", cursor: "pointer", color: "#4F46E5", fontWeight: 700, fontSize: 11 }}>
-        <span style={{ fontSize: 14 }}>+</span> 記事を追加
-      </button>
+    <>
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        <button onClick={startNew}
+          style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, width: "100%", padding: "9px 0", borderRadius: 8, border: "1.5px dashed #C7D2FE", background: "#EEF2FF", cursor: "pointer", color: "#4F46E5", fontWeight: 700, fontSize: 11 }}>
+          <span style={{ fontSize: 14 }}>+</span> 記事を追加
+        </button>
 
-      {articles.length === 0 && (
-        <p style={{ fontSize: 11, color: "#94A3B8", textAlign: "center", padding: "16px 0" }}>記事がありません</p>
-      )}
+        {articles.length === 0 && (
+          <p style={{ fontSize: 11, color: "#94A3B8", textAlign: "center", padding: "16px 0" }}>記事がありません</p>
+        )}
 
-      {articles.map((a) => (
-        <div key={a.id} style={{ border: "1px solid #E2E8F0", borderRadius: 8, overflow: "hidden" }}>
-          {/* 記事ヘッダー行 */}
-          <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 10px", background: "#FAFAFA", cursor: "pointer" }}
-            onClick={() => startEdit(a)}>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <p style={{ fontSize: 11, fontWeight: 600, color: "#1E293B", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{a.title}</p>
-              <p style={{ fontSize: 9, color: "#94A3B8", margin: 0 }}>{a.date} · {a.category}</p>
+        {articles.map((a) => (
+          <div key={a.id} style={{ border: "1px solid #E2E8F0", borderRadius: 8, overflow: "hidden" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 10px", background: "#FAFAFA" }}>
+              <div style={{ flex: 1, minWidth: 0, cursor: "pointer" }} onClick={() => setEditingId(a.id)}>
+                <p style={{ fontSize: 11, fontWeight: 600, color: "#1E293B", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{a.title}</p>
+                <p style={{ fontSize: 9, color: "#94A3B8", margin: 0 }}>{a.date} · {a.category}</p>
+              </div>
+              <button onClick={e => { e.stopPropagation(); togglePublished(a.id); }}
+                style={{ fontSize: 9, padding: "2px 7px", borderRadius: 10, border: "none", cursor: "pointer", flexShrink: 0,
+                  background: a.published ? "#DCFCE7" : "#F1F5F9", color: a.published ? "#16A34A" : "#94A3B8", fontWeight: 700 }}>
+                {a.published ? "公開中" : "下書き"}
+              </button>
+              <button onClick={() => setEditingId(a.id)}
+                style={{ width: 20, height: 20, border: "1px solid #DBEAFE", borderRadius: 4, background: "#EFF6FF", color: "#3B82F6", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, flexShrink: 0 }}
+                title="編集">✏</button>
+              <button onClick={() => deleteArticle(a.id)}
+                style={{ width: 20, height: 20, border: "1px solid #FEE2E2", borderRadius: 4, background: "#FFF5F5", color: "#EF4444", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, flexShrink: 0 }}>×</button>
             </div>
-            {/* 公開トグル */}
-            <button onClick={e => { e.stopPropagation(); togglePublished(a.id); }}
-              style={{ fontSize: 9, padding: "2px 7px", borderRadius: 10, border: "none", cursor: "pointer", flexShrink: 0,
-                background: a.published ? "#DCFCE7" : "#F1F5F9", color: a.published ? "#16A34A" : "#94A3B8", fontWeight: 700 }}>
-              {a.published ? "公開中" : "下書き"}
-            </button>
-            <button onClick={e => { e.stopPropagation(); deleteArticle(a.id); }}
-              style={{ width: 20, height: 20, border: "1px solid #FEE2E2", borderRadius: 4, background: "#FFF5F5", color: "#EF4444", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, flexShrink: 0 }}>×</button>
+          </div>
+        ))}
+      </div>
+
+      {/* 全画面編集モーダル */}
+      {editingArticle && (
+        <ArticleEditModal
+          article={editingArticle}
+          onSave={(updated) => {
+            onChange(articles.map((a) => a.id === updated.id ? updated : a));
+            setEditingId(null);
+          }}
+          onClose={() => setEditingId(null)}
+        />
+      )}
+    </>
+  );
+}
+
+// ─── 記事全画面エディタ ────────────────────────────────────────
+function ArticleEditModal({ article, onSave, onClose }: {
+  article: Article;
+  onSave: (a: Article) => void;
+  onClose: () => void;
+}) {
+  const [form, setForm] = useState<Article>({ ...article });
+  const f = (patch: Partial<Article>) => setForm((prev) => ({ ...prev, ...patch }));
+
+  const inp: React.CSSProperties = { fontSize: 13, padding: "8px 11px", border: "1px solid #E2E8F0", borderRadius: 7, outline: "none", color: "#111", width: "100%", boxSizing: "border-box" };
+  const lbl: React.CSSProperties = { fontSize: 11, fontWeight: 600, color: "#475569", display: "block", marginBottom: 4 };
+
+  return (
+    <div style={{ position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0,0,0,0.45)", display: "flex", alignItems: "stretch", justifyContent: "center" }}>
+      <div style={{ width: "100%", maxWidth: 1100, background: "#fff", display: "flex", flexDirection: "column", boxShadow: "0 20px 60px rgba(0,0,0,0.25)", margin: "auto" }}>
+
+        {/* ── ヘッダー ── */}
+        <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 24px", borderBottom: "1px solid #E2E8F0", background: "#0F172A", flexShrink: 0 }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#818CF8" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          <span style={{ fontSize: 13, fontWeight: 700, color: "#E2E8F0", flex: 1 }}>記事編集</span>
+          <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", marginRight: 8 }}>
+            <span style={{ fontSize: 11, color: form.published ? "#4ADE80" : "#94A3B8", fontWeight: 600 }}>
+              {form.published ? "公開中" : "下書き"}
+            </span>
+            <div onClick={() => f({ published: !form.published })}
+              style={{ width: 36, height: 20, borderRadius: 10, background: form.published ? "#22C55E" : "#475569", position: "relative", cursor: "pointer", transition: "background 0.2s" }}>
+              <div style={{ position: "absolute", top: 2, left: form.published ? 18 : 2, width: 16, height: 16, borderRadius: "50%", background: "#fff", transition: "left 0.2s" }} />
+            </div>
+          </label>
+          <button onClick={() => { onSave(form); }}
+            style={{ padding: "7px 20px", borderRadius: 7, border: "none", background: "#4F46E5", color: "#fff", fontWeight: 700, fontSize: 12, cursor: "pointer" }}>
+            保存
+          </button>
+          <button onClick={onClose}
+            style={{ padding: "7px 14px", borderRadius: 7, border: "1px solid #334155", background: "transparent", color: "#94A3B8", fontSize: 12, cursor: "pointer" }}>
+            閉じる
+          </button>
+        </div>
+
+        {/* ── 本体 ── */}
+        <div style={{ display: "flex", flex: 1, overflow: "hidden", minHeight: 0, maxHeight: "calc(100vh - 60px)" }}>
+
+          {/* 左: メタデータ */}
+          <div style={{ width: 320, flexShrink: 0, borderRight: "1px solid #E2E8F0", padding: "20px 20px", overflowY: "auto", display: "flex", flexDirection: "column", gap: 14 }}>
+            <div>
+              <label style={lbl}>タイトル</label>
+              <input style={inp} value={form.title} onChange={e => f({ title: e.target.value })} />
+            </div>
+            <div style={{ display: "flex", gap: 8 }}>
+              <div style={{ flex: 1 }}>
+                <label style={lbl}>日付</label>
+                <input style={inp} type="date" value={form.date} onChange={e => f({ date: e.target.value })} />
+              </div>
+              <div style={{ flex: 1 }}>
+                <label style={lbl}>カテゴリ</label>
+                <input style={inp} value={form.category} onChange={e => f({ category: e.target.value })} />
+              </div>
+            </div>
+            <div>
+              <label style={lbl}>スラッグ（URL）</label>
+              <input style={inp} value={form.slug} onChange={e => f({ slug: e.target.value })} placeholder="my-article" />
+            </div>
+            <div>
+              <label style={lbl}>著者</label>
+              <input style={inp} value={form.author} onChange={e => f({ author: e.target.value })} />
+            </div>
+            <div>
+              <label style={lbl}>アイキャッチ画像 URL</label>
+              <input style={inp} value={form.imageUrl} onChange={e => f({ imageUrl: e.target.value })} placeholder="https://..." />
+              {form.imageUrl && (
+                <img src={form.imageUrl} alt="" style={{ marginTop: 8, width: "100%", height: 120, objectFit: "cover", borderRadius: 6, border: "1px solid #E2E8F0" }} />
+              )}
+            </div>
+            <div>
+              <label style={lbl}>抜粋（一覧表示用）</label>
+              <textarea style={{ ...inp, resize: "vertical", minHeight: 80, fontSize: 12 }} value={form.excerpt} onChange={e => f({ excerpt: e.target.value })} />
+            </div>
+            <div style={{ borderTop: "1px solid #F1F5F9", paddingTop: 12 }}>
+              <p style={{ fontSize: 10, fontWeight: 700, color: "#64748B", marginBottom: 10, letterSpacing: "0.05em" }}>SEO設定</p>
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                <div>
+                  <label style={{ ...lbl, fontSize: 10 }}>metaタイトル（空欄=タイトルを使用）</label>
+                  <input style={{ ...inp, fontSize: 11 }} value={form.metaTitle ?? ""} onChange={e => f({ metaTitle: e.target.value })} />
+                </div>
+                <div>
+                  <label style={{ ...lbl, fontSize: 10 }}>meta説明文</label>
+                  <textarea style={{ ...inp, resize: "vertical", minHeight: 56, fontSize: 11 }} value={form.metaDescription ?? ""} onChange={e => f({ metaDescription: e.target.value })} />
+                </div>
+                <label style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
+                  <input type="checkbox" checked={form.noindex ?? false} onChange={e => f({ noindex: e.target.checked })} />
+                  <span style={{ fontSize: 11, color: "#475569" }}>検索エンジンにインデックスさせない</span>
+                </label>
+              </div>
+            </div>
           </div>
 
-          {/* 編集フォーム */}
-          {editingId === a.id && (
-            <div style={{ padding: "10px", display: "flex", flexDirection: "column", gap: 8, borderTop: "1px solid #E2E8F0" }}>
-              <div>
-                <span style={lbl}>タイトル</span>
-                <input style={inp} value={form.title ?? ""} onChange={e => f({ title: e.target.value })} />
-              </div>
-              <div style={{ display: "flex", gap: 6 }}>
-                <div style={{ flex: 1 }}>
-                  <span style={lbl}>日付</span>
-                  <input style={inp} type="date" value={form.date ?? ""} onChange={e => f({ date: e.target.value })} />
-                </div>
-                <div style={{ flex: 1 }}>
-                  <span style={lbl}>カテゴリ</span>
-                  <input style={inp} value={form.category ?? ""} onChange={e => f({ category: e.target.value })} />
-                </div>
-              </div>
-              <div>
-                <span style={lbl}>スラッグ（URL）</span>
-                <input style={inp} value={form.slug ?? ""} onChange={e => f({ slug: e.target.value })} placeholder="my-article" />
-              </div>
-              <div>
-                <span style={lbl}>著者</span>
-                <input style={inp} value={form.author ?? ""} onChange={e => f({ author: e.target.value })} />
-              </div>
-              <div>
-                <span style={lbl}>アイキャッチ画像 URL</span>
-                <input style={inp} value={form.imageUrl ?? ""} onChange={e => f({ imageUrl: e.target.value })} placeholder="https://..." />
-              </div>
-              <div>
-                <span style={lbl}>抜粋（一覧表示用）</span>
-                <textarea style={{ ...inp, resize: "vertical", minHeight: 56 }} value={form.excerpt ?? ""} onChange={e => f({ excerpt: e.target.value })} />
-              </div>
-              <div>
-                <span style={lbl}>本文（HTML可）</span>
-                <textarea style={{ ...inp, resize: "vertical", minHeight: 100, fontFamily: "monospace", fontSize: 10 }} value={form.body ?? ""} onChange={e => f({ body: e.target.value })} />
-              </div>
-              <div style={{ display: "flex", gap: 6 }}>
-                <button onClick={saveEdit}
-                  style={{ flex: 1, padding: "8px 0", borderRadius: 7, border: "none", background: "#4F46E5", color: "#fff", fontWeight: 700, fontSize: 11, cursor: "pointer" }}>
-                  保存
-                </button>
-                <button onClick={() => setEditingId(null)}
-                  style={{ flex: 1, padding: "8px 0", borderRadius: 7, border: "1px solid #E2E8F0", background: "#fff", color: "#64748B", fontSize: 11, cursor: "pointer" }}>
-                  キャンセル
-                </button>
-              </div>
+          {/* 右: 本文エディタ */}
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+            <div style={{ padding: "10px 20px", borderBottom: "1px solid #F1F5F9", flexShrink: 0, background: "#FAFAFA" }}>
+              <p style={{ margin: 0, fontSize: 11, color: "#64748B" }}>
+                本文（HTML可）— &lt;h2&gt;、&lt;p&gt;、&lt;ul&gt;、&lt;strong&gt; などのタグが使えます
+              </p>
             </div>
-          )}
+            <textarea
+              style={{ flex: 1, resize: "none", border: "none", outline: "none", padding: "20px 24px", fontSize: 14, lineHeight: 1.8, color: "#1E293B", fontFamily: "'Noto Sans JP', sans-serif", background: "#fff" }}
+              value={form.body}
+              onChange={e => f({ body: e.target.value })}
+              placeholder="<p>ここに本文を入力...</p>&#10;<h2>見出し</h2>&#10;<p>続きの文章</p>"
+            />
+          </div>
         </div>
-      ))}
+      </div>
     </div>
   );
 }
