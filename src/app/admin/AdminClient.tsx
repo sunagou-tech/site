@@ -458,29 +458,27 @@ export default function AdminClient() {
   });
 })();
 <\/script>`;
-    // AI HTMLを処理: header/nav/footerを除去して統一ナビ・フッターを注入
+    // AI HTMLをDOMParserで処理: header/nav/footerを除去して統一ナビ・フッターをDOM挿入
     let processedHtml = siteHtml;
     try {
       const parser2 = new DOMParser();
       const doc2 = parser2.parseFromString(siteHtml, "text/html");
-      // AI生成のheader/nav/footerをすべて除去
-      doc2.querySelector("body > header")?.remove();
-      doc2.querySelector("body > nav")?.remove();
-      doc2.querySelector("footer")?.remove();
-      // 固定・スティッキーのナビ要素も除去（AIがheader以外に置くケース）
-      doc2.querySelectorAll("header, [class*='navbar'], [class*='nav-bar'], [id*='navbar'], [id*='nav-bar']").forEach(el => el.remove());
-      processedHtml = doc2.documentElement.outerHTML;
-    } catch {}
 
-    // 統一ナビ HTML（config.navLinksベース — サブページと同じ情報）
-    const logoHtml = config.logoUrl
-      ? `<img src="${config.logoUrl}" alt="${config.title}" style="height:32px;width:auto;object-fit:contain" />`
-      : `<div style="width:32px;height:32px;border-radius:6px;background:${config.primaryColor};display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:800">${(config.title?.charAt(0) ?? "S").toUpperCase()}</div>`;
-    const navLinksHtml = config.navLinks.map(link =>
-      `<a href="${link.url}" style="font-size:12px;color:#374151;text-decoration:none;white-space:nowrap">${link.label}</a>`
-    ).join("");
-    const navInjection = `
-      <nav data-tsukurie style="position:relative;z-index:50;background:#fff;border-bottom:1px solid #f1f5f9;padding:12px 32px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 1px 3px rgba(0,0,0,0.05)">
+      // AI生成のheader/nav/footerをすべて除去
+      doc2.querySelectorAll("header, footer, body > nav").forEach(el => el.remove());
+      doc2.querySelectorAll("[class*='navbar'],[class*='nav-bar'],[id*='navbar'],[id*='nav-bar']").forEach(el => el.remove());
+
+      // 統一ナビをbodyの先頭にDOM挿入
+      const logoHtml = config.logoUrl
+        ? `<img src="${config.logoUrl}" alt="${config.title}" style="height:32px;width:auto;object-fit:contain" />`
+        : `<div style="width:32px;height:32px;border-radius:6px;background:${config.primaryColor};display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:800">${(config.title?.charAt(0) ?? "S").toUpperCase()}</div>`;
+      const navLinksHtml = config.navLinks.map(link =>
+        `<a href="${link.url}" style="font-size:12px;color:#374151;text-decoration:none;white-space:nowrap">${link.label}</a>`
+      ).join("");
+      const navEl = doc2.createElement("nav");
+      navEl.setAttribute("data-tsukurie", "");
+      navEl.setAttribute("style", "position:relative;z-index:50;background:#fff;border-bottom:1px solid #f1f5f9;padding:12px 32px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 1px 3px rgba(0,0,0,0.05)");
+      navEl.innerHTML = `
         <div style="display:flex;align-items:center;gap:8px">
           ${logoHtml}
           <a href="/" style="font-weight:700;font-size:14px;text-decoration:none;color:#111">${config.title}</a>
@@ -488,23 +486,24 @@ export default function AdminClient() {
         <div style="display:flex;align-items:center;gap:16px">
           ${navLinksHtml}
           <a href="/contact" style="font-size:12px;color:#fff;padding:7px 18px;border-radius:20px;background:${config.primaryColor};text-decoration:none;font-weight:600">お問い合わせ</a>
-        </div>
-      </nav>`;
+        </div>`;
+      doc2.body.insertBefore(navEl, doc2.body.firstChild);
 
-    // 統一フッター HTML
-    let footerInjection = "";
-    if (config.footerNavConfig?.show) {
-      const fnc = config.footerNavConfig;
-      const addressLines = fnc.address.split("\n").filter(Boolean);
-      const colsHtml = fnc.columns.map(col => `
-        <div>
-          <p style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.45);letter-spacing:0.08em;margin:0 0 12px;text-transform:uppercase">${col.heading}</p>
-          <div style="display:flex;flex-direction:column;gap:8px">
-            ${col.links.map(link => `<a href="${link.url}" style="font-size:13px;color:rgba(255,255,255,0.75);text-decoration:none;line-height:1.5">${link.label}</a>`).join("")}
-          </div>
-        </div>`).join("");
-      footerInjection = `
-        <div style="background:#0f172a;color:#fff;position:relative">
+      // 統一フッターをbodyの末尾にDOM挿入
+      if (config.footerNavConfig?.show) {
+        const fnc = config.footerNavConfig;
+        const addressLines = fnc.address.split("\n").filter(Boolean);
+        const colsHtml = fnc.columns.map(col => `
+          <div>
+            <p style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.45);letter-spacing:0.08em;margin:0 0 12px;text-transform:uppercase">${col.heading}</p>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              ${col.links.map(link => `<a href="${link.url}" style="font-size:13px;color:rgba(255,255,255,0.75);text-decoration:none;line-height:1.5">${link.label}</a>`).join("")}
+            </div>
+          </div>`).join("");
+        const footerEl = doc2.createElement("div");
+        footerEl.setAttribute("data-tsukurie-footer", "");
+        footerEl.setAttribute("style", "background:#0f172a;color:#fff");
+        footerEl.innerHTML = `
           <div style="max-width:1200px;margin:0 auto;padding:48px 32px 32px;display:grid;grid-template-columns:${fnc.columns.length > 0 ? "1fr 2fr" : "1fr"};gap:48px">
             <div>
               <p style="font-weight:800;font-size:20px;margin:0 0 16px;letter-spacing:-0.01em;color:#fff">${fnc.companyName}</p>
@@ -516,11 +515,15 @@ export default function AdminClient() {
           </div>
           <div style="border-top:1px solid rgba(255,255,255,0.08);padding:16px 32px;text-align:center">
             <p style="font-size:11px;color:rgba(255,255,255,0.35);margin:0">© ${new Date().getFullYear()} ${fnc.companyName}</p>
-          </div>
-        </div>`;
-    }
+          </div>`;
+        doc2.body.appendChild(footerEl);
+      }
 
-    const injected = processedHtml.replace('<body', `<body data-tsukurie`).replace('data-tsukurie>', `data-tsukurie>${navInjection}`).replace('</body>', footerInjection + script + '</body>');
+      processedHtml = doc2.documentElement.outerHTML;
+    } catch {}
+
+    // スクリプトのみ文字列置換で注入
+    const injected = processedHtml.replace('</body>', script + '</body>');
     const url = URL.createObjectURL(new Blob([injected], { type: "text/html" }));
     setHtmlBlobUrl(url);
     return () => URL.revokeObjectURL(url);
