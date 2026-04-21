@@ -1235,6 +1235,60 @@ export default function AdminClient() {
                         <option value="Shippori Mincho">Shippori Mincho（しっぽり明朝）</option>
                       </select>
                     </label>
+
+                    {/* ナビゲーションリンク */}
+                    <div style={{ padding: "10px", background: "#F8FAFC", borderRadius: 8, display: "flex", flexDirection: "column", gap: 8 }}>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                        <p style={{ fontSize: 10, fontWeight: 700, color: "#475569", margin: 0, letterSpacing: "0.05em" }}>ナビゲーションリンク</p>
+                        <button
+                          onClick={() => u({ navLinks: [...config.navLinks, { id: uid(), label: "新しいリンク", url: "/" }] })}
+                          style={{ fontSize: 9, padding: "2px 8px", borderRadius: 5, border: "1px solid #C7D2FE", background: "#EEF2FF", color: "#4F46E5", cursor: "pointer", fontWeight: 600 }}>
+                          + 追加
+                        </button>
+                      </div>
+                      {config.navLinks.length === 0 && (
+                        <p style={{ fontSize: 10, color: "#94A3B8", textAlign: "center", margin: 0, padding: "4px 0" }}>リンクがありません</p>
+                      )}
+                      {config.navLinks.map((link, idx) => (
+                        <div key={link.id} style={{ display: "flex", flexDirection: "column", gap: 3, padding: "8px", background: "#fff", borderRadius: 7, border: "1px solid #E2E8F0" }}>
+                          <div style={{ display: "flex", gap: 4 }}>
+                            <input
+                              value={link.label}
+                              onChange={e => u({ navLinks: config.navLinks.map((l, i) => i === idx ? { ...l, label: e.target.value } : l) })}
+                              placeholder="メニュー名"
+                              style={{ flex: 1, fontSize: 11, padding: "5px 8px", border: "1px solid #E2E8F0", borderRadius: 6, outline: "none", color: "#111", background: "#F8FAFC" }}
+                            />
+                            <button
+                              onClick={() => u({ navLinks: config.navLinks.filter((_, i) => i !== idx) })}
+                              style={{ fontSize: 11, color: "#EF4444", border: "1px solid #FEE2E2", borderRadius: 5, background: "#FFF5F5", cursor: "pointer", padding: "0 8px", flexShrink: 0 }}>
+                              ×
+                            </button>
+                          </div>
+                          <select
+                            value={["/", ...config.pages.map(p => `/${p.slug}`)].includes(link.url) ? link.url : "__custom__"}
+                            onChange={e => {
+                              if (e.target.value !== "__custom__") {
+                                u({ navLinks: config.navLinks.map((l, i) => i === idx ? { ...l, url: e.target.value } : l) });
+                              }
+                            }}
+                            style={{ fontSize: 11, padding: "5px 8px", border: "1px solid #E2E8F0", borderRadius: 6, outline: "none", color: "#111", background: "#F8FAFC" }}>
+                            <option value="/">ホーム (/)</option>
+                            {config.pages.map(p => (
+                              <option key={p.id} value={`/${p.slug}`}>{p.title} (/{p.slug})</option>
+                            ))}
+                            <option value="__custom__">カスタムURL...</option>
+                          </select>
+                          {!["/", ...config.pages.map(p => `/${p.slug}`)].includes(link.url) && (
+                            <input
+                              value={link.url}
+                              onChange={e => u({ navLinks: config.navLinks.map((l, i) => i === idx ? { ...l, url: e.target.value } : l) })}
+                              placeholder="/custom-path or https://..."
+                              style={{ fontSize: 10, padding: "5px 8px", border: "1px solid #C7D2FE", borderRadius: 6, outline: "none", color: "#111", background: "#EEF2FF", fontFamily: "monospace" }}
+                            />
+                          )}
+                        </div>
+                      ))}
+                    </div>
                   </>}
                   </div>
                 )}
@@ -1638,7 +1692,7 @@ export default function AdminClient() {
               onConfigChange={handleActiveConfigChange}
               onInsertRequest={handleInsertRequest}
               headerHtml={activePageId !== "home" ? config.headerHtml : undefined}
-              globalFooter={config.globalFooter}
+              globalFooter={htmlMode && activePageId === "home" ? undefined : config.globalFooter}
               onGlobalFooterChange={(f) => updateConfig({ ...config, globalFooter: f })}
             />
           ) : (
