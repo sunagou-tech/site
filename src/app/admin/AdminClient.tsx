@@ -1580,31 +1580,89 @@ export default function AdminClient() {
 
                 {/* ── フッターパネル ── */}
                 {sidePanel === "footer" && (
-                  <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                    <div style={{ padding: "10px 12px", background: "#F0FDF4", borderRadius: 8, border: "1px solid #BBF7D0" }}>
-                      <p style={{ fontSize: 10, color: "#15803D", margin: 0, lineHeight: 1.6 }}>
-                        ここで設定したフッターは全ページの下部に自動で表示されます。プレビュー下部のテキストをクリックして直接編集することもできます。
-                      </p>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                    {/* 表示切替 */}
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 10px", background: "#F8FAFC", borderRadius: 8, border: "1px solid #E2E8F0" }}>
+                      <span style={{ fontSize: 11, fontWeight: 600, color: "#374151" }}>フッターを表示</span>
+                      <button
+                        onClick={() => {
+                          if (config.footerHtml || config.globalFooter) {
+                            // 非表示にする（footerHtmlを空文字に、globalFooterをnullに）
+                            updateConfig({ ...config, footerHtml: "", globalFooter: undefined });
+                          } else {
+                            // 再表示（デフォルトのfooterHtmlかglobalFooterを復元）
+                            updateConfig({ ...config, globalFooter: defaultConfig.globalFooter });
+                          }
+                        }}
+                        style={{
+                          width: 36, height: 20, borderRadius: 10, border: "none", cursor: "pointer", position: "relative", transition: "background 0.2s",
+                          background: (config.footerHtml !== "" && (config.footerHtml || config.globalFooter)) ? "#4F46E5" : "#CBD5E1",
+                        }}>
+                        <span style={{
+                          position: "absolute", top: 2, width: 16, height: 16, borderRadius: "50%", background: "#fff", transition: "left 0.2s", boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
+                          left: (config.footerHtml !== "" && (config.footerHtml || config.globalFooter)) ? 18 : 2,
+                        }} />
+                      </button>
                     </div>
-                    <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                      <span style={{ fontSize: 10, fontWeight: 600, color: "#64748B" }}>会社名</span>
-                      <input
-                        value={config.globalFooter?.companyName ?? ""}
-                        onChange={e => updateConfig({ ...config, globalFooter: { ...config.globalFooter!, companyName: e.target.value } })}
-                        style={{ fontSize: 12, padding: "7px 10px", border: "1px solid #E2E8F0", borderRadius: 7, outline: "none", color: "#111", background: "#fff" }}
-                        placeholder="株式会社〇〇"
-                      />
-                    </label>
-                    <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                      <span style={{ fontSize: 10, fontWeight: 600, color: "#64748B" }}>住所・連絡先</span>
-                      <textarea
-                        value={config.globalFooter?.address ?? ""}
-                        onChange={e => updateConfig({ ...config, globalFooter: { ...config.globalFooter!, address: e.target.value } })}
-                        rows={4}
-                        style={{ fontSize: 11, padding: "7px 10px", border: "1px solid #E2E8F0", borderRadius: 7, outline: "none", resize: "none", color: "#111", lineHeight: 1.6, background: "#fff" }}
-                        placeholder={"〒000-0000\n東京都〇〇区...\nTEL: 03-0000-0000"}
-                      />
-                    </label>
+
+                    {/* footerHtmlがある場合: HTMLエディタ */}
+                    {config.footerHtml && config.footerHtml !== "" && (
+                      <>
+                        <div style={{ padding: "8px 10px", background: "#EEF2FF", borderRadius: 8, border: "1px solid #C7D2FE" }}>
+                          <p style={{ fontSize: 10, fontWeight: 700, color: "#4F46E5", margin: "0 0 2px" }}>AIで生成されたフッター</p>
+                          <p style={{ fontSize: 10, color: "#6366F1", margin: 0, lineHeight: 1.5 }}>
+                            下のHTMLを編集すると全ページのフッターに反映されます。
+                          </p>
+                        </div>
+                        <textarea
+                          value={config.footerHtml}
+                          onChange={e => updateConfig({ ...config, footerHtml: e.target.value })}
+                          rows={14}
+                          spellCheck={false}
+                          style={{ fontSize: 10, padding: "8px 10px", border: "1px solid #E2E8F0", borderRadius: 7, outline: "none", resize: "vertical", color: "#111", lineHeight: 1.5, background: "#fff", fontFamily: "monospace", whiteSpace: "pre" }}
+                        />
+                        <button
+                          onClick={() => { if (confirm("フッターHTMLをリセットしますか？")) updateConfig({ ...config, footerHtml: undefined, globalFooter: defaultConfig.globalFooter }); }}
+                          style={{ fontSize: 10, padding: "5px 10px", borderRadius: 6, border: "1px solid #FEE2E2", background: "#FFF5F5", color: "#EF4444", cursor: "pointer", textAlign: "center" }}>
+                          フッターをリセット（シンプルなブロックに戻す）
+                        </button>
+                      </>
+                    )}
+
+                    {/* footerHtmlがない場合: ブロックフッター編集 */}
+                    {(!config.footerHtml || config.footerHtml === "") && config.globalFooter && (
+                      <>
+                        <div style={{ padding: "8px 10px", background: "#F0FDF4", borderRadius: 8, border: "1px solid #BBF7D0" }}>
+                          <p style={{ fontSize: 10, color: "#15803D", margin: 0, lineHeight: 1.5 }}>全ページの下部に表示されます。</p>
+                        </div>
+                        <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                          <span style={{ fontSize: 10, fontWeight: 600, color: "#64748B" }}>会社名</span>
+                          <input
+                            value={config.globalFooter?.companyName ?? ""}
+                            onChange={e => updateConfig({ ...config, globalFooter: { ...config.globalFooter!, companyName: e.target.value } })}
+                            style={{ fontSize: 12, padding: "7px 10px", border: "1px solid #E2E8F0", borderRadius: 7, outline: "none", color: "#111", background: "#fff" }}
+                            placeholder="株式会社〇〇"
+                          />
+                        </label>
+                        <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                          <span style={{ fontSize: 10, fontWeight: 600, color: "#64748B" }}>住所・連絡先</span>
+                          <textarea
+                            value={config.globalFooter?.address ?? ""}
+                            onChange={e => updateConfig({ ...config, globalFooter: { ...config.globalFooter!, address: e.target.value } })}
+                            rows={4}
+                            style={{ fontSize: 11, padding: "7px 10px", border: "1px solid #E2E8F0", borderRadius: 7, outline: "none", resize: "none", color: "#111", lineHeight: 1.6, background: "#fff" }}
+                            placeholder={"〒000-0000\n東京都〇〇区...\nTEL: 03-0000-0000"}
+                          />
+                        </label>
+                      </>
+                    )}
+
+                    {/* フッター非表示中 */}
+                    {config.footerHtml === "" && !config.globalFooter && (
+                      <div style={{ padding: "16px", textAlign: "center", color: "#94A3B8", fontSize: 11 }}>
+                        フッターは非表示です
+                      </div>
+                    )}
                   </div>
                 )}
 

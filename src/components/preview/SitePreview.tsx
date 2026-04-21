@@ -481,12 +481,13 @@ export default function SitePreview({ config, onConfigChange, onInsertRequest, l
           </DragOverlay>
         </DndContext>
 
-        {/* 共通フッター（HTMLモード: footerHtml優先、ブロックモード: globalFooter） */}
-        {footerHtml ? (
+        {/* 共通フッター: footerHtml=""は非表示、非空ならHTML、未設定ならblockフッター */}
+        {footerHtml === "" ? null
+         : footerHtml ? (
           <div className="relative group/global-footer">
             <div className="absolute top-0 inset-x-0 z-30 flex items-center gap-2 px-3 py-1.5 bg-gray-600 text-white text-[11px] opacity-0 group-hover/global-footer:opacity-100 transition-opacity pointer-events-none">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="14" width="20" height="8" rx="2"/><path d="M2 10h20"/></svg>
-              <span>フッター（全ページ共通） — ホームのHTML編集で変更</span>
+              <span>フッター（全ページ共通） — 左メニューの「フッター」で編集</span>
             </div>
             <div dangerouslySetInnerHTML={{ __html: footerHtml }} />
           </div>
