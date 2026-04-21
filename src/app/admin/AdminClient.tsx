@@ -1845,6 +1845,12 @@ export default function AdminClient() {
                   </div>
                 )}
               </div>
+              {/* フッタープレビュー（全ページ共通） */}
+              {config.footerNavConfig?.show && (
+                <div style={{ flexShrink: 0, maxHeight: 220, overflowY: "auto", borderTop: "2px solid rgba(79,70,229,0.15)" }}>
+                  <FooterNavRenderer config={config.footerNavConfig} />
+                </div>
+              )}
             </div>
           ) : deviceMode === "pc" ? (
             <SitePreview
