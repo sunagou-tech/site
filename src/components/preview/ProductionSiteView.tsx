@@ -26,16 +26,14 @@ export default function ProductionSiteView({ config, slug, siteSlug }: Props) {
     : config.fontFamily === "mono" ? "font-mono"
     : "font-sans";
 
-  let sections = config.sections;
+  let sections = config.sections.filter((s) => s.type !== "footer");
   let pageNotFound = false;
 
   if (slug) {
     const page = config.pages.find((p) => p.slug === slug);
     if (!page) pageNotFound = true;
     else {
-      // フッターはホームと共通 — サブページのフッターを除き、ホームのフッターを末尾に追加
-      const homeFooter = config.sections.filter((s) => s.type === "footer");
-      sections = [...page.sections.filter((s) => s.type !== "footer"), ...homeFooter];
+      sections = page.sections.filter((s) => s.type !== "footer");
     }
   }
 
@@ -134,6 +132,11 @@ export default function ProductionSiteView({ config, slug, siteSlug }: Props) {
         sections.map((block) => (
           <BlockRenderer key={block.id} block={block} config={config} onChange={() => {}} />
         ))
+      )}
+
+      {/* グローバルフッター（全ページ共通） */}
+      {config.globalFooter && (
+        <BlockRenderer block={config.globalFooter} config={config} onChange={() => {}} />
       )}
     </div>
   );

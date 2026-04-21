@@ -1,6 +1,6 @@
 "use client";
 
-import { SiteConfig, SectionBlock, BLOCK_META, BlockStyle } from "@/types/site";
+import { SiteConfig, SectionBlock, BLOCK_META, BlockStyle, FooterBlock } from "@/types/site";
 import NavBar from "./NavBar";
 import BlockRenderer from "./blocks/BlockRenderer";
 import StickyContactBar from "./StickyContactBar";
@@ -34,9 +34,11 @@ interface Props {
   config: SiteConfig;
   onConfigChange: (config: SiteConfig) => void;
   onInsertRequest: (position: number) => void;
-  lockedBlockIds?: string[];  // これらのIDのブロックはホームと共通（読み取り専用で表示）
+  lockedBlockIds?: string[];  // 後方互換のために残す（未使用）
   headerHtml?: string;        // ホームのHTMLヘッダー（指定時はNavBarの代わりに表示）
-  footerHtml?: string;        // ホームのHTMLフッター（指定時はロックブロックの代わりに表示）
+  footerHtml?: string;        // 後方互換のために残す（未使用）
+  globalFooter?: FooterBlock; // グローバルフッター（全ページ共通）
+  onGlobalFooterChange?: (footer: FooterBlock) => void;
 }
 
 function blockLabel(block: SectionBlock) {
@@ -323,12 +325,12 @@ const SortableBlock = memo(function SortableBlock({
 });
 
 // ─── メイン ──────────────────────────────────────────────────
-export default function SitePreview({ config, onConfigChange, onInsertRequest, lockedBlockIds, headerHtml, footerHtml }: Props) {
+export default function SitePreview({ config, onConfigChange, onInsertRequest, lockedBlockIds, headerHtml, footerHtml, globalFooter, onGlobalFooterChange }: Props) {
   const [activeId, setActiveId] = useState<string | null>(null);
 
-  // ロック済みブロック（ホームと共通）と編集可能ブロックを分離
+  // 編集可能ブロック（footerタイプは除外）
   const lockedSet = useMemo(() => new Set(lockedBlockIds ?? []), [lockedBlockIds]);
-  const editableSections = useMemo(() => config.sections.filter(b => !lockedSet.has(b.id)), [config.sections, lockedSet]);
+  const editableSections = useMemo(() => config.sections.filter(b => !lockedSet.has(b.id) && b.type !== "footer"), [config.sections, lockedSet]);
   const lockedSections = useMemo(() => config.sections.filter(b => lockedSet.has(b.id)), [config.sections, lockedSet]);
 
   const sensors = useSensors(
@@ -406,7 +408,7 @@ export default function SitePreview({ config, onConfigChange, onInsertRequest, l
       {/* サイト本体 */}
       <div className="gs-root mx-4 my-4 bg-white shadow-xl rounded-b-lg overflow-hidden border-t-2 border-green-400">
         <GlobalStyleInjector style={config.globalStyle} />
-        {editableSections.length === 0 && lockedSections.length === 0 && (
+        {editableSections.length === 0 && !globalFooter && (
           <div className="flex flex-col items-center justify-center h-64 text-gray-400 gap-3">
             <p className="text-sm">ブロックがありません</p>
             <button
@@ -451,7 +453,7 @@ export default function SitePreview({ config, onConfigChange, onInsertRequest, l
               </div>
             ))}
 
-            {editableSections.length === 0 && lockedSections.length > 0 && (
+            {editableSections.length === 0 && globalFooter && (
               <div className="flex flex-col items-center justify-center h-32 text-gray-400 gap-2">
                 <p className="text-xs">ブロックがありません</p>
                 <button
@@ -479,23 +481,14 @@ export default function SitePreview({ config, onConfigChange, onInsertRequest, l
           </DragOverlay>
         </DndContext>
 
-        {/* フッター: HTMLがあればそれを表示、なければロック済みブロック */}
-        {footerHtml
-          ? <div dangerouslySetInnerHTML={{ __html: footerHtml }} style={{ pointerEvents: "none" }} />
-          : lockedSections.length > 0 && (
-            <div>
-              <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "5px 14px", background: "#F1F5F9", borderTop: "1px dashed #CBD5E1" }}>
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth="2.5">
-                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                  <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                </svg>
-                <span style={{ fontSize: 10, color: "#64748B", fontWeight: 600 }}>ホームと共通（フッターを変更するにはホームタブから）</span>
+        {/* グローバルフッター */}
+        {globalFooter && (
+            <div className="relative group/global-footer">
+              <div className="absolute top-0 inset-x-0 z-30 flex items-center gap-2 px-3 py-1.5 bg-gray-600 text-white text-[11px] opacity-0 group-hover/global-footer:opacity-100 transition-opacity pointer-events-none">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="14" width="20" height="8" rx="2"/><path d="M2 10h20"/></svg>
+                <span>グローバルフッター（全ページ共通） — テキストをクリックして編集</span>
               </div>
-              <div style={{ pointerEvents: "none", opacity: 0.88 }}>
-                {lockedSections.map(block => (
-                  <BlockRenderer key={block.id} block={block} config={config} onChange={() => {}} />
-                ))}
-              </div>
+              <BlockRenderer block={globalFooter} config={config} onChange={(nb) => onGlobalFooterChange?.(nb as FooterBlock)} />
             </div>
           )
         }

@@ -773,6 +773,7 @@ export interface SiteConfig {
   footerHtml?: string;        // HTMLモードのフッターHTML（サブページでも共通表示）
   favicon?: string;           // ファビコン URL
   ogImage?: string;           // OGP 画像 URL
+  globalFooter?: FooterBlock; // グローバルフッター（全ページ共通）
   gaId?: string;              // Google Analytics 測定 ID
   gscCode?: string;           // Search Console 確認コード
   meoName?: string;
@@ -1383,26 +1384,26 @@ export const defaultConfig: SiteConfig = {
   accentColor: "#F5C842",
   fontFamily: "sans",
   catchCopy: "stand by your project.",
+  globalFooter: BLOCK_DEFAULTS.footer() as FooterBlock,
   sections: [
     BLOCK_DEFAULTS.hero(),
     BLOCK_DEFAULTS.about(),
     BLOCK_DEFAULTS.why(),
     BLOCK_DEFAULTS.services(),
     BLOCK_DEFAULTS.contact(),
-    BLOCK_DEFAULTS.footer(),
   ],
   pages: [
     {
       id: uid(), slug: "about", title: "会社案内",
-      sections: [BLOCK_DEFAULTS["hero-minimal"](), BLOCK_DEFAULTS.why(), BLOCK_DEFAULTS.team(), BLOCK_DEFAULTS.footer()],
+      sections: [BLOCK_DEFAULTS["hero-minimal"](), BLOCK_DEFAULTS.why(), BLOCK_DEFAULTS.team()],
     },
     {
       id: uid(), slug: "column", title: "コラム",
-      sections: [BLOCK_DEFAULTS.column(), BLOCK_DEFAULTS.footer()],
+      sections: [BLOCK_DEFAULTS.column()],
     },
     {
       id: uid(), slug: "contact", title: "お問い合わせ",
-      sections: [BLOCK_DEFAULTS.contact(), BLOCK_DEFAULTS.footer()],
+      sections: [BLOCK_DEFAULTS.contact()],
     },
   ],
   articles: [

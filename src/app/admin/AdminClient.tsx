@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import {
   defaultConfig, SiteConfig, SitePage, SectionBlock, Article,
-  uid, BLOCK_META,
+  uid, BLOCK_META, FooterBlock,
 } from "@/types/site";
 import SitePreview from "@/components/preview/SitePreview";
 import BlockRenderer from "@/components/preview/blocks/BlockRenderer";
@@ -13,7 +13,7 @@ import { EditingContext } from "@/contexts/EditingContext";
 import { ImagePickContext } from "@/contexts/ImagePickContext";
 import { publishSite, isSupabaseConfigured } from "@/lib/supabase";
 
-type SidePanel = "settings" | "blocks" | "upload" | "ai-image" | "seo" | "column";
+type SidePanel = "settings" | "blocks" | "upload" | "ai-image" | "seo" | "column" | "footer";
 type DeviceMode = "pc" | "tablet" | "sp";
 interface PageTab { id: string; slug: string; title: string; isHome: boolean; }
 interface UploadedImage { id: string; name: string; url: string; uploadedAt: number; }
@@ -541,7 +541,22 @@ export default function AdminClient() {
     const saved = localStorage.getItem("site-config");
     if (saved) try {
       const sanitized = saved.replace(/https:\/\/picsum\.photos[^"]*/g, "");
-      setConfig(JSON.parse(sanitized));
+      const parsed = JSON.parse(sanitized);
+      // Migration: move footer blocks from sections/pages to globalFooter
+      if (!parsed.globalFooter) {
+        const sectionFooter = parsed.sections?.find((s: SectionBlock) => s.type === "footer") as FooterBlock | undefined;
+        if (sectionFooter) {
+          parsed.globalFooter = sectionFooter;
+        } else {
+          parsed.globalFooter = defaultConfig.globalFooter;
+        }
+        parsed.sections = (parsed.sections ?? []).filter((s: SectionBlock) => s.type !== "footer");
+        parsed.pages = (parsed.pages ?? []).map((p: SitePage) => ({
+          ...p,
+          sections: (p.sections ?? []).filter((s: SectionBlock) => s.type !== "footer"),
+        }));
+      }
+      setConfig(parsed);
     } catch {}
     const savedSlug = localStorage.getItem("site-slug");
     if (savedSlug) setSiteSlug(savedSlug);
@@ -673,32 +688,26 @@ export default function AdminClient() {
   function getActiveConfig(): SiteConfig {
     if (activePageId === "home") return config;
     const page = config.pages.find((p) => p.id === activePageId);
-    // フッターはホームと共通 — サブページのsectionsからフッターを除き、ホームのフッターを末尾に追加
-    const homeFooter = config.sections.filter((s) => s.type === "footer");
     const pageSections = (page?.sections ?? []).filter((s) => s.type !== "footer");
-    return { ...config, sections: [...pageSections, ...homeFooter] };
+    return { ...config, sections: pageSections };
   }
 
   function handleActiveConfigChange(newConfig: SiteConfig) {
     if (activePageId === "home") {
       updateConfig(newConfig);
     } else {
-      // ロック済みブロック（ホームのフッター）をサブページのsectionsから除外して保存
-      const homeFooterIds = new Set(config.sections.filter(s => s.type === "footer").map(b => b.id));
-      const pageOnlySections = newConfig.sections.filter(s => !homeFooterIds.has(s.id));
       updateConfig({
         ...newConfig,
         sections: config.sections,
         pages: config.pages.map((p) =>
-          p.id === activePageId ? { ...p, sections: pageOnlySections } : p
+          p.id === activePageId ? { ...p, sections: newConfig.sections.filter(s => s.type !== "footer") } : p
         ),
       });
     }
   }
 
   function getActiveSections(): SectionBlock[] {
-    if (activePageId === "home") return config.sections;
-    // サブページはフッター除外（フッターはホーム共通）
+    if (activePageId === "home") return config.sections.filter(s => s.type !== "footer");
     return (config.pages.find((p) => p.id === activePageId)?.sections ?? []).filter((s) => s.type !== "footer");
   }
 
@@ -879,6 +888,8 @@ export default function AdminClient() {
       icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> },
     { id: "column", label: "コラム",
       icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg> },
+    { id: "footer", label: "フッター",
+      icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="2" y="14" width="20" height="8" rx="2"/><path d="M2 10h20M2 6h20"/></svg> },
   ];
 
   return (
@@ -1060,6 +1071,7 @@ export default function AdminClient() {
                     : sidePanel === "upload" ? "画像ライブラリ"
                     : sidePanel === "ai-image" ? "AI画像生成"
                     : sidePanel === "column" ? "コラム管理"
+                    : sidePanel === "footer" ? "フッター設定"
                     : "SEO / 集客設定"}
                 </p>
               </div>
@@ -1512,6 +1524,36 @@ export default function AdminClient() {
                   />
                 )}
 
+                {/* ── フッターパネル ── */}
+                {sidePanel === "footer" && (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                    <div style={{ padding: "10px 12px", background: "#F0FDF4", borderRadius: 8, border: "1px solid #BBF7D0" }}>
+                      <p style={{ fontSize: 10, color: "#15803D", margin: 0, lineHeight: 1.6 }}>
+                        ここで設定したフッターは全ページの下部に自動で表示されます。プレビュー下部のテキストをクリックして直接編集することもできます。
+                      </p>
+                    </div>
+                    <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                      <span style={{ fontSize: 10, fontWeight: 600, color: "#64748B" }}>会社名</span>
+                      <input
+                        value={config.globalFooter?.companyName ?? ""}
+                        onChange={e => updateConfig({ ...config, globalFooter: { ...config.globalFooter!, companyName: e.target.value } })}
+                        style={{ fontSize: 12, padding: "7px 10px", border: "1px solid #E2E8F0", borderRadius: 7, outline: "none", color: "#111", background: "#fff" }}
+                        placeholder="株式会社〇〇"
+                      />
+                    </label>
+                    <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                      <span style={{ fontSize: 10, fontWeight: 600, color: "#64748B" }}>住所・連絡先</span>
+                      <textarea
+                        value={config.globalFooter?.address ?? ""}
+                        onChange={e => updateConfig({ ...config, globalFooter: { ...config.globalFooter!, address: e.target.value } })}
+                        rows={4}
+                        style={{ fontSize: 11, padding: "7px 10px", border: "1px solid #E2E8F0", borderRadius: 7, outline: "none", resize: "none", color: "#111", lineHeight: 1.6, background: "#fff" }}
+                        placeholder={"〒000-0000\n東京都〇〇区...\nTEL: 03-0000-0000"}
+                      />
+                    </label>
+                  </div>
+                )}
+
               </div>
             </div>
           </div>
@@ -1595,11 +1637,9 @@ export default function AdminClient() {
               config={activePageId !== "home" ? { ...config, sections: getActiveSections() } : getActiveConfig()}
               onConfigChange={handleActiveConfigChange}
               onInsertRequest={handleInsertRequest}
-              lockedBlockIds={activePageId !== "home" && !config.headerHtml
-                ? config.sections.filter(s => s.type === "footer").map(b => b.id)
-                : undefined}
               headerHtml={activePageId !== "home" ? config.headerHtml : undefined}
-              footerHtml={activePageId !== "home" ? config.footerHtml : undefined}
+              globalFooter={config.globalFooter}
+              onGlobalFooterChange={(f) => updateConfig({ ...config, globalFooter: f })}
             />
           ) : (
             <div style={{ flex: 1, overflowY: "auto", background: "#E2E8F0", display: "flex", flexDirection: "column", alignItems: "center", paddingTop: 20, paddingBottom: 20, gap: 12 }}>
