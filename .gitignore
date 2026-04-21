@@ -18,3 +18,4 @@ tsconfig.tsbuildinfo
 
 # Editor
 .claude/
+.vercel

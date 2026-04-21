@@ -87,6 +87,24 @@ export interface FooterBlock {
   address: string;
 }
 
+// ─── 構造化フッター設定（誰でも操作できる） ────────────────────
+export interface FooterNavLink {
+  id: string;
+  label: string;
+  url: string;
+}
+export interface FooterNavColumn {
+  id: string;
+  heading: string;
+  links: FooterNavLink[];
+}
+export interface FooterNavConfig {
+  show: boolean;
+  companyName: string;
+  address: string;          // 改行区切りで複数行OK
+  columns: FooterNavColumn[];
+}
+
 export interface SplitBlock {
   id: string;
   type: "split";
@@ -774,6 +792,7 @@ export interface SiteConfig {
   favicon?: string;           // ファビコン URL
   ogImage?: string;           // OGP 画像 URL
   globalFooter?: FooterBlock; // グローバルフッター（全ページ共通）
+  footerNavConfig?: FooterNavConfig; // 構造化フッター設定（優先）
   gaId?: string;              // Google Analytics 測定 ID
   gscCode?: string;           // Search Console 確認コード
   meoName?: string;

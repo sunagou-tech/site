@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import {
   defaultConfig, SiteConfig, SitePage, SectionBlock, Article,
-  uid, BLOCK_META, FooterBlock,
+  uid, BLOCK_META, FooterBlock, FooterNavConfig, FooterNavColumn, FooterNavLink,
 } from "@/types/site";
 import SitePreview from "@/components/preview/SitePreview";
 import BlockRenderer from "@/components/preview/blocks/BlockRenderer";
@@ -1579,92 +1579,147 @@ export default function AdminClient() {
                 )}
 
                 {/* ── フッターパネル ── */}
-                {sidePanel === "footer" && (
-                  <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                    {/* 表示切替 */}
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 10px", background: "#F8FAFC", borderRadius: 8, border: "1px solid #E2E8F0" }}>
-                      <span style={{ fontSize: 11, fontWeight: 600, color: "#374151" }}>フッターを表示</span>
-                      <button
-                        onClick={() => {
-                          if (config.footerHtml || config.globalFooter) {
-                            // 非表示にする（footerHtmlを空文字に、globalFooterをnullに）
-                            updateConfig({ ...config, footerHtml: "", globalFooter: undefined });
-                          } else {
-                            // 再表示（デフォルトのfooterHtmlかglobalFooterを復元）
-                            updateConfig({ ...config, globalFooter: defaultConfig.globalFooter });
-                          }
-                        }}
-                        style={{
-                          width: 36, height: 20, borderRadius: 10, border: "none", cursor: "pointer", position: "relative", transition: "background 0.2s",
-                          background: (config.footerHtml !== "" && (config.footerHtml || config.globalFooter)) ? "#4F46E5" : "#CBD5E1",
-                        }}>
-                        <span style={{
-                          position: "absolute", top: 2, width: 16, height: 16, borderRadius: "50%", background: "#fff", transition: "left 0.2s", boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
-                          left: (config.footerHtml !== "" && (config.footerHtml || config.globalFooter)) ? 18 : 2,
-                        }} />
-                      </button>
-                    </div>
+                {sidePanel === "footer" && (() => {
+                  const fnc = config.footerNavConfig;
+                  const setFnc = (patch: Partial<FooterNavConfig>) =>
+                    updateConfig({ ...config, footerNavConfig: { ...fnc!, ...patch } });
+                  const updateCol = (ci: number, patch: Partial<FooterNavColumn>) =>
+                    setFnc({ columns: fnc!.columns.map((c, i) => i === ci ? { ...c, ...patch } : c) });
+                  const updateLink = (ci: number, li: number, patch: Partial<FooterNavLink>) =>
+                    updateCol(ci, { links: fnc!.columns[ci].links.map((l, j) => j === li ? { ...l, ...patch } : l) });
 
-                    {/* footerHtmlがある場合: HTMLエディタ */}
-                    {config.footerHtml && config.footerHtml !== "" && (
-                      <>
-                        <div style={{ padding: "8px 10px", background: "#EEF2FF", borderRadius: 8, border: "1px solid #C7D2FE" }}>
-                          <p style={{ fontSize: 10, fontWeight: 700, color: "#4F46E5", margin: "0 0 2px" }}>AIで生成されたフッター</p>
-                          <p style={{ fontSize: 10, color: "#6366F1", margin: 0, lineHeight: 1.5 }}>
-                            下のHTMLを編集すると全ページのフッターに反映されます。
+                  const pageOptions = [
+                    { label: "ホーム", url: "/" },
+                    ...config.pages.map(p => ({ label: p.title, url: `/${p.slug}` })),
+                  ];
+
+                  // 未設定の場合: 初期化ボタン
+                  if (!fnc) {
+                    return (
+                      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                        <div style={{ padding: "10px 12px", background: "#EEF2FF", borderRadius: 8, border: "1px solid #C7D2FE" }}>
+                          <p style={{ fontSize: 10, color: "#4F46E5", margin: 0, lineHeight: 1.6 }}>
+                            フッターをかんたんに設定できます。会社名・住所・ナビリンクをフォームで管理できます。
                           </p>
                         </div>
-                        <textarea
-                          value={config.footerHtml}
-                          onChange={e => updateConfig({ ...config, footerHtml: e.target.value })}
-                          rows={14}
-                          spellCheck={false}
-                          style={{ fontSize: 10, padding: "8px 10px", border: "1px solid #E2E8F0", borderRadius: 7, outline: "none", resize: "vertical", color: "#111", lineHeight: 1.5, background: "#fff", fontFamily: "monospace", whiteSpace: "pre" }}
-                        />
                         <button
-                          onClick={() => { if (confirm("フッターHTMLをリセットしますか？")) updateConfig({ ...config, footerHtml: undefined, globalFooter: defaultConfig.globalFooter }); }}
-                          style={{ fontSize: 10, padding: "5px 10px", borderRadius: 6, border: "1px solid #FEE2E2", background: "#FFF5F5", color: "#EF4444", cursor: "pointer", textAlign: "center" }}>
-                          フッターをリセット（シンプルなブロックに戻す）
+                          onClick={() => updateConfig({
+                            ...config,
+                            footerNavConfig: {
+                              show: true,
+                              companyName: config.globalFooter?.companyName ?? config.title,
+                              address: config.globalFooter?.address ?? "",
+                              columns: config.pages.slice(0, 3).map(p => ({
+                                id: uid(),
+                                heading: p.title,
+                                links: [{ id: uid(), label: p.title, url: `/${p.slug}` }],
+                              })),
+                            },
+                          })}
+                          style={{ padding: "10px", borderRadius: 8, border: "none", background: "#4F46E5", color: "#fff", fontWeight: 700, fontSize: 12, cursor: "pointer" }}>
+                          フッターを設定する
                         </button>
-                      </>
-                    )}
-
-                    {/* footerHtmlがない場合: ブロックフッター編集 */}
-                    {(!config.footerHtml || config.footerHtml === "") && config.globalFooter && (
-                      <>
-                        <div style={{ padding: "8px 10px", background: "#F0FDF4", borderRadius: 8, border: "1px solid #BBF7D0" }}>
-                          <p style={{ fontSize: 10, color: "#15803D", margin: 0, lineHeight: 1.5 }}>全ページの下部に表示されます。</p>
-                        </div>
-                        <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                          <span style={{ fontSize: 10, fontWeight: 600, color: "#64748B" }}>会社名</span>
-                          <input
-                            value={config.globalFooter?.companyName ?? ""}
-                            onChange={e => updateConfig({ ...config, globalFooter: { ...config.globalFooter!, companyName: e.target.value } })}
-                            style={{ fontSize: 12, padding: "7px 10px", border: "1px solid #E2E8F0", borderRadius: 7, outline: "none", color: "#111", background: "#fff" }}
-                            placeholder="株式会社〇〇"
-                          />
-                        </label>
-                        <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                          <span style={{ fontSize: 10, fontWeight: 600, color: "#64748B" }}>住所・連絡先</span>
-                          <textarea
-                            value={config.globalFooter?.address ?? ""}
-                            onChange={e => updateConfig({ ...config, globalFooter: { ...config.globalFooter!, address: e.target.value } })}
-                            rows={4}
-                            style={{ fontSize: 11, padding: "7px 10px", border: "1px solid #E2E8F0", borderRadius: 7, outline: "none", resize: "none", color: "#111", lineHeight: 1.6, background: "#fff" }}
-                            placeholder={"〒000-0000\n東京都〇〇区...\nTEL: 03-0000-0000"}
-                          />
-                        </label>
-                      </>
-                    )}
-
-                    {/* フッター非表示中 */}
-                    {config.footerHtml === "" && !config.globalFooter && (
-                      <div style={{ padding: "16px", textAlign: "center", color: "#94A3B8", fontSize: 11 }}>
-                        フッターは非表示です
                       </div>
-                    )}
-                  </div>
-                )}
+                    );
+                  }
+
+                  return (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                      {/* 表示切替 */}
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 10px", background: "#F8FAFC", borderRadius: 8, border: "1px solid #E2E8F0" }}>
+                        <span style={{ fontSize: 11, fontWeight: 600, color: "#374151" }}>フッターを表示</span>
+                        <button onClick={() => setFnc({ show: !fnc.show })}
+                          style={{ width: 36, height: 20, borderRadius: 10, border: "none", cursor: "pointer", position: "relative", transition: "background 0.2s", background: fnc.show ? "#4F46E5" : "#CBD5E1" }}>
+                          <span style={{ position: "absolute", top: 2, width: 16, height: 16, borderRadius: "50%", background: "#fff", transition: "left 0.2s", boxShadow: "0 1px 3px rgba(0,0,0,0.2)", left: fnc.show ? 18 : 2 }} />
+                        </button>
+                      </div>
+
+                      {fnc.show && <>
+                        {/* 会社情報 */}
+                        <div style={{ padding: "10px", background: "#F8FAFC", borderRadius: 8, border: "1px solid #E2E8F0", display: "flex", flexDirection: "column", gap: 8 }}>
+                          <p style={{ fontSize: 10, fontWeight: 700, color: "#475569", margin: 0 }}>会社情報</p>
+                          <label style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                            <span style={{ fontSize: 10, color: "#64748B", fontWeight: 600 }}>会社名</span>
+                            <input value={fnc.companyName} onChange={e => setFnc({ companyName: e.target.value })}
+                              placeholder="株式会社〇〇"
+                              style={{ fontSize: 12, padding: "6px 10px", border: "1px solid #E2E8F0", borderRadius: 6, outline: "none", color: "#111", background: "#fff" }} />
+                          </label>
+                          <label style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                            <span style={{ fontSize: 10, color: "#64748B", fontWeight: 600 }}>住所・連絡先 <span style={{ fontWeight: 400 }}>(改行で複数行)</span></span>
+                            <textarea value={fnc.address} onChange={e => setFnc({ address: e.target.value })} rows={4}
+                              placeholder={"〒100-0000\n東京都千代田区...\nTEL: 03-0000-0000\n営業時間：平日9:00〜18:00"}
+                              style={{ fontSize: 11, padding: "6px 10px", border: "1px solid #E2E8F0", borderRadius: 6, outline: "none", resize: "none", color: "#111", lineHeight: 1.7, background: "#fff" }} />
+                          </label>
+                        </div>
+
+                        {/* ナビカラム */}
+                        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                            <p style={{ fontSize: 10, fontWeight: 700, color: "#475569", margin: 0 }}>ナビゲーション カラム</p>
+                            <button
+                              onClick={() => setFnc({ columns: [...fnc.columns, { id: uid(), heading: "カテゴリ", links: [] }] })}
+                              style={{ fontSize: 9, padding: "3px 8px", borderRadius: 5, border: "1px solid #C7D2FE", background: "#EEF2FF", color: "#4F46E5", cursor: "pointer", fontWeight: 600 }}>
+                              + カラム追加
+                            </button>
+                          </div>
+
+                          {fnc.columns.length === 0 && (
+                            <p style={{ fontSize: 10, color: "#94A3B8", textAlign: "center", padding: "8px 0" }}>カラムがありません</p>
+                          )}
+
+                          {fnc.columns.map((col, ci) => (
+                            <div key={col.id} style={{ padding: "10px", background: "#F8FAFC", borderRadius: 8, border: "1px solid #E2E8F0", display: "flex", flexDirection: "column", gap: 7 }}>
+                              {/* カラム見出し */}
+                              <div style={{ display: "flex", gap: 4 }}>
+                                <input value={col.heading} onChange={e => updateCol(ci, { heading: e.target.value })}
+                                  placeholder="カラム見出し（例：サービス）"
+                                  style={{ flex: 1, fontSize: 11, fontWeight: 600, padding: "5px 8px", border: "1px solid #E2E8F0", borderRadius: 6, outline: "none", color: "#111", background: "#fff" }} />
+                                <button onClick={() => setFnc({ columns: fnc.columns.filter((_, i) => i !== ci) })}
+                                  style={{ fontSize: 11, color: "#EF4444", border: "1px solid #FEE2E2", borderRadius: 5, background: "#FFF5F5", cursor: "pointer", padding: "0 8px" }}>
+                                  ×
+                                </button>
+                              </div>
+
+                              {/* リンク一覧 */}
+                              {col.links.map((link, li) => (
+                                <div key={link.id} style={{ paddingLeft: 8, display: "flex", flexDirection: "column", gap: 3 }}>
+                                  <div style={{ display: "flex", gap: 3 }}>
+                                    <input value={link.label} onChange={e => updateLink(ci, li, { label: e.target.value })}
+                                      placeholder="テキスト"
+                                      style={{ flex: 1, fontSize: 11, padding: "4px 7px", border: "1px solid #E2E8F0", borderRadius: 5, outline: "none", color: "#111", background: "#fff" }} />
+                                    <button onClick={() => updateCol(ci, { links: col.links.filter((_, j) => j !== li) })}
+                                      style={{ fontSize: 10, color: "#94A3B8", border: "none", background: "none", cursor: "pointer", padding: "0 4px" }}>
+                                      ×
+                                    </button>
+                                  </div>
+                                  <select
+                                    value={pageOptions.some(o => o.url === link.url) ? link.url : "__custom__"}
+                                    onChange={e => { if (e.target.value !== "__custom__") updateLink(ci, li, { url: e.target.value }); }}
+                                    style={{ fontSize: 10, padding: "4px 7px", border: "1px solid #E2E8F0", borderRadius: 5, outline: "none", color: "#111", background: "#fff" }}>
+                                    {pageOptions.map(o => <option key={o.url} value={o.url}>{o.label} ({o.url})</option>)}
+                                    <option value="__custom__">外部URL...</option>
+                                  </select>
+                                  {!pageOptions.some(o => o.url === link.url) && (
+                                    <input value={link.url} onChange={e => updateLink(ci, li, { url: e.target.value })}
+                                      placeholder="https://..."
+                                      style={{ fontSize: 10, padding: "4px 7px", border: "1px solid #C7D2FE", borderRadius: 5, outline: "none", color: "#111", background: "#EEF2FF", fontFamily: "monospace" }} />
+                                  )}
+                                </div>
+                              ))}
+
+                              {/* リンク追加 */}
+                              <button
+                                onClick={() => updateCol(ci, { links: [...col.links, { id: uid(), label: "", url: "/" }] })}
+                                style={{ fontSize: 10, padding: "5px 0", borderRadius: 5, border: "1px dashed #C7D2FE", background: "transparent", color: "#4F46E5", cursor: "pointer", fontWeight: 600 }}>
+                                + リンクを追加
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </>}
+                    </div>
+                  );
+                })()}
 
               </div>
             </div>

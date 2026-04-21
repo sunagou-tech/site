@@ -4,6 +4,7 @@ import { SiteConfig, SectionBlock, BLOCK_META, BlockStyle, FooterBlock } from "@
 import NavBar from "./NavBar";
 import BlockRenderer from "./blocks/BlockRenderer";
 import StickyContactBar from "./StickyContactBar";
+import FooterNavRenderer from "./FooterNavRenderer";
 import {
   Plus, MousePointerClick, GripVertical, Trash2,
   ChevronUp, ChevronDown, Palette, X, ImageIcon,
@@ -481,24 +482,14 @@ export default function SitePreview({ config, onConfigChange, onInsertRequest, l
           </DragOverlay>
         </DndContext>
 
-        {/* 共通フッター: footerHtml=""は非表示、非空ならHTML、未設定ならblockフッター */}
-        {footerHtml === "" ? null
+        {/* 共通フッター: footerNavConfig優先 > footerHtml > globalFooter */}
+        {config.footerNavConfig ? (
+          <FooterNavRenderer config={config.footerNavConfig} />
+        ) : footerHtml === "" ? null
          : footerHtml ? (
-          <div className="relative group/global-footer">
-            <div className="absolute top-0 inset-x-0 z-30 flex items-center gap-2 px-3 py-1.5 bg-gray-600 text-white text-[11px] opacity-0 group-hover/global-footer:opacity-100 transition-opacity pointer-events-none">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="14" width="20" height="8" rx="2"/><path d="M2 10h20"/></svg>
-              <span>フッター（全ページ共通） — 左メニューの「フッター」で編集</span>
-            </div>
-            <div dangerouslySetInnerHTML={{ __html: footerHtml }} />
-          </div>
+          <div dangerouslySetInnerHTML={{ __html: footerHtml }} />
         ) : globalFooter ? (
-          <div className="relative group/global-footer">
-            <div className="absolute top-0 inset-x-0 z-30 flex items-center gap-2 px-3 py-1.5 bg-gray-600 text-white text-[11px] opacity-0 group-hover/global-footer:opacity-100 transition-opacity pointer-events-none">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="14" width="20" height="8" rx="2"/><path d="M2 10h20"/></svg>
-              <span>グローバルフッター（全ページ共通） — テキストをクリックして編集</span>
-            </div>
-            <BlockRenderer block={globalFooter} config={config} onChange={(nb) => onGlobalFooterChange?.(nb as FooterBlock)} />
-          </div>
+          <BlockRenderer block={globalFooter} config={config} onChange={(nb) => onGlobalFooterChange?.(nb as FooterBlock)} />
         ) : null}
 
         <StickyContactBar primaryColor={config.primaryColor} />

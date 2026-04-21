@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { SiteConfig } from "@/types/site";
 import BlockRenderer from "@/components/preview/blocks/BlockRenderer";
+import FooterNavRenderer from "@/components/preview/FooterNavRenderer";
 
 interface Props {
   config: SiteConfig;
@@ -134,8 +135,10 @@ export default function ProductionSiteView({ config, slug, siteSlug }: Props) {
         ))
       )}
 
-      {/* 共通フッター（全ページ共通）: footerHtml=""は非表示、非空ならHTML表示、未設定ならブロック */}
-      {config.footerHtml === "" ? null
+      {/* 共通フッター: footerNavConfig優先 > footerHtml > globalFooter */}
+      {config.footerNavConfig ? (
+        <FooterNavRenderer config={config.footerNavConfig} siteSlug={siteSlug} />
+      ) : config.footerHtml === "" ? null
        : config.footerHtml ? (
         <div dangerouslySetInnerHTML={{ __html: config.footerHtml }} />
       ) : config.globalFooter ? (
