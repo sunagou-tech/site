@@ -134,10 +134,12 @@ export default function ProductionSiteView({ config, slug, siteSlug }: Props) {
         ))
       )}
 
-      {/* グローバルフッター（全ページ共通） */}
-      {config.globalFooter && (
+      {/* 共通フッター（全ページ共通）: HTMLフッター優先、なければブロックフッター */}
+      {config.footerHtml ? (
+        <div dangerouslySetInnerHTML={{ __html: config.footerHtml }} />
+      ) : config.globalFooter ? (
         <BlockRenderer block={config.globalFooter} config={config} onChange={() => {}} />
-      )}
+      ) : null}
     </div>
   );
 }
