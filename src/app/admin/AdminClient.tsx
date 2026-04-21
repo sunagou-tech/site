@@ -1884,7 +1884,7 @@ export default function AdminClient() {
               config={activePageId !== "home" ? { ...config, sections: getActiveSections() } : getActiveConfig()}
               onConfigChange={handleActiveConfigChange}
               onInsertRequest={handleInsertRequest}
-              headerHtml={activePageId !== "home" ? config.headerHtml : undefined}
+              headerHtml={undefined}
               footerHtml={!(htmlMode && activePageId === "home") ? config.footerHtml : undefined}
               globalFooter={!(htmlMode && activePageId === "home") && !config.footerHtml ? config.globalFooter : undefined}
               onGlobalFooterChange={(f) => updateConfig({ ...config, globalFooter: f })}
