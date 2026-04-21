@@ -458,9 +458,42 @@ export default function AdminClient() {
   });
 })();
 <\/script>`;
-    // footerNavConfigがある場合はHTMLからfooterを除去（footerNavConfigで統一表示）
+    // footerNavConfigがある場合はHTMLからfooterを除去し、代わりに統一フッターを注入
     let processedHtml = siteHtml;
-    if (config.footerNavConfig) {
+    let footerInjection = "";
+    if (config.footerNavConfig?.show) {
+      try {
+        const parser2 = new DOMParser();
+        const doc2 = parser2.parseFromString(siteHtml, "text/html");
+        doc2.querySelector("footer")?.remove();
+        processedHtml = doc2.documentElement.outerHTML;
+      } catch {}
+      const fnc = config.footerNavConfig;
+      const addressLines = fnc.address.split("\n").filter(Boolean);
+      const colsHtml = fnc.columns.map(col => `
+        <div>
+          <p style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.45);letter-spacing:0.08em;margin:0 0 12px;text-transform:uppercase">${col.heading}</p>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            ${col.links.map(link => `<a href="${link.url}" style="font-size:13px;color:rgba(255,255,255,0.75);text-decoration:none;line-height:1.5">${link.label}</a>`).join("")}
+          </div>
+        </div>`).join("");
+      footerInjection = `
+        <div style="background:#0f172a;color:#fff;position:relative">
+          <div style="max-width:1200px;margin:0 auto;padding:48px 32px 32px;display:grid;grid-template-columns:${fnc.columns.length > 0 ? "1fr 2fr" : "1fr"};gap:48px">
+            <div>
+              <p style="font-weight:800;font-size:20px;margin:0 0 16px;letter-spacing:-0.01em;color:#fff">${fnc.companyName}</p>
+              <div style="display:flex;flex-direction:column;gap:4px">
+                ${addressLines.map(line => `<p style="font-size:13px;color:rgba(255,255,255,0.65);margin:0;line-height:1.7">${line}</p>`).join("")}
+              </div>
+            </div>
+            ${fnc.columns.length > 0 ? `<div style="display:grid;grid-template-columns:repeat(${Math.min(fnc.columns.length, 4)},1fr);gap:32px">${colsHtml}</div>` : ""}
+          </div>
+          <div style="border-top:1px solid rgba(255,255,255,0.08);padding:16px 32px;text-align:center">
+            <p style="font-size:11px;color:rgba(255,255,255,0.35);margin:0">© ${new Date().getFullYear()} ${fnc.companyName}</p>
+          </div>
+        </div>`;
+    } else if (config.footerNavConfig && !config.footerNavConfig.show) {
+      // show:false の場合はHTMLのfooterも除去
       try {
         const parser2 = new DOMParser();
         const doc2 = parser2.parseFromString(siteHtml, "text/html");
@@ -468,11 +501,11 @@ export default function AdminClient() {
         processedHtml = doc2.documentElement.outerHTML;
       } catch {}
     }
-    const injected = processedHtml.replace('</body>', script + '</body>');
+    const injected = processedHtml.replace('</body>', footerInjection + script + '</body>');
     const url = URL.createObjectURL(new Blob([injected], { type: "text/html" }));
     setHtmlBlobUrl(url);
     return () => URL.revokeObjectURL(url);
-  }, [siteHtml, !!config.footerNavConfig]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [siteHtml, JSON.stringify(config.footerNavConfig)]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // iframeからのテキスト変更を受け取る（編集後のHTMLをsessionStorageに保存）
   useEffect(() => {
@@ -1845,12 +1878,6 @@ export default function AdminClient() {
                   </div>
                 )}
               </div>
-              {/* フッタープレビュー（全ページ共通） */}
-              {config.footerNavConfig?.show && (
-                <div style={{ flexShrink: 0, maxHeight: 220, overflowY: "auto", borderTop: "2px solid rgba(79,70,229,0.15)" }}>
-                  <FooterNavRenderer config={config.footerNavConfig} />
-                </div>
-              )}
             </div>
           ) : deviceMode === "pc" ? (
             <SitePreview
