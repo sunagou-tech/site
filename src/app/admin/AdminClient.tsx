@@ -498,6 +498,33 @@ export default function AdminClient() {
     return () => document.removeEventListener("dragend", handler);
   }, []);
 
+  // HTMLモード時: siteHtmlが変わったら自動でheader/footerを抽出してconfigに反映
+  useEffect(() => {
+    if (!htmlMode || !siteHtml) return;
+    const timer = setTimeout(() => {
+      try {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(siteHtml, "text/html");
+        const cssContent = Array.from(doc.querySelectorAll("style")).map(s => s.outerHTML).join("");
+        const headerEl = doc.querySelector("header") || doc.querySelector("nav");
+        const footerEl = doc.querySelector("footer");
+        if (!headerEl && !footerEl) return;
+        const newHeaderHtml = headerEl ? cssContent + headerEl.outerHTML : undefined;
+        const newFooterHtml = footerEl ? cssContent + footerEl.outerHTML : undefined;
+        setConfig(prev => {
+          const updated = {
+            ...prev,
+            ...(newHeaderHtml !== undefined ? { headerHtml: newHeaderHtml } : {}),
+            ...(newFooterHtml !== undefined ? { footerHtml: newFooterHtml } : {}),
+          };
+          try { localStorage.setItem("site-config", JSON.stringify(updated)); } catch {}
+          return updated;
+        });
+      } catch {}
+    }, 800);
+    return () => clearTimeout(timer);
+  }, [siteHtml, htmlMode]);
+
   // Load from sessionStorage (HTML mode) or localStorage (block mode) on mount
   useEffect(() => {
     const mode = sessionStorage.getItem("site-mode");
@@ -1042,20 +1069,6 @@ export default function AdminClient() {
                 {/* ── 設定パネル ── */}
                 {sidePanel === "settings" && (
                   <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-
-                  {/* HTMLモード同期バナー */}
-                  {htmlMode && activePageId === "home" && (
-                    <div style={{ padding: "10px 12px", background: "#FFF7ED", borderRadius: 8, border: "1px solid #FED7AA" }}>
-                      <p style={{ fontSize: 10, fontWeight: 700, color: "#C2410C", margin: "0 0 4px" }}>HTMLモードで動作中</p>
-                      <p style={{ fontSize: 10, color: "#9A3412", margin: "0 0 8px", lineHeight: 1.5 }}>
-                        サイト名・ナビ・カラーをHTMLから読み取って設定に反映します。他のページのナビが統一されます。
-                      </p>
-                      <button onClick={syncConfigFromHtml}
-                        style={{ fontSize: 11, fontWeight: 600, color: "#fff", background: "#EA580C", border: "none", borderRadius: 6, padding: "6px 14px", cursor: "pointer", width: "100%" }}>
-                        HTMLからナビ設定を同期
-                      </button>
-                    </div>
-                  )}
 
                   {/* ── ページ別設定（サブページ選択時） ── */}
                   {activePageId !== "home" && (() => {
