@@ -8,6 +8,7 @@ import {
 import SitePreview from "@/components/preview/SitePreview";
 import BlockRenderer from "@/components/preview/blocks/BlockRenderer";
 import BlockInsertModal from "@/components/admin/BlockInsertModal";
+import FooterNavRenderer from "@/components/preview/FooterNavRenderer";
 import { RefreshCw, ExternalLink, Plus, Layout, Globe, Check, AlertCircle, Undo2, Image, Copy, Trash2 } from "lucide-react";
 import { EditingContext } from "@/contexts/EditingContext";
 import { ImagePickContext } from "@/contexts/ImagePickContext";
@@ -457,11 +458,21 @@ export default function AdminClient() {
   });
 })();
 <\/script>`;
-    const injected = siteHtml.replace('</body>', script + '</body>');
+    // footerNavConfigがある場合はHTMLからfooterを除去（footerNavConfigで統一表示）
+    let processedHtml = siteHtml;
+    if (config.footerNavConfig) {
+      try {
+        const parser2 = new DOMParser();
+        const doc2 = parser2.parseFromString(siteHtml, "text/html");
+        doc2.querySelector("footer")?.remove();
+        processedHtml = doc2.documentElement.outerHTML;
+      } catch {}
+    }
+    const injected = processedHtml.replace('</body>', script + '</body>');
     const url = URL.createObjectURL(new Blob([injected], { type: "text/html" }));
     setHtmlBlobUrl(url);
     return () => URL.revokeObjectURL(url);
-  }, [siteHtml]);
+  }, [siteHtml, !!config.footerNavConfig]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // iframeからのテキスト変更を受け取る（編集後のHTMLをsessionStorageに保存）
   useEffect(() => {
@@ -1727,7 +1738,7 @@ export default function AdminClient() {
 
           {/* ═══ Center: SitePreview / Device Preview ════ */}
           {htmlMode && htmlBlobUrl && activePageId === "home" ? (
-            <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+            <div style={{ flex: 1, display: "flex", flexDirection: "column", overflowY: "auto", overflowX: "hidden" }}>
               {/* 編集ヒントバー */}
               <div style={{ background: "#4F46E5", padding: "6px 16px", display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
@@ -1763,7 +1774,7 @@ export default function AdminClient() {
                   </button>
                 </div>
               </div>
-              <div style={{ flex: 1, position: "relative", overflow: "hidden" }}>
+              <div style={{ flexShrink: 0, position: "relative", height: "calc(100vh - 80px)", minHeight: 500 }}>
                 <iframe
                   ref={htmlIframeRef}
                   key={htmlBlobUrl}
@@ -1798,6 +1809,13 @@ export default function AdminClient() {
                   </div>
                 )}
               </div>
+
+              {/* 統一フッター（全ページ共通・HTMLフッターの代わり） */}
+              {config.footerNavConfig?.show && (
+                <div style={{ flexShrink: 0 }}>
+                  <FooterNavRenderer config={config.footerNavConfig} />
+                </div>
+              )}
             </div>
           ) : deviceMode === "pc" ? (
             <SitePreview
