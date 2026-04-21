@@ -35,6 +35,8 @@ interface Props {
   onConfigChange: (config: SiteConfig) => void;
   onInsertRequest: (position: number) => void;
   lockedBlockIds?: string[];  // これらのIDのブロックはホームと共通（読み取り専用で表示）
+  headerHtml?: string;        // ホームのHTMLヘッダー（指定時はNavBarの代わりに表示）
+  footerHtml?: string;        // ホームのHTMLフッター（指定時はロックブロックの代わりに表示）
 }
 
 function blockLabel(block: SectionBlock) {
@@ -321,7 +323,7 @@ const SortableBlock = memo(function SortableBlock({
 });
 
 // ─── メイン ──────────────────────────────────────────────────
-export default function SitePreview({ config, onConfigChange, onInsertRequest, lockedBlockIds }: Props) {
+export default function SitePreview({ config, onConfigChange, onInsertRequest, lockedBlockIds, headerHtml, footerHtml }: Props) {
   const [activeId, setActiveId] = useState<string | null>(null);
 
   // ロック済みブロック（ホームと共通）と編集可能ブロックを分離
@@ -416,7 +418,10 @@ export default function SitePreview({ config, onConfigChange, onInsertRequest, l
           </div>
         )}
 
-        <NavBar config={config} onConfigChange={onConfigChange} />
+        {headerHtml
+          ? <div dangerouslySetInnerHTML={{ __html: headerHtml }} />
+          : <NavBar config={config} onConfigChange={onConfigChange} />
+        }
 
         <DndContext
           sensors={sensors}
@@ -474,23 +479,26 @@ export default function SitePreview({ config, onConfigChange, onInsertRequest, l
           </DragOverlay>
         </DndContext>
 
-        {/* ロック済みブロック（ホームと共通 — 読み取り専用） */}
-        {lockedSections.length > 0 && (
-          <div>
-            <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "5px 14px", background: "#F1F5F9", borderTop: "1px dashed #CBD5E1" }}>
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth="2.5">
-                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-              </svg>
-              <span style={{ fontSize: 10, color: "#64748B", fontWeight: 600 }}>ホームと共通（フッターを変更するにはホームタブから）</span>
+        {/* フッター: HTMLがあればそれを表示、なければロック済みブロック */}
+        {footerHtml
+          ? <div dangerouslySetInnerHTML={{ __html: footerHtml }} style={{ pointerEvents: "none" }} />
+          : lockedSections.length > 0 && (
+            <div>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "5px 14px", background: "#F1F5F9", borderTop: "1px dashed #CBD5E1" }}>
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth="2.5">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+                <span style={{ fontSize: 10, color: "#64748B", fontWeight: 600 }}>ホームと共通（フッターを変更するにはホームタブから）</span>
+              </div>
+              <div style={{ pointerEvents: "none", opacity: 0.88 }}>
+                {lockedSections.map(block => (
+                  <BlockRenderer key={block.id} block={block} config={config} onChange={() => {}} />
+                ))}
+              </div>
             </div>
-            <div style={{ pointerEvents: "none", opacity: 0.88 }}>
-              {lockedSections.map(block => (
-                <BlockRenderer key={block.id} block={block} config={config} onChange={() => {}} />
-              ))}
-            </div>
-          </div>
-        )}
+          )
+        }
 
         <StickyContactBar primaryColor={config.primaryColor} />
       </div>

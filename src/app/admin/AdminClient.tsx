@@ -789,10 +789,8 @@ export default function AdminClient() {
       const styleEls = Array.from(doc.querySelectorAll("style"));
       outerLoop: for (const styleEl of styleEls) {
         const css = styleEl.textContent || "";
-        // CSS変数パターン
         const varMatch = css.match(/(?:--primary|--primary-color|--color-primary|--brand|--main-color)[^:]*:\s*(#[0-9a-fA-F]{3,6})/);
         if (varMatch) { newPrimaryColor = varMatch[1]; break; }
-        // header/navの背景色パターン
         const headerRules = css.match(/(?:header|\.header|nav|\.nav|\.navbar)[^{]*\{([^}]+)\}/g) || [];
         for (const rule of headerRules) {
           const bgMatch = rule.match(/background(?:-color)?:\s*(#[0-9a-fA-F]{3,6})/);
@@ -803,7 +801,14 @@ export default function AdminClient() {
         }
       }
 
-      updateConfig({ ...config, title: newTitle, navLinks: newNavLinks, primaryColor: newPrimaryColor });
+      // 4. ヘッダー・フッターHTML: CSS付きで丸ごと抽出
+      const cssContent = Array.from(doc.querySelectorAll("style")).map(s => s.outerHTML).join("");
+      const headerEl = doc.querySelector("header") || doc.querySelector("nav") || doc.querySelector(".header");
+      const footerEl = doc.querySelector("footer") || doc.querySelector(".footer");
+      const newHeaderHtml = headerEl ? cssContent + headerEl.outerHTML : config.headerHtml;
+      const newFooterHtml = footerEl ? cssContent + footerEl.outerHTML : config.footerHtml;
+
+      updateConfig({ ...config, title: newTitle, navLinks: newNavLinks, primaryColor: newPrimaryColor, headerHtml: newHeaderHtml, footerHtml: newFooterHtml });
     } catch (e) {
       console.error("HTML sync error:", e);
     }
@@ -1574,12 +1579,14 @@ export default function AdminClient() {
             </div>
           ) : deviceMode === "pc" ? (
             <SitePreview
-              config={getActiveConfig()}
+              config={activePageId !== "home" ? { ...config, sections: getActiveSections() } : getActiveConfig()}
               onConfigChange={handleActiveConfigChange}
               onInsertRequest={handleInsertRequest}
-              lockedBlockIds={activePageId !== "home"
+              lockedBlockIds={activePageId !== "home" && !config.headerHtml
                 ? config.sections.filter(s => s.type === "footer").map(b => b.id)
                 : undefined}
+              headerHtml={activePageId !== "home" ? config.headerHtml : undefined}
+              footerHtml={activePageId !== "home" ? config.footerHtml : undefined}
             />
           ) : (
             <div style={{ flex: 1, overflowY: "auto", background: "#E2E8F0", display: "flex", flexDirection: "column", alignItems: "center", paddingTop: 20, paddingBottom: 20, gap: 12 }}>
