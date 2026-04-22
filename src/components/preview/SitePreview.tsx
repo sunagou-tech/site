@@ -382,11 +382,11 @@ export default function SitePreview({ config, onConfigChange, onInsertRequest, l
     <div className="flex-1 bg-white overflow-y-auto" style={{ scrollbarGutter: "stable" }}>
       <GlobalFormatBar />
 
-      {/* 編集ガイドバー */}
-      <div className="sticky top-0 z-40 text-white text-[11px] flex items-center gap-3 shrink-0 overflow-hidden" style={{ background: "#4F46E5", padding: "6px 16px" }}>
+      {/* 編集ガイドバー — HTML mode と同一インラインスタイルで高さを揃える */}
+      <div style={{ position: "sticky", top: 0, zIndex: 40, background: "#4F46E5", padding: "6px 16px", display: "flex", alignItems: "center", gap: 8, flexShrink: 0, overflow: "hidden" }}>
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" style={{ flexShrink: 0 }}><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-        <span className="font-semibold" style={{ flexShrink: 0 }}>編集モード</span>
-        <span style={{ color: "rgba(255,255,255,0.75)", overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis", minWidth: 0 }}>テキストをクリックして編集　テキストを選択してフォーマット（太字・色・サイズ）　ブロックをホバーして移動・削除・背景変更</span>
+        <span style={{ color: "white", fontSize: 11, fontWeight: 600, flexShrink: 0 }}>編集モード</span>
+        <span style={{ color: "rgba(255,255,255,0.75)", fontSize: 11, overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis", minWidth: 0 }}>テキストをクリックして編集　テキストを選択してフォーマット（太字・色・サイズ）　ブロックをホバーして移動・削除・背景変更</span>
       </div>
 
       {/* サイト本体 — transform: translateZ(0) で position:fixed 要素をこのコンテナに封じ込める */}
