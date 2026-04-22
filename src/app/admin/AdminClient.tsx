@@ -68,7 +68,6 @@ export default function AdminClient() {
   const [htmlMode,    setHtmlMode]    = useState(false);
   const [siteHtml,    setSiteHtml]    = useState("");
   const [htmlBlobUrl, setHtmlBlobUrl] = useState("");
-  const [converting,  setConverting]  = useState(false);
   const latestHtmlRef = useRef("");
   const htmlIframeRef = useRef<HTMLIFrameElement>(null);
   // ドラッグ&ドロップ用
@@ -1351,31 +1350,13 @@ export default function AdminClient() {
                         <p style={{ fontSize: 11, fontWeight: 700, color: "#4F46E5", margin: "0 0 6px" }}>✏️ AI生成HTMLモード</p>
                         <p style={{ fontSize: 10, color: "#6366F1", margin: "0 0 10px", lineHeight: 1.7 }}>プレビュー上でテキストを直接クリックして編集できます。</p>
                         <button
-                          disabled={converting}
-                          onClick={async () => {
-                            const html = latestHtmlRef.current || siteHtml;
-                            if (!html) return;
-                            setConverting(true);
-                            try {
-                              const res = await fetch("/api/html-to-blocks", {
-                                method: "POST",
-                                headers: { "Content-Type": "application/json" },
-                                body: JSON.stringify({ html }),
-                              });
-                              const data = await res.json();
-                              if (!data.blocks) throw new Error(data.error ?? "failed");
-                              updateConfig({ ...config, sections: data.blocks });
-                              setHtmlMode(false);
-                              setHtmlBlobUrl("");
-                              try { sessionStorage.removeItem("site-mode"); } catch {}
-                            } catch (e) {
-                              alert("変換に失敗しました: " + String(e));
-                            } finally {
-                              setConverting(false);
-                            }
+                          onClick={() => {
+                            setHtmlMode(false);
+                            setHtmlBlobUrl("");
+                            try { sessionStorage.removeItem("site-mode"); } catch {}
                           }}
-                          style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 5, width: "100%", padding: "8px 0", borderRadius: 6, border: "1.5px solid #818CF8", background: converting ? "#EEF2FF" : "white", cursor: converting ? "not-allowed" : "pointer", color: "#4F46E5", fontWeight: 700, fontSize: 11, transition: "background 0.12s" }}>
-                          {converting ? "⏳ AI変換中..." : "⬡ ブロックに分解して編集"}
+                          style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 5, width: "100%", padding: "8px 0", borderRadius: 6, border: "1.5px solid #818CF8", background: "white", cursor: "pointer", color: "#4F46E5", fontWeight: 700, fontSize: 11 }}>
+                          ⬡ ブロックで編集に切り替え
                         </button>
                       </div>
                     )}
