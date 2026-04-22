@@ -379,7 +379,7 @@ export default function SitePreview({ config, onConfigChange, onInsertRequest, l
   const activeBlock = activeId ? editableSections.find((b) => b.id === activeId) : null;
 
   return (
-    <div className="flex-1 bg-white overflow-y-auto">
+    <div className="flex-1 bg-white overflow-y-auto" style={{ scrollbarGutter: "stable" }}>
       <GlobalFormatBar />
 
       {/* 編集ガイドバー */}

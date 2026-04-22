@@ -28,7 +28,7 @@ export default function NavBar({ config, onConfigChange }: Props) {
   }
 
   return (
-    <nav className="sticky top-0 z-20 bg-white border-b border-gray-100 px-8 py-3 flex items-center justify-between shadow-sm">
+    <nav className="group/nav sticky top-0 z-20 bg-white border-b border-gray-100 px-8 py-3 flex items-center justify-between shadow-sm">
       <div className="flex items-center gap-2">
         {config.logoUrl ? (
           <img src={config.logoUrl} alt={config.title} className="h-8 w-auto object-contain" />
@@ -69,7 +69,7 @@ export default function NavBar({ config, onConfigChange }: Props) {
 
         <button
           onClick={addLink}
-          className="text-gray-300 hover:text-gray-500 transition-colors"
+          className="opacity-0 group-hover/nav:opacity-100 transition-opacity text-gray-300 hover:text-gray-500"
           title="ナビリンクを追加"
         >
           <Plus size={12} />
