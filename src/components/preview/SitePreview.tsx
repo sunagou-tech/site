@@ -379,15 +379,14 @@ export default function SitePreview({ config, onConfigChange, onInsertRequest, l
   const activeBlock = activeId ? editableSections.find((b) => b.id === activeId) : null;
 
   return (
-    <div className="flex-1 bg-gray-200 overflow-y-auto">
+    <div className="flex-1 bg-white overflow-y-auto">
       <GlobalFormatBar />
 
       {/* 編集ガイドバー */}
-      <div className="sticky top-0 z-40 bg-gradient-to-r from-indigo-600 to-violet-600 text-white text-[11px] px-4 py-1.5 flex items-center gap-4">
-        <span className="font-semibold">✏️ 編集モード</span>
-        <span className="opacity-80">テキストをクリックして編集</span>
-        <span className="opacity-80">テキストを選択してフォーマット（太字・色・サイズ）</span>
-        <span className="opacity-80">ブロックをホバーして移動・削除・背景変更</span>
+      <div className="sticky top-0 z-40 text-white text-[11px] px-4 flex items-center gap-3 shrink-0" style={{ background: "#4F46E5", padding: "6px 16px" }}>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        <span className="font-semibold">編集モード</span>
+        <span style={{ color: "rgba(255,255,255,0.75)" }}>テキストをクリックして編集　テキストを選択してフォーマット（太字・色・サイズ）　ブロックをホバーして移動・削除・背景変更</span>
       </div>
 
       {/* サイト本体 — transform: translateZ(0) で position:fixed 要素をこのコンテナに封じ込める */}
