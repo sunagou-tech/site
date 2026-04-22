@@ -1808,10 +1808,10 @@ export default function AdminClient() {
           {htmlMode && htmlBlobUrl && activePageId === "home" ? (
             <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
               {/* 編集ヒントバー */}
-              <div style={{ background: "#4F46E5", padding: "6px 16px", display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                <span style={{ color: "white", fontSize: 11, fontWeight: 600 }}>編集モード</span>
-                <span style={{ color: "rgba(255,255,255,0.75)", fontSize: 11 }}>テキストをクリックして直接編集できます</span>
+              <div style={{ background: "#4F46E5", padding: "6px 16px", display: "flex", alignItems: "center", gap: 8, flexShrink: 0, overflow: "hidden" }}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" style={{ flexShrink: 0 }}><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                <span style={{ color: "white", fontSize: 11, fontWeight: 600, flexShrink: 0, whiteSpace: "nowrap" }}>編集モード</span>
+                <span style={{ color: "rgba(255,255,255,0.75)", fontSize: 11, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", minWidth: 0 }}>テキストをクリックして直接編集できます</span>
                 {config.footerNavConfig?.show && (
                   <span style={{ fontSize: 10, background: "rgba(255,255,255,0.2)", color: "white", borderRadius: 4, padding: "2px 8px", fontWeight: 600 }}>
                     フッター設定済み ✓（全ページ共通）
