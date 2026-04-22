@@ -471,21 +471,23 @@ export default function AdminClient() {
       // 統一ナビをbodyの先頭にDOM挿入
       const logoHtml = config.logoUrl
         ? `<img src="${config.logoUrl}" alt="${config.title}" style="height:32px;width:auto;object-fit:contain" />`
-        : `<div style="width:32px;height:32px;border-radius:6px;background:${config.primaryColor};display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:800">${(config.title?.charAt(0) ?? "S").toUpperCase()}</div>`;
+        : `<div style="width:32px;height:32px;border-radius:4px;background:${config.primaryColor};display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700;box-shadow:0 1px 2px rgba(0,0,0,0.05)">${(config.title?.charAt(0) ?? "S").toUpperCase()}</div>`;
+      // NavBarコンポーネントと同じスタイル
       const navLinksHtml = config.navLinks.map(link =>
-        `<a href="${link.url}" style="font-size:12px;color:#374151;text-decoration:none;white-space:nowrap">${link.label}</a>`
+        `<a href="${link.url}" style="font-size:12px;color:#4b5563;text-decoration:none;white-space:nowrap">${link.label}</a>`
       ).join("");
       const navEl = doc2.createElement("nav");
       navEl.setAttribute("data-tsukurie", "");
-      navEl.setAttribute("style", "position:relative;z-index:50;background:#fff;border-bottom:1px solid #f1f5f9;padding:12px 32px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 1px 3px rgba(0,0,0,0.05)");
+      // NavBar: px-8 py-3 = padding:12px 32px / border-gray-100 = #f3f4f6 / shadow-sm
+      navEl.setAttribute("style", "position:relative;z-index:50;background:#fff;border-bottom:1px solid #f3f4f6;padding:12px 32px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 1px 2px rgba(0,0,0,0.05)");
       navEl.innerHTML = `
         <div style="display:flex;align-items:center;gap:8px">
           ${logoHtml}
-          <a href="/" style="font-weight:700;font-size:14px;text-decoration:none;color:#111">${config.title}</a>
+          <span style="font-weight:700;font-size:14px;letter-spacing:0.025em;color:#111">${config.title}</span>
         </div>
         <div style="display:flex;align-items:center;gap:16px">
           ${navLinksHtml}
-          <a href="/contact" style="font-size:12px;color:#fff;padding:7px 18px;border-radius:20px;background:${config.primaryColor};text-decoration:none;font-weight:600">お問い合わせ</a>
+          <a href="/contact" style="font-size:12px;color:#fff;padding:8px 16px;border-radius:9999px;background:${config.primaryColor};text-decoration:none;font-weight:500;box-shadow:0 1px 2px rgba(0,0,0,0.05)">お問い合わせ</a>
         </div>`;
       doc2.body.insertBefore(navEl, doc2.body.firstChild);
 
