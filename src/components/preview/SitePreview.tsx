@@ -6,7 +6,7 @@ import BlockRenderer from "./blocks/BlockRenderer";
 import StickyContactBar from "./StickyContactBar";
 import FooterNavRenderer from "./FooterNavRenderer";
 import {
-  Plus, MousePointerClick, GripVertical, Trash2,
+  Plus, GripVertical, Trash2,
   ChevronUp, ChevronDown, Palette, X, ImageIcon,
 } from "lucide-react";
 
@@ -390,24 +390,8 @@ export default function SitePreview({ config, onConfigChange, onInsertRequest, l
         <span className="opacity-80">ブロックをホバーして移動・削除・背景変更</span>
       </div>
 
-      {/* ブラウザChrome */}
-      <div className="sticky top-0 z-30 bg-gray-300 border-b border-gray-400 px-4 py-2 flex items-center gap-2">
-        <div className="flex gap-1.5">
-          <span className="w-3 h-3 rounded-full bg-red-400" />
-          <span className="w-3 h-3 rounded-full bg-yellow-400" />
-          <span className="w-3 h-3 rounded-full bg-green-400" />
-        </div>
-        <div className="flex-1 mx-3 bg-white rounded px-3 py-1 text-xs text-gray-400 font-mono">
-          https://my-site.example.com
-        </div>
-        <div className="flex items-center gap-1 text-[10px] text-gray-500 bg-white/60 px-2 py-1 rounded">
-          <MousePointerClick size={10} />
-          テキストを選択してフォーマット · ホバーでツールバー（移動・削除・背景）
-        </div>
-      </div>
-
       {/* サイト本体 — transform: translateZ(0) で position:fixed 要素をこのコンテナに封じ込める */}
-      <div className="gs-root mx-4 my-4 bg-white shadow-xl rounded-b-lg overflow-hidden border-t-2 border-green-400" style={{ transform: "translateZ(0)" }}>
+      <div className="gs-root bg-white overflow-hidden" style={{ transform: "translateZ(0)" }}>
         <GlobalStyleInjector style={config.globalStyle} />
         {editableSections.length === 0 && !globalFooter && (
           <div className="flex flex-col items-center justify-center h-64 text-gray-400 gap-3">
