@@ -257,47 +257,28 @@ export default function SetupClient() {
     }
   }, [businessName, serviceDesc, target, strengths]);
 
-  // ─── デモテンプレートから生成（デモスタイル + 事業情報 → キャンバスブロック生成）──
+  // ─── デモテンプレートをそのままロード（AI不使用・コンテンツ変更なし）──
   const generateFromDemo = useCallback(async () => {
-    if (!selectedDemo || !demoBizName.trim() || !demoBizDesc.trim()) return;
+    if (!selectedDemo) return;
     setPhase("generating");
-    setGenPct(0);
-    setGenText("デモデザインを読み込み中...");
-
-    const DEMO_STEPS = [
-      { pct: 15, text: "デモデザインを読み込み中..." },
-      { pct: 35, text: "事業情報をAIが解析中..." },
-      { pct: 55, text: "ブロックを構築中..." },
-      { pct: 75, text: "見出し・説明文を最適化中..." },
-      { pct: 90, text: "最終仕上げ中..." },
-    ];
-    DEMO_STEPS.forEach(({ pct, text }, i) => {
-      setTimeout(() => { setGenPct(pct); setGenText(text); }, i * 2000);
-    });
-
+    setGenPct(20);
+    setGenText("デモサイトを読み込み中...");
     try {
-      const res = await fetch("/api/setup-ai", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          phase: "form-generate",
-          formData: { businessName: demoBizName, serviceDesc: demoBizDesc, target: "", strengths: "" },
-          analysisResult: selectedDemo.style,
-        }),
-      });
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      let data: { error?: string; config?: any };
-      try { data = await res.json(); } catch { throw new Error("サーバーエラーが発生しました。もう一度お試しください。"); }
-      if (!res.ok || data.error) throw new Error(data.error ?? "生成に失敗しました");
-
+      const res = await fetch(`/demos/${selectedDemo.id}.html`);
+      if (!res.ok) throw new Error("デモファイルの取得に失敗しました");
+      const html = await res.text();
       setGenPct(100);
-      setTimeout(() => { setGeneratedConfig(data.config); setPhase("preview"); }, 800);
+      setTimeout(() => {
+        sessionStorage.setItem("site-html", html);
+        sessionStorage.setItem("site-mode", "html");
+        router.push("/admin");
+      }, 400);
     } catch (e) {
-      setDemoError(e instanceof Error ? e.message : "生成に失敗しました");
+      setDemoError(e instanceof Error ? e.message : "読み込みに失敗しました");
       setPhase("form");
       setMainTab("demo");
     }
-  }, [selectedDemo, demoBizName, demoBizDesc]);
+  }, [selectedDemo, router]);
 
   // ─── チャット: メッセージ送信 ────────────────────────────────
   const runChatGenerate = useCallback(async (msgs: ChatMessage[]) => {
@@ -865,57 +846,37 @@ export default function SetupClient() {
                 ))}
               </div>
 
-              {/* 選択後の生成フォーム */}
+              {/* 選択後の確認 */}
               {selectedDemo && (
                 <div style={{ background: "#FFFFFF", borderRadius: 16, border: `1.5px solid ${NAVY}33`, padding: 24 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
                     <div style={{ width: 8, height: 8, borderRadius: "50%", background: NAVY }} />
                     <p className="text-sm font-bold" style={{ color: "#111827" }}>
-                      「{selectedDemo.name}」のスタイルで生成します
+                      「{selectedDemo.name}」をそのまま使います
                     </p>
                     <span className="text-xs px-2 py-0.5 rounded-full"
                       style={{ background: "#EFF6FF", color: NAVY }}>{selectedDemo.label}</span>
                   </div>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-                    <div>
-                      <label className="block text-xs font-semibold mb-1.5" style={{ color: "#374151" }}>
-                        事業・サービス名 <span style={{ color: "#EF4444" }}>*</span>
-                      </label>
-                      <input type="text" value={demoBizName} onChange={e => setDemoBizName(e.target.value)}
-                        placeholder="例：青山進学塾 / みらい個別指導"
-                        className="w-full text-sm rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-200"
-                        style={{ border: "1.5px solid #E2E8F0", background: "#F9FAFB", color: "#111827" }} />
+                  <p className="text-xs mb-4" style={{ color: "#6B7280" }}>
+                    サムネイルと同じデザインがそのまま開きます。テキストは管理画面で直接クリックして編集できます。
+                  </p>
+                  {demoError && (
+                    <div className="flex items-start gap-2 p-3 rounded-xl mb-4"
+                      style={{ background: "#FEF2F2", border: "1px solid #FECACA" }}>
+                      <MsIcon name="error" size={14} color="#DC2626" />
+                      <p className="text-xs leading-relaxed" style={{ color: "#DC2626" }}>{demoError}</p>
                     </div>
-                    <div>
-                      <label className="block text-xs font-semibold mb-1.5" style={{ color: "#374151" }}>
-                        サービス・特徴の説明 <span style={{ color: "#EF4444" }}>*</span>
-                      </label>
-                      <textarea value={demoBizDesc} onChange={e => setDemoBizDesc(e.target.value)}
-                        placeholder="例：中学受験専門の個別指導塾。講師全員が難関大出身で、年間合格率95%。少人数制で一人ひとりに最適な学習プランを提供します。"
-                        rows={3} className="w-full text-sm rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-200 resize-none"
-                        style={{ border: "1.5px solid #E2E8F0", background: "#F9FAFB", color: "#111827" }} />
-                    </div>
-                    {demoError && (
-                      <div className="flex items-start gap-2 p-3 rounded-xl"
-                        style={{ background: "#FEF2F2", border: "1px solid #FECACA" }}>
-                        <MsIcon name="error" size={14} color="#DC2626" />
-                        <p className="text-xs leading-relaxed" style={{ color: "#DC2626" }}>{demoError}</p>
-                      </div>
-                    )}
-                    <button
-                      onClick={generateFromDemo}
-                      disabled={!demoBizName.trim() || !demoBizDesc.trim()}
-                      className="flex items-center justify-center gap-2 font-bold text-sm py-3 rounded-xl text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-                      style={{
-                        background: demoBizName.trim() && demoBizDesc.trim()
-                          ? `linear-gradient(135deg, ${NAVY}, #2B6CB0)` : "#CBD5E1",
-                        boxShadow: demoBizName.trim() && demoBizDesc.trim()
-                          ? "0 4px 16px rgba(26,54,93,0.3)" : "none",
-                      }}>
-                      <MsIcon name="auto_awesome" size={16} color="#FFFFFF" />
-                      このデザインで編集を始める
-                    </button>
-                  </div>
+                  )}
+                  <button
+                    onClick={generateFromDemo}
+                    className="flex items-center justify-center gap-2 font-bold text-sm py-3 rounded-xl text-white transition-all w-full"
+                    style={{
+                      background: `linear-gradient(135deg, ${NAVY}, #2B6CB0)`,
+                      boxShadow: "0 4px 16px rgba(26,54,93,0.3)",
+                    }}>
+                    <MsIcon name="edit" size={16} color="#FFFFFF" />
+                    このデザインで編集を始める
+                  </button>
                 </div>
               )}
             </div>
