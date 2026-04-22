@@ -1825,7 +1825,7 @@ export default function AdminClient() {
           </div>
 
           {/* ═══ Center: SitePreview / Device Preview ════ */}
-          {htmlMode && htmlBlobUrl && activePageId === "home" ? (
+          {htmlMode && htmlBlobUrl ? (
             <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
               {/* 編集ヒントバー */}
               <div style={{ background: "#4F46E5", padding: "6px 16px", display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
