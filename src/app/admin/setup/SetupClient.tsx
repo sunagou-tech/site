@@ -257,7 +257,7 @@ export default function SetupClient() {
     }
   }, [businessName, serviceDesc, target, strengths]);
 
-  // ─── デモテンプレートから生成（デモHTMLに事業情報注入 → /admin でクリック編集）──
+  // ─── デモテンプレートから生成（デモスタイル + 事業情報 → キャンバスブロック生成）──
   const generateFromDemo = useCallback(async () => {
     if (!selectedDemo || !demoBizName.trim() || !demoBizDesc.trim()) return;
     setPhase("generating");
@@ -267,7 +267,7 @@ export default function SetupClient() {
     const DEMO_STEPS = [
       { pct: 15, text: "デモデザインを読み込み中..." },
       { pct: 35, text: "事業情報をAIが解析中..." },
-      { pct: 55, text: "テキストコンテンツを差し替え中..." },
+      { pct: 55, text: "ブロックを構築中..." },
       { pct: 75, text: "見出し・説明文を最適化中..." },
       { pct: 90, text: "最終仕上げ中..." },
     ];
@@ -276,21 +276,22 @@ export default function SetupClient() {
     });
 
     try {
-      const res = await fetch("/api/demo-inject", {
+      const res = await fetch("/api/setup-ai", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ demoId: selectedDemo.id, bizName: demoBizName, bizDesc: demoBizDesc }),
+        body: JSON.stringify({
+          phase: "form-generate",
+          formData: { businessName: demoBizName, serviceDesc: demoBizDesc, target: "", strengths: "" },
+          analysisResult: selectedDemo.style,
+        }),
       });
-      let data: { error?: string; html?: string };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let data: { error?: string; config?: any };
       try { data = await res.json(); } catch { throw new Error("サーバーエラーが発生しました。もう一度お試しください。"); }
       if (!res.ok || data.error) throw new Error(data.error ?? "生成に失敗しました");
 
       setGenPct(100);
-      setTimeout(() => {
-        sessionStorage.setItem("site-html", data.html!);
-        sessionStorage.setItem("site-mode", "html");
-        router.push("/admin");
-      }, 800);
+      setTimeout(() => { setGeneratedConfig(data.config); setPhase("preview"); }, 800);
     } catch (e) {
       setDemoError(e instanceof Error ? e.message : "生成に失敗しました");
       setPhase("form");

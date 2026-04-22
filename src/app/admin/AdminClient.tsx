@@ -1348,16 +1348,12 @@ export default function AdminClient() {
                     {htmlMode && activePageId === "home" && (
                       <div style={{ marginBottom: 14, padding: "12px", background: "#EEF2FF", borderRadius: 8, border: "1px solid #C7D2FE" }}>
                         <p style={{ fontSize: 11, fontWeight: 700, color: "#4F46E5", margin: "0 0 6px" }}>✏️ AI生成HTMLモード</p>
-                        <p style={{ fontSize: 10, color: "#6366F1", margin: "0 0 10px", lineHeight: 1.7 }}>プレビュー上でテキストを直接クリックして編集できます。</p>
-                        <button
-                          onClick={() => {
-                            setHtmlMode(false);
-                            setHtmlBlobUrl("");
-                            try { sessionStorage.removeItem("site-mode"); } catch {}
-                          }}
-                          style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 5, width: "100%", padding: "8px 0", borderRadius: 6, border: "1.5px solid #818CF8", background: "white", cursor: "pointer", color: "#4F46E5", fontWeight: 700, fontSize: 11 }}>
-                          ⬡ ブロックで編集に切り替え
-                        </button>
+                        <p style={{ fontSize: 10, color: "#6366F1", margin: "0 0 10px", lineHeight: 1.7 }}>プレビュー上でテキストを直接クリックして編集できます。ブロック編集にするにはAI生成ページからやり直してください。</p>
+                        <a
+                          href="/admin/setup"
+                          style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 5, width: "100%", padding: "8px 0", borderRadius: 6, border: "1.5px solid #818CF8", background: "white", cursor: "pointer", color: "#4F46E5", fontWeight: 700, fontSize: 11, textDecoration: "none" }}>
+                          → ブロックで再生成する
+                        </a>
                       </div>
                     )}
                     {/* 配置済みブロック一覧（HTMLモードのホームでは非表示） */}
