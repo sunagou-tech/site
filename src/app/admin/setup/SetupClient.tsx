@@ -3,7 +3,7 @@
 import "@material-symbols/font-400/rounded.css";
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { SiteConfig, GlobalStyle } from "@/types/site";
+import { SiteConfig, GlobalStyle, uid } from "@/types/site";
 import CanvasEditor from "@/components/canvas/CanvasEditor";
 import { EditingContext } from "@/contexts/EditingContext";
 
@@ -49,6 +49,107 @@ const DEMO_TEMPLATES: DemoTemplate[] = [
     },
   },
 ];
+
+// ── デモ用キャンバスブロック設定（静的・AI不使用）────────────
+function buildDemoConfig(id: string): SiteConfig | null {
+  if (id === "juku-benesse") {
+    return {
+      title: "ライズ学習塾", catchCopy: "一人ひとりの「わかった！」を積み上げる",
+      primaryColor: "#005bab", accentColor: "#e50012", fontFamily: "sans",
+      logoUrl: "", headerHtml: "", footerHtml: "",
+      globalStyle: { primaryColor: "#005bab", accentColor: "#e50012", bgColor: "#ffffff", cardBgColor: "#f7f9fc", buttonBgColor: "#e50012", buttonTextColor: "#ffffff", buttonRadius: "6", cardBorderRadius: "16", sectionPaddingY: "80" },
+      navLinks: [
+        { id: uid(), label: "選ばれる理由", url: "#features" },
+        { id: uid(), label: "コース紹介", url: "#course" },
+        { id: uid(), label: "よくある質問", url: "#faq" },
+        { id: uid(), label: "お問い合わせ", url: "/contact" },
+      ],
+      sections: [
+        { id: uid(), type: "hero-centered", eyebrow: "2026年度 生徒募集中", tagline: "一人ひとりの\n「わかった！」を\n積み上げる個別指導", body: "あなたのペースで、あなただけのカリキュラム。苦手科目の克服から志望校合格まで、担任制の個別指導でしっかりサポートします。", buttonText: "無料体験授業を申し込む", buttonUrl: "/contact", buttonText2: "資料を請求する", buttonUrl2: "", imageUrl: "" },
+        { id: uid(), type: "stats", heading: "選ばれる実績", items: [{ value: "98", suffix: "%", label: "成績向上率" }, { value: "15", suffix: "年", label: "指導実績" }, { value: "1,200", suffix: "名+", label: "累計卒業生" }, { value: "94", suffix: "%", label: "志望校合格率" }] },
+        { id: uid(), type: "about", heading: "こんなお悩みありませんか？", body: "成績が伸び悩む原因は「一人ひとりに合った学習」の欠如です。集団授業では拾えない「つまずき」が、やがて大きな学力差を生みます。\n\n授業についていけない、何から手をつければいいかわからない、塾に通っても成績が上がらない——そんなお悩みをライズ学習塾がすべて解決します。", buttonText: "無料体験を申し込む", buttonUrl: "/contact" },
+        { id: uid(), type: "features", heading: "成績が上がる、3つの仕組み", subheading: "15年の指導実績から生まれた確かな学習メソッド",
+          items: [
+            { icon: { kind: "lucide", value: "GraduationCap", size: 28 }, title: "専任担任制・完全個別カリキュラム", desc: "入塾時の学力診断から始まり、生徒一人ひとりに合わせたオリジナルカリキュラムを作成。苦手分野を集中的に克服できます。" },
+            { icon: { kind: "lucide", value: "BarChart2", size: 28 }, title: "週次レポートで保護者と進捗共有", desc: "毎週の学習状況・理解度・宿題の定着率をレポートでお届け。保護者の方もリアルタイムで成長を確認できます。" },
+            { icon: { kind: "lucide", value: "MessageCircle", size: 28 }, title: "自習室・質問対応でわからないを即解決", desc: "開塾時間中はいつでも自習室を利用可能。常駐スタッフへの質問も随時受付けているので、疑問をその日のうちに解消できます。" },
+            { icon: { kind: "lucide", value: "BookOpen", size: 28 }, title: "定期テスト対策コース", desc: "テスト2週間前から5教科を集中対策。前回比で平均+18点アップの実績を誇ります。" },
+            { icon: { kind: "lucide", value: "Target", size: 28 }, title: "高校受験専門コース", desc: "志望校別の入試対策・模擬試験・過去問演習・出願面接サポートまで。合格率94%の実績。" },
+            { icon: { kind: "lucide", value: "Star", size: 28 }, title: "基礎力強化コース", desc: "つまずいた単元まで遡る反復演習で確実に定着。3ヶ月で苦手意識を解消します。" },
+          ] as [{ icon: { kind: "lucide"; value: string; size: 28 }; title: string; desc: string }, { icon: { kind: "lucide"; value: string; size: 28 }; title: string; desc: string }, { icon: { kind: "lucide"; value: string; size: 28 }; title: string; desc: string }, { icon: { kind: "lucide"; value: string; size: 28 }; title: string; desc: string }, { icon: { kind: "lucide"; value: string; size: 28 }; title: string; desc: string }, { icon: { kind: "lucide"; value: string; size: 28 }; title: string; desc: string }]
+        },
+        { id: uid(), type: "steps", heading: "入塾の流れ", subheading: "まずは無料体験から気軽にスタートできます",
+          items: [
+            { number: "01", title: "無料体験申込", desc: "Webフォームまたはお電話でご予約" },
+            { number: "02", title: "学力診断テスト", desc: "現在の学力と課題を把握" },
+            { number: "03", title: "担任との授業体験", desc: "実際の授業スタイルをご体験" },
+            { number: "04", title: "ご入塾・学習開始", desc: "カリキュラム作成後すぐにスタート" },
+          ]
+        },
+        { id: uid(), type: "faq", heading: "よくある質問",
+          items: [
+            { question: "体験授業は本当に無料ですか？", answer: "はい、初回の体験授業（60分）は完全無料です。学力診断テストと授業がセットになっており、一切費用はかかりません。体験後に入塾を強制することもありませんので、お気軽にお申し込みください。" },
+            { question: "授業は週に何回から通えますか？", answer: "週1回から通うことができます。学校の行事やクラブ活動に合わせてスケジュールを柔軟に組めますので、お子さまのペースに合わせてご相談ください。" },
+            { question: "途中でコースを変更することはできますか？", answer: "もちろん可能です。受験が近づいてきたタイミングでコースを切り替えるご家庭も多いです。担任の先生と相談しながら最適な時期に変更できます。" },
+            { question: "オンライン授業にも対応していますか？", answer: "はい、ZoomやGoogle Meetを使ったオンライン個別指導も行っています。通塾とオンラインを組み合わせることも可能です。" },
+          ]
+        },
+        { id: uid(), type: "cta", heading: "まずは無料体験授業から", body: "入塾金0円・初回授業完全無料。担任制で一人ひとりに合わせた指導をご体験ください。", buttonText: "無料体験を申し込む", buttonUrl: "/contact", buttonText2: "資料請求はこちら", buttonUrl2: "" },
+        { id: uid(), type: "contact", heading: "お問い合わせ", desc: "ご不明な点はお気軽にご相談ください。担当スタッフが丁寧にご案内します。", buttonUrl: "/contact" },
+      ],
+      pages: [],
+    } as unknown as SiteConfig;
+  }
+  if (id === "juku-sakura") {
+    return {
+      title: "サクラ進学塾", catchCopy: "女の子専門 中学受験特化",
+      primaryColor: "#9D174D", accentColor: "#EC4899", fontFamily: "sans",
+      logoUrl: "", headerHtml: "", footerHtml: "",
+      globalStyle: { primaryColor: "#9D174D", accentColor: "#EC4899", bgColor: "#FDF2F8", cardBgColor: "#FCE7F3", buttonBgColor: "#EC4899", buttonTextColor: "#ffffff", buttonRadius: "100", cardBorderRadius: "20", sectionPaddingY: "80" },
+      navLinks: [
+        { id: uid(), label: "選ばれる理由", url: "#reason" },
+        { id: uid(), label: "コース・料金", url: "#course" },
+        { id: uid(), label: "よくある質問", url: "#faq" },
+        { id: uid(), label: "お問い合わせ", url: "/contact" },
+      ],
+      sections: [
+        { id: uid(), type: "hero-centered", eyebrow: "女の子専門 中学受験特化", tagline: "女の子専門\n中学受験塾\n『サクラ進学塾』", body: "「もっと自信を持って勉強したい」そんな女の子の気持ちを大切に。女性講師中心のやさしい環境で、第一志望合格を目指します。", buttonText: "無料体験授業を申し込む", buttonUrl: "/contact", buttonText2: "資料を請求する", buttonUrl2: "", imageUrl: "" },
+        { id: uid(), type: "stats", heading: "選ばれる実績", items: [{ value: "95", suffix: "%", label: "志望校合格率" }, { value: "1,800", suffix: "名+", label: "累計卒業生" }, { value: "99", suffix: "%", label: "保護者満足度" }, { value: "600", suffix: "名+", label: "在籍講師数" }] },
+        { id: uid(), type: "about", heading: "こんなお悩みはありませんか？", body: "女の子の特性に合わせた学習法がわからない。中学受験、何から始めたらいいかわからない。勉強嫌いになってしまわないか心配——サクラ進学塾がすべて解決します。", buttonText: "サクラの解決策を見る", buttonUrl: "" },
+        { id: uid(), type: "features", heading: "サクラ進学塾の強み", subheading: "女の子のための細やかな指導環境",
+          items: [
+            { icon: { kind: "lucide", value: "Heart", size: 28 }, title: "女性講師中心の安心環境", desc: "女性講師が中心のやさしく温かみのある教室で、安心して学べる環境を整えています。" },
+            { icon: { kind: "lucide", value: "GraduationCap", size: 28 }, title: "中学受験のプロフェッショナル", desc: "難関女子中学校への合格実績が豊富。各校の出題傾向を知り尽くした専門家が指導します。" },
+            { icon: { kind: "lucide", value: "Smile", size: 28 }, title: "温かく親しみやすい学習環境", desc: "笑顔あふれる教室で、友達と切磋琢磨しながら楽しく学べます。講師との距離が近いのも特徴。" },
+            { icon: { kind: "lucide", value: "Users", size: 28 }, title: "保護者様のご不安に寄り添うサポート", desc: "定期面談や日々の報告で、保護者の方が安心して任せられる体制を整えています。" },
+            { icon: { kind: "lucide", value: "Star", size: 28 }, title: "「できた！」を育む授業スタイル", desc: "間違いを責めず、一歩ずつ前進する指導で自己肯定感と学力を同時に育てます。" },
+            { icon: { kind: "lucide", value: "Award", size: 28 }, title: "完全個別カスタマイズカリキュラム", desc: "お子さまの目標・学力・性格に合わせたオリジナルカリキュラムを作成。確実な成長を約束します。" },
+          ] as [{ icon: { kind: "lucide"; value: string; size: 28 }; title: string; desc: string }, { icon: { kind: "lucide"; value: string; size: 28 }; title: string; desc: string }, { icon: { kind: "lucide"; value: string; size: 28 }; title: string; desc: string }, { icon: { kind: "lucide"; value: string; size: 28 }; title: string; desc: string }, { icon: { kind: "lucide"; value: string; size: 28 }; title: string; desc: string }, { icon: { kind: "lucide"; value: string; size: 28 }; title: string; desc: string }]
+        },
+        { id: uid(), type: "steps", heading: "ご利用の流れ", subheading: "まずはお気軽にお問い合わせください",
+          items: [
+            { number: "01", title: "お問い合わせ", desc: "まずはお気軽にフォームもしくはお電話にてご連絡ください" },
+            { number: "02", title: "学習相談・面談", desc: "現在の学習状況やお悩み、目標をじっくりお聞かせください" },
+            { number: "03", title: "体験授業（無料）", desc: "実際に授業を受けて塾の雰囲気や指導スタイルをご確認ください" },
+            { number: "04", title: "ご入塾・学習開始", desc: "ご納得いただいた上でご入塾。すぐに学習がスタートします" },
+          ]
+        },
+        { id: uid(), type: "faq", heading: "よくある質問",
+          items: [
+            { question: "女の子専門とはどういう意味ですか？", answer: "女性講師が中心となり、女の子の学習スタイルや心理的特性に合わせた指導を行う塾です。男女混合の環境が苦手なお子さまも安心して通えます。" },
+            { question: "中学受験以外の目的でも通えますか？", answer: "はい、学力向上や定期テスト対策など、受験以外の目的でもご利用いただけます。お子さまの状況に合わせてご提案します。" },
+            { question: "体験授業は無料ですか？", answer: "はい、初回の体験授業は完全無料です。実際の授業スタイルをご体験の上、ご検討いただけます。" },
+            { question: "オンライン受講は可能ですか？", answer: "はい、オンライン個別指導にも対応しています。通塾とオンラインを組み合わせることも可能です。" },
+          ]
+        },
+        { id: uid(), type: "cta", heading: "まずは無料体験授業を", body: "女の子専門の個別指導塾サクラで、お子さまの可能性を最大限に引き出します。", buttonText: "無料体験を申し込む", buttonUrl: "/contact", buttonText2: "資料請求はこちら", buttonUrl2: "" },
+        { id: uid(), type: "contact", heading: "お問い合わせ", desc: "ご不明な点はお気軽にご相談ください。女性スタッフが丁寧にご案内します。", buttonUrl: "/contact" },
+      ],
+      pages: [],
+    } as unknown as SiteConfig;
+  }
+  return null;
+}
 
 // ── デモサムネイル（実際のHTMLをiframeで表示）────────────────
 function DemoThumb({ t, W = 260, H = 155 }: { t: DemoTemplate; W?: number; H?: number }) {
@@ -257,28 +358,14 @@ export default function SetupClient() {
     }
   }, [businessName, serviceDesc, target, strengths]);
 
-  // ─── デモテンプレートをそのままロード（AI不使用・コンテンツ変更なし）──
-  const generateFromDemo = useCallback(async () => {
+  // ─── デモをキャンバスブロックとしてロード（AI不使用）──
+  const generateFromDemo = useCallback(() => {
     if (!selectedDemo) return;
-    setPhase("generating");
-    setGenPct(20);
-    setGenText("デモサイトを読み込み中...");
-    try {
-      const res = await fetch(`/demos/${selectedDemo.id}.html`);
-      if (!res.ok) throw new Error("デモファイルの取得に失敗しました");
-      const html = await res.text();
-      setGenPct(100);
-      setTimeout(() => {
-        sessionStorage.setItem("site-html", html);
-        sessionStorage.setItem("site-mode", "html");
-        router.push("/admin");
-      }, 400);
-    } catch (e) {
-      setDemoError(e instanceof Error ? e.message : "読み込みに失敗しました");
-      setPhase("form");
-      setMainTab("demo");
-    }
-  }, [selectedDemo, router]);
+    const config = buildDemoConfig(selectedDemo.id);
+    if (!config) { setDemoError("このデモは対応していません"); return; }
+    setGeneratedConfig(config);
+    setPhase("preview");
+  }, [selectedDemo]);
 
   // ─── チャット: メッセージ送信 ────────────────────────────────
   const runChatGenerate = useCallback(async (msgs: ChatMessage[]) => {
