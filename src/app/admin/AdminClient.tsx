@@ -1344,15 +1344,24 @@ export default function AdminClient() {
                 {/* ── ブロックパネル ── */}
                 {sidePanel === "blocks" && (
                   <div>
-                    {/* HTMLモード時の案内 */}
-                    {htmlMode && (
-                      <div style={{ marginBottom: 14, padding: "10px 12px", background: "#EEF2FF", borderRadius: 8, border: "1px solid #C7D2FE" }}>
-                        <p style={{ fontSize: 11, fontWeight: 700, color: "#4F46E5", margin: "0 0 4px" }}>✏️ テキストをクリックして編集</p>
-                        <p style={{ fontSize: 10, color: "#6366F1", margin: 0, lineHeight: 1.6 }}>右のプレビュー上でテキストを直接クリックすると編集できます。Enterまたはクリック外で確定。</p>
+                    {/* HTMLモード時の案内（ホームのみ） */}
+                    {htmlMode && activePageId === "home" && (
+                      <div style={{ marginBottom: 14, padding: "12px", background: "#EEF2FF", borderRadius: 8, border: "1px solid #C7D2FE" }}>
+                        <p style={{ fontSize: 11, fontWeight: 700, color: "#4F46E5", margin: "0 0 6px" }}>🖊 HTMLモードで表示中</p>
+                        <p style={{ fontSize: 10, color: "#6366F1", margin: "0 0 10px", lineHeight: 1.6 }}>プレビュー上でテキストを直接クリックして編集できます。</p>
+                        <button
+                          onClick={() => {
+                            setHtmlMode(false);
+                            setHtmlBlobUrl("");
+                            try { sessionStorage.removeItem("site-mode"); } catch {}
+                          }}
+                          style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 5, width: "100%", padding: "7px 0", borderRadius: 6, border: "1px solid #818CF8", background: "white", cursor: "pointer", color: "#4F46E5", fontWeight: 700, fontSize: 11 }}>
+                          ⬡ キャンバスブロックで編集
+                        </button>
                       </div>
                     )}
-                    {/* 配置済みブロック一覧 */}
-                    {activeSections.length > 0 && (
+                    {/* 配置済みブロック一覧（HTMLモードのホームでは非表示） */}
+                    {!(htmlMode && activePageId === "home") && activeSections.length > 0 && (
                       <div style={{ marginBottom: 16 }}>
                         <p style={{ fontSize: 10, fontWeight: 700, color: "#64748B", marginBottom: 8, letterSpacing: "0.05em" }}>配置済みブロック（ドラッグで並び替え）</p>
                         <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
@@ -1416,7 +1425,8 @@ export default function AdminClient() {
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#CBD5E1" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
                       </div>
                     )}
-                    {/* ブロックを追加 */}
+                    {/* ブロックを追加（HTMLモードのホームでは非表示） */}
+                    {!(htmlMode && activePageId === "home") && (
                     <button
                       onClick={() => { setInsertPosition(null); setShowBlockModal(true); }}
                       style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, width: "100%", padding: "10px 0", borderRadius: 8, border: "1.5px dashed #C7D2FE", background: "#EEF2FF", cursor: "pointer", color: "#4F46E5", fontWeight: 700, fontSize: 12, marginBottom: 12, transition: "background 0.12s" }}
@@ -1424,6 +1434,7 @@ export default function AdminClient() {
                       onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "#EEF2FF"; }}>
                       <span style={{ fontSize: 15 }}>+</span> ブロックを追加
                     </button>
+                    )}
                   </div>
                 )}
 
