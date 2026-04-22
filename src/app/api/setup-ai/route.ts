@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GlobalStyle, CanvasElement, SectionBlock, FeatureItem, IconValue, uid } from "@/types/site";
 
-export const runtime = "edge";
-export const maxDuration = 30;
+export const maxDuration = 60;
 
 const API_KEY         = process.env.GEMINI_API_KEY ?? "";
 const GEMINI_BASE     = "https://generativelanguage.googleapis.com/v1beta/models";
-const GEMINI_MODELS   = ["gemini-2.5-flash", "gemini-2.5-pro"];
+const GEMINI_MODELS   = ["gemini-2.0-flash", "gemini-2.5-flash", "gemini-1.5-flash", "gemini-2.5-pro"];
 
 // ── Chat system prompt ───────────────────────────────────────
 const CHAT_SYSTEM = `あなたは日本市場向けウェブサイト制作の専門コンサルタントです。
@@ -932,7 +931,7 @@ function buildCanvasFromSections(data: SectionData, dna?: GlobalStyle): CanvasEl
 
 // ── Gemini fetch with retry + model fallback ─────────────────
 // タイムアウト設定: 1モデル12秒 × 最大2モデル = 24秒 → 30秒以内に収める
-const MODEL_TIMEOUT_MS = 12000;
+const MODEL_TIMEOUT_MS = 25000;
 
 async function geminiFetch(
   systemPrompt: string,
