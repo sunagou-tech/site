@@ -54,7 +54,6 @@ const DEMO_TEMPLATES: DemoTemplate[] = [
     name: "CREAVO（デザイン会社）",
     label: "カラフル × ポップ × 丸み",
     desc: "ピンク×イエロー×ティールの遊び心あるデザイン。クリエイティブ・スタートアップ向けのポップなスタイル。",
-    mode: "blocks",
     thumb: { bg: "#FFF2F6", accent: "#ED3A8C", textColor: "#2A2A33", subColor: "#7A7A86", gradient: "linear-gradient(160deg,#FFF2F6 0%,#F4F0FF 60%,#F0FAF8 100%)" },
     style: {
       primaryColor: "#2A2A33", accentColor: "#ED3A8C",
@@ -984,10 +983,10 @@ export default function SetupClient() {
             <div className="max-w-4xl mx-auto">
               <div className="mb-6">
                 <h2 className="font-bold mb-1" style={{ fontSize: 20, color: "#111827", letterSpacing: "-0.02em" }}>
-                  学習塾のデモサイトから作成
+                  デモサイトから作成
                 </h2>
                 <p className="text-sm" style={{ color: "#6B7280" }}>
-                  お好みのデザインを選んで、事業情報を入れるだけで完成します。
+                  お好みのデザインを選ぶと、そのまま編集できる状態で開きます。
                 </p>
               </div>
 
@@ -1034,7 +1033,7 @@ export default function SetupClient() {
                       style={{ background: "#EFF6FF", color: NAVY }}>{selectedDemo.label}</span>
                   </div>
                   <p className="text-xs mb-4" style={{ color: "#6B7280" }}>
-                    サムネイルと同じデザインがそのまま開きます。テキストは管理画面で直接クリックして編集できます。
+                    サムネイルと同じデザインがそのまま開きます。テキストをクリックして直接編集、セクションはドラッグで並び替えできます。
                   </p>
                   {demoError && (
                     <div className="flex items-start gap-2 p-3 rounded-xl mb-4"
