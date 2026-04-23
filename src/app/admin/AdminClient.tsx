@@ -1409,75 +1409,31 @@ export default function AdminClient() {
                 {/* ── ブロックパネル ── */}
                 {sidePanel === "blocks" && (
                   <div>
-                    {/* HTMLセクションブロック一覧（HTMLモード・ホームのみ） */}
+                    {/* HTMLモード：シンプルな編集案内 */}
                     {htmlMode && activePageId === "home" && (
                       <div style={{ marginBottom: 14 }}>
-                        <p style={{ fontSize: 10, fontWeight: 700, color: "#64748B", marginBottom: 8, letterSpacing: "0.05em" }}>セクション（ドラッグで並び替え）</p>
-                        {htmlSections.length > 0 ? (
-                          <div style={{ display: "flex", flexDirection: "column", gap: 0, marginBottom: 10 }}>
-                            {htmlSections.map((sec, idx) => (
-                              <div key={sec.id}>
-                                <div
-                                  draggable
-                                  onDragStart={() => setHtmlSecDragIdx(idx)}
-                                  onDragEnd={() => { setHtmlSecDragIdx(null); setHtmlSecDragOver(null); }}
-                                  onDragOver={e => { e.preventDefault(); setHtmlSecDragOver(idx); }}
-                                  onDragLeave={() => setHtmlSecDragOver(null)}
-                                  onDrop={e => {
-                                    e.preventDefault();
-                                    if (htmlSecDragIdx !== null && htmlSecDragIdx !== idx) {
-                                      const next = [...htmlSections];
-                                      const [moved] = next.splice(htmlSecDragIdx, 1);
-                                      next.splice(idx, 0, moved);
-                                      setHtmlSections(next);
-                                      const newHtml = rebuildHtmlFromSections(next);
-                                      setSiteHtml(newHtml);
-                                      latestHtmlRef.current = newHtml;
-                                      try { sessionStorage.setItem("site-html", newHtml); } catch {}
-                                    }
-                                    setHtmlSecDragIdx(null);
-                                    setHtmlSecDragOver(null);
-                                  }}
-                                  style={{
-                                    display: "flex", alignItems: "center", gap: 8,
-                                    padding: "7px 10px", borderRadius: 8,
-                                    border: htmlSecDragOver === idx && htmlSecDragIdx !== idx ? "1.5px solid #4F46E5" : "1px solid #E2E8F0",
-                                    background: htmlSecDragIdx === idx ? "#EEF2FF" : "#FAFAFA",
-                                    opacity: htmlSecDragIdx === idx ? 0.5 : 1,
-                                    cursor: "grab", marginBottom: 2, transition: "all 0.1s",
-                                  }}>
-                                  <svg width="10" height="14" viewBox="0 0 10 14" fill="#CBD5E1" style={{ flexShrink: 0 }}>
-                                    <circle cx="3" cy="2.5" r="1.3"/><circle cx="7" cy="2.5" r="1.3"/>
-                                    <circle cx="3" cy="7" r="1.3"/><circle cx="7" cy="7" r="1.3"/>
-                                    <circle cx="3" cy="11.5" r="1.3"/><circle cx="7" cy="11.5" r="1.3"/>
-                                  </svg>
-                                  <span style={{ fontSize: 11, fontWeight: 600, color: "#374151", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                                    {sec.label}
-                                  </span>
-                                  <button
-                                    onClick={() => {
-                                      const next = htmlSections.filter((_, i) => i !== idx);
-                                      setHtmlSections(next);
-                                      const newHtml = rebuildHtmlFromSections(next);
-                                      setSiteHtml(newHtml);
-                                      latestHtmlRef.current = newHtml;
-                                      try { sessionStorage.setItem("site-html", newHtml); } catch {}
-                                    }}
-                                    style={{ width: 22, height: 22, border: "1px solid #FEE2E2", borderRadius: 5, background: "#FFF5F5", color: "#EF4444", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, flexShrink: 0 }}
-                                    title="セクションを削除">×</button>
-                                </div>
-                              </div>
-                            ))}
+                        <div style={{ padding: "14px", background: "#EEF2FF", borderRadius: 10, border: "1px solid #C7D2FE", marginBottom: 12 }}>
+                          <p style={{ fontSize: 12, fontWeight: 800, color: "#4F46E5", margin: "0 0 10px", display: "flex", alignItems: "center", gap: 5 }}>
+                            <span>✏️</span> テキストをクリックして編集
+                          </p>
+                          <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+                            <div style={{ display: "flex", alignItems: "flex-start", gap: 7 }}>
+                              <span style={{ fontSize: 14, flexShrink: 0, marginTop: 1 }}>①</span>
+                              <p style={{ fontSize: 11, color: "#4338CA", margin: 0, lineHeight: 1.6 }}>右のプレビュー上で編集したいテキストをクリック</p>
+                            </div>
+                            <div style={{ display: "flex", alignItems: "flex-start", gap: 7 }}>
+                              <span style={{ fontSize: 14, flexShrink: 0, marginTop: 1 }}>②</span>
+                              <p style={{ fontSize: 11, color: "#4338CA", margin: 0, lineHeight: 1.6 }}>文字を書き換えて「✓ 確定」を押す</p>
+                            </div>
+                            <div style={{ display: "flex", alignItems: "flex-start", gap: 7 }}>
+                              <span style={{ fontSize: 14, flexShrink: 0, marginTop: 1 }}>③</span>
+                              <p style={{ fontSize: 11, color: "#4338CA", margin: 0, lineHeight: 1.6 }}>右上の「保存して公開」で完成！</p>
+                            </div>
                           </div>
-                        ) : (
-                          <div style={{ padding: "10px 12px", background: "#F8FAFC", borderRadius: 8, border: "1px solid #E2E8F0", marginBottom: 10 }}>
-                            <p style={{ fontSize: 10, color: "#94A3B8", margin: 0 }}>セクションを読み込み中...</p>
-                          </div>
-                        )}
-                        <div style={{ height: 1, background: "#F1F5F9", margin: "10px 0" }} />
+                        </div>
                         <a
                           href="/admin/setup"
-                          style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 5, width: "100%", padding: "8px 0", borderRadius: 6, border: "1.5px solid #C7D2FE", background: "white", cursor: "pointer", color: "#6366F1", fontWeight: 600, fontSize: 10, textDecoration: "none" }}>
+                          style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 5, width: "100%", padding: "9px 0", borderRadius: 7, border: "1.5px solid #C7D2FE", background: "white", cursor: "pointer", color: "#6366F1", fontWeight: 700, fontSize: 11, textDecoration: "none" }}>
                           → 別のデモに変更する
                         </a>
                       </div>
