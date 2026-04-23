@@ -51,10 +51,10 @@ const DEMO_TEMPLATES: DemoTemplate[] = [
   },
   {
     id: "juku-takeda",
-    name: "進学塾ルートアップ",
-    label: "受験専門 × 逆転合格",
-    desc: "クリーム×赤×イエローの武田塾系デザイン。自学自習メソッドで逆転合格を狙う受験専門塾に最適。",
-    thumb: { bg: "#fcfbf6", accent: "#df2525", textColor: "#1a1a1a", subColor: "#777777", gradient: "linear-gradient(160deg,#fcfbf6 0%,#feefef 100%)" },
+    name: "逆転塾ルートアップ",
+    label: "武田塾系 × 逆転合格",
+    desc: "白×赤×イエローの武田塾系LP。授業をしない自学自習メソッドで難関大逆転合格を狙う受験専門塾に最適。",
+    thumb: { bg: "#ffffff", accent: "#e50012", textColor: "#111111", subColor: "#666666", gradient: "linear-gradient(160deg,#ffffff 0%,#fff0f0 100%)" },
     style: {
       primaryColor: "#df2525", accentColor: "#fff972",
       heroBgColor: "#fcfbf6", bgColor: "#fcfbf6",
