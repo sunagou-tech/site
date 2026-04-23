@@ -49,6 +49,20 @@ const DEMO_TEMPLATES: DemoTemplate[] = [
       designNotes: "学習塾、個別指導、白背景、赤アクセント、青サブカラー、Noto Sans JP、清潔感、信頼感、保護者向け、フラットデザイン",
     },
   },
+  {
+    id: "juku-takeda",
+    name: "進学塾ルートアップ",
+    label: "受験専門 × 逆転合格",
+    desc: "クリーム×赤×イエローの武田塾系デザイン。自学自習メソッドで逆転合格を狙う受験専門塾に最適。",
+    thumb: { bg: "#fcfbf6", accent: "#df2525", textColor: "#1a1a1a", subColor: "#777777", gradient: "linear-gradient(160deg,#fcfbf6 0%,#feefef 100%)" },
+    style: {
+      primaryColor: "#df2525", accentColor: "#fff972",
+      heroBgColor: "#fcfbf6", bgColor: "#fcfbf6",
+      cardBgColor: "#ffffff", buttonBgColor: "#df2525",
+      designStyle: "exam-prep-bold",
+      designNotes: "受験専門塾、自学自習、逆転合格、クリーム背景、赤アクセント、イエローハイライト、Noto Sans JP、武田塾系、大学受験",
+    },
+  },
 ];
 
 // ── デモ用キャンバスブロック設定（静的・AI不使用）────────────

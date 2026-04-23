@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>進学塾ルートアップ | 授業に頼らない自学自習で逆転合格</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --red:#df2525;
+  --red-light:#feefef;
+  --red-dark:#b81e1e;
+  --cream:#fcfbf6;
+  --cream2:#f7f5ee;
+  --yellow:#fff972;
+  --yellow2:#fff61a;
+  --dark:#1a1a1a;
+  --mid:#444444;
+  --sub:#777777;
+  --border:#eedede;
+  --white:#ffffff;
+}
+body{background:var(--cream);color:var(--dark);font-family:'Noto Sans JP',sans-serif;overflow-x:hidden;font-size:15px;line-height:1.8;letter-spacing:0.04em}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 48px;height:68px;background:var(--white);border-bottom:2px solid var(--red);box-shadow:0 2px 8px rgba(223,37,37,.08)}
+.logo{font-weight:900;font-size:19px;color:var(--dark);letter-spacing:.04em;display:flex;align-items:center;gap:8px}
+.logo-mark{background:var(--red);color:#fff;font-size:11px;font-weight:900;padding:2px 8px;border-radius:4px;letter-spacing:.1em}
+.logo span{color:var(--red)}
+nav ul{display:flex;list-style:none;gap:24px;align-items:center}
+nav a{color:var(--mid);text-decoration:none;font-size:13px;font-weight:500;transition:.2s}
+nav a:hover{color:var(--red)}
+.nav-cta{background:var(--red)!important;color:#fff!important;padding:10px 22px;border-radius:6px;font-weight:700!important;font-size:13px!important;transition:.2s!important}
+.nav-cta:hover{background:var(--red-dark)!important}
+
+/* HERO */
+.hero{padding-top:68px;background:var(--cream);overflow:hidden;position:relative}
+.hero::before{content:'';position:absolute;top:0;right:0;width:45%;height:100%;background:var(--red-light);clip-path:polygon(8% 0,100% 0,100% 100%,0 100%)}
+.hero-inner{display:grid;grid-template-columns:1fr 420px;gap:60px;min-height:580px;max-width:1200px;margin:0 auto;padding:0 48px;align-items:center;position:relative;z-index:1}
+.hero-text{padding:80px 0}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;background:var(--yellow);color:var(--dark);font-size:11px;font-weight:900;letter-spacing:.15em;padding:5px 14px;border-radius:4px;margin-bottom:20px}
+.hero h1{font-size:clamp(1.9rem,3.2vw,2.8rem);font-weight:900;line-height:1.3;color:var(--dark);margin-bottom:16px;letter-spacing:.02em}
+.hero h1 em{color:var(--red);font-style:normal;border-bottom:3px solid var(--yellow2)}
+.hero-catch{font-size:18px;font-weight:700;color:var(--red);margin-bottom:20px;letter-spacing:.05em}
+.hero-sub{font-size:14px;line-height:2;color:var(--mid);margin-bottom:36px;max-width:460px}
+.hero-btns{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.btn-primary{display:inline-flex;align-items:center;gap:8px;background:var(--red);color:#fff;font-weight:700;font-size:15px;padding:16px 36px;border-radius:6px;border:none;cursor:pointer;transition:.2s;text-decoration:none;box-shadow:0 4px 16px rgba(223,37,37,.3)}
+.btn-primary:hover{background:var(--red-dark);transform:translateY(-2px);box-shadow:0 6px 20px rgba(223,37,37,.4)}
+.btn-secondary{display:inline-flex;align-items:center;gap:8px;background:var(--white);color:var(--dark);font-weight:700;font-size:15px;padding:15px 28px;border-radius:6px;border:1.5px solid var(--border);cursor:pointer;transition:.2s;text-decoration:none}
+.btn-secondary:hover{border-color:var(--red);color:var(--red)}
+.hero-img-wrap{position:relative;display:flex;align-items:center;justify-content:center;padding:60px 0}
+.hero-img-box{width:380px;height:380px;border-radius:16px;overflow:hidden;position:relative;background:#f0e8e8;box-shadow:0 12px 40px rgba(223,37,37,.15)}
+.hero-img-box img{width:100%;height:100%;object-fit:cover}
+.hero-tag{position:absolute;bottom:-16px;left:50%;transform:translateX(-50%);white-space:nowrap;background:var(--yellow);color:var(--dark);font-size:12px;font-weight:900;padding:7px 20px;border-radius:20px;box-shadow:0 4px 12px rgba(0,0,0,.12)}
+.hero-stats{display:flex;gap:12px;margin-top:36px;flex-wrap:wrap}
+.h-stat{text-align:center;padding:12px 18px;border-radius:8px;background:var(--white);border:1px solid var(--border);min-width:90px}
+.h-stat-num{font-size:24px;font-weight:900;color:var(--red);line-height:1}
+.h-stat-unit{font-size:12px;font-weight:700;color:var(--red)}
+.h-stat-label{font-size:10px;color:var(--sub);margin-top:3px;letter-spacing:.05em}
+
+/* STRIP (キャッチ帯) */
+.strip{background:var(--dark);padding:16px 48px;display:flex;align-items:center;justify-content:center;gap:60px}
+.strip-item{display:flex;align-items:center;gap:10px;color:#fff;font-size:13px;font-weight:700}
+.strip-dot{width:8px;height:8px;background:var(--yellow);border-radius:50%;flex-shrink:0}
+
+/* セクション共通 */
+section{padding:88px 48px}
+.sec-inner{max-width:1100px;margin:0 auto}
+.sec-label{display:inline-flex;align-items:center;gap:8px;font-size:11px;font-weight:900;letter-spacing:.25em;color:var(--red);margin-bottom:10px;text-transform:uppercase}
+.sec-label::before{content:'';width:4px;height:16px;background:var(--red);border-radius:2px}
+.sec-heading{font-size:clamp(1.5rem,3vw,2.2rem);font-weight:900;color:var(--dark);line-height:1.35;margin-bottom:10px}
+.sec-heading em{color:var(--red);font-style:normal}
+.sec-heading mark{background:var(--yellow);padding:0 4px;font-style:normal;color:var(--dark)}
+.sec-sub{font-size:14px;color:var(--sub);margin-top:8px;margin-bottom:48px;line-height:2}
+
+/* 悩みセクション */
+.problem-section{background:var(--cream2)}
+.prob-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:40px}
+.prob-card{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:28px 24px;position:relative;overflow:hidden}
+.prob-card::before{content:'';position:absolute;top:0;left:0;width:4px;height:100%;background:var(--red)}
+.prob-icon{font-size:28px;margin-bottom:14px}
+.prob-title{font-size:15px;font-weight:700;color:var(--dark);margin-bottom:8px}
+.prob-desc{font-size:13px;color:var(--sub);line-height:1.9}
+.prob-arrow{text-align:center;margin-top:48px;font-size:14px;font-weight:700;color:var(--red)}
+.prob-arrow-icon{font-size:36px;display:block;margin-bottom:6px}
+
+/* 解決策セクション */
+.sol-section{background:var(--white)}
+.sol-tagline{font-size:clamp(1.3rem,2.5vw,1.9rem);font-weight:900;color:var(--dark);text-align:center;margin-bottom:48px;line-height:1.5}
+.sol-tagline em{color:var(--red);font-style:normal}
+.sol-tagline mark{background:var(--yellow);padding:0 6px}
+.sol-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.sol-card{background:var(--cream);border-radius:12px;padding:32px 24px;text-align:center;border:1px solid var(--border)}
+.sol-num{font-size:48px;font-weight:900;color:var(--red);opacity:.15;line-height:1;margin-bottom:8px}
+.sol-icon{font-size:32px;margin-bottom:14px}
+.sol-title{font-size:16px;font-weight:700;color:var(--dark);margin-bottom:10px}
+.sol-desc{font-size:13px;color:var(--mid);line-height:1.9}
+
+/* コース */
+.course-section{background:var(--cream2)}
+.course-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:40px}
+.course-card{background:var(--white);border-radius:12px;overflow:hidden;border:1px solid var(--border);transition:.2s}
+.course-card:hover{box-shadow:0 8px 24px rgba(223,37,37,.12);transform:translateY(-3px)}
+.course-head{background:var(--red);padding:20px 24px;position:relative;overflow:hidden}
+.course-head::after{content:'';position:absolute;right:-20px;bottom:-20px;width:80px;height:80px;background:rgba(255,255,255,.1);border-radius:50%}
+.course-grade{font-size:11px;font-weight:700;color:rgba(255,255,255,.8);letter-spacing:.15em;margin-bottom:6px}
+.course-name{font-size:17px;font-weight:900;color:#fff}
+.course-body{padding:24px}
+.course-tag{display:inline-block;background:var(--red-light);color:var(--red);font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px;margin-bottom:14px;letter-spacing:.08em}
+.course-list{list-style:none}
+.course-list li{font-size:13px;color:var(--mid);padding:6px 0;border-bottom:1px dashed var(--border);display:flex;align-items:center;gap:8px}
+.course-list li::before{content:'✓';color:var(--red);font-weight:700;flex-shrink:0}
+.course-cta{margin-top:18px;display:block;text-align:center;background:var(--red);color:#fff;font-weight:700;font-size:13px;padding:11px 20px;border-radius:6px;text-decoration:none;transition:.2s}
+.course-cta:hover{background:var(--red-dark)}
+
+/* 流れ */
+.flow-section{background:var(--white)}
+.flow-steps{display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin-top:48px;position:relative}
+.flow-steps::before{content:'';position:absolute;top:36px;left:12.5%;right:12.5%;height:2px;background:linear-gradient(90deg,var(--red) 0%,var(--border) 100%);z-index:0}
+.flow-step{text-align:center;position:relative;z-index:1;padding:0 12px}
+.step-circle{width:72px;height:72px;border-radius:50%;background:var(--red);color:#fff;font-size:20px;font-weight:900;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;box-shadow:0 4px 16px rgba(223,37,37,.3)}
+.step-num{font-size:10px;font-weight:700;letter-spacing:.1em;display:block;margin-bottom:2px;opacity:.8}
+.step-title{font-size:15px;font-weight:700;color:var(--dark);margin-bottom:8px}
+.step-desc{font-size:12px;color:var(--sub);line-height:1.8}
+.step-badge{display:inline-block;background:var(--yellow);color:var(--dark);font-size:10px;font-weight:700;padding:2px 8px;border-radius:3px;margin-bottom:6px}
+
+/* 実績 */
+.result-section{background:var(--red);padding:72px 48px}
+.result-inner{max-width:1100px;margin:0 auto;text-align:center}
+.result-heading{font-size:clamp(1.5rem,3vw,2rem);font-weight:900;color:#fff;margin-bottom:12px}
+.result-sub{font-size:13px;color:rgba(255,255,255,.75);margin-bottom:48px}
+.result-grid{display:grid;grid-template-columns:repeat(4,1fr);background:rgba(255,255,255,.1);border-radius:12px;overflow:hidden}
+.result-item{padding:32px 20px;border-right:1px solid rgba(255,255,255,.15);text-align:center}
+.result-item:last-child{border-right:none}
+.result-num{font-size:42px;font-weight:900;color:#fff;line-height:1}
+.result-unit{font-size:16px;font-weight:700;color:var(--yellow)}
+.result-label{font-size:12px;color:rgba(255,255,255,.75);margin-top:8px;letter-spacing:.05em}
+
+/* お客様の声 */
+.voice-section{background:var(--cream2)}
+.voice-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:40px}
+.voice-card{background:var(--white);border-radius:12px;padding:28px 24px;border:1px solid var(--border);position:relative}
+.voice-stars{color:var(--yellow2);font-size:16px;margin-bottom:12px;letter-spacing:2px}
+.voice-quote{font-size:14px;color:var(--mid);line-height:1.9;margin-bottom:16px;font-style:normal}
+.voice-quote::before{content:'"';font-size:48px;color:var(--red);opacity:.15;line-height:0;position:absolute;top:36px;left:24px;font-family:serif}
+.voice-meta{display:flex;align-items:center;gap:12px;margin-top:auto;padding-top:16px;border-top:1px solid var(--border)}
+.voice-avatar{width:40px;height:40px;border-radius:50%;background:var(--red-light);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.voice-name{font-size:13px;font-weight:700;color:var(--dark)}
+.voice-role{font-size:11px;color:var(--sub)}
+.voice-result{display:inline-block;background:var(--yellow);color:var(--dark);font-size:10px;font-weight:900;padding:2px 10px;border-radius:3px;margin-bottom:10px;letter-spacing:.05em}
+
+/* FAQ */
+.faq-section{background:var(--white)}
+.faq-list{margin-top:40px;max-width:800px;margin-left:auto;margin-right:auto}
+.faq-item{border:1px solid var(--border);border-radius:10px;margin-bottom:12px;overflow:hidden}
+.faq-q{padding:20px 24px;display:flex;align-items:flex-start;gap:14px;cursor:pointer;background:var(--white);font-weight:700;font-size:14px;color:var(--dark)}
+.faq-q-mark{width:28px;height:28px;background:var(--red);color:#fff;border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px;flex-shrink:0;margin-top:1px}
+.faq-a{padding:0 24px 20px 66px;font-size:13px;color:var(--mid);line-height:1.9}
+.faq-a-mark{color:var(--red);font-weight:700;margin-right:4px}
+
+/* CTA */
+.cta-section{background:var(--cream);padding:88px 48px;text-align:center;position:relative;overflow:hidden}
+.cta-section::before{content:'';position:absolute;top:-60px;right:-60px;width:300px;height:300px;background:var(--red-light);border-radius:50%;z-index:0}
+.cta-section::after{content:'';position:absolute;bottom:-80px;left:-80px;width:360px;height:360px;background:var(--red-light);border-radius:50%;z-index:0}
+.cta-inner{position:relative;z-index:1;max-width:760px;margin:0 auto}
+.cta-badge{display:inline-block;background:var(--yellow);color:var(--dark);font-size:12px;font-weight:900;padding:6px 20px;border-radius:4px;margin-bottom:24px;letter-spacing:.1em}
+.cta-title{font-size:clamp(1.6rem,3.5vw,2.4rem);font-weight:900;color:var(--dark);line-height:1.4;margin-bottom:16px}
+.cta-title em{color:var(--red);font-style:normal}
+.cta-desc{font-size:14px;color:var(--mid);line-height:2;margin-bottom:36px}
+.cta-btns{display:flex;justify-content:center;gap:16px;flex-wrap:wrap}
+.btn-cta{display:inline-flex;align-items:center;gap:10px;background:var(--red);color:#fff;font-weight:700;font-size:16px;padding:18px 40px;border-radius:8px;border:none;cursor:pointer;transition:.2s;text-decoration:none;box-shadow:0 6px 20px rgba(223,37,37,.35)}
+.btn-cta:hover{background:var(--red-dark);transform:translateY(-2px);box-shadow:0 8px 28px rgba(223,37,37,.45)}
+.btn-cta-line{display:inline-flex;align-items:center;gap:10px;background:#06C755;color:#fff;font-weight:700;font-size:16px;padding:18px 36px;border-radius:8px;border:none;cursor:pointer;transition:.2s;text-decoration:none}
+.btn-cta-line:hover{opacity:.88;transform:translateY(-2px)}
+.cta-note{font-size:12px;color:var(--sub);margin-top:20px}
+
+/* FOOTER */
+footer{background:var(--dark);padding:48px 48px 28px;color:rgba(255,255,255,.75)}
+.footer-inner{max-width:1100px;margin:0 auto}
+.footer-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:36px}
+.footer-logo{font-size:18px;font-weight:900;color:#fff;margin-bottom:8px}
+.footer-logo span{color:var(--yellow)}
+.footer-desc{font-size:12px;color:rgba(255,255,255,.5);line-height:1.8}
+.footer-links{display:flex;gap:48px}
+.footer-col h4{font-size:11px;font-weight:700;letter-spacing:.15em;color:rgba(255,255,255,.4);margin-bottom:14px;text-transform:uppercase}
+.footer-col ul{list-style:none}
+.footer-col li{margin-bottom:8px}
+.footer-col a{color:rgba(255,255,255,.6);text-decoration:none;font-size:12px;transition:.2s}
+.footer-col a:hover{color:#fff}
+.footer-bottom{border-top:1px solid rgba(255,255,255,.1);padding-top:20px;display:flex;justify-content:space-between;align-items:center;font-size:11px;color:rgba(255,255,255,.35)}
+
+/* RESPONSIVE */
+@media(max-width:768px){
+  nav{padding:0 20px;height:60px}
+  nav ul{display:none}
+  .hero{padding-top:60px}
+  .hero-inner{grid-template-columns:1fr;padding:0 20px;min-height:auto;gap:0}
+  .hero-text{padding:40px 0 0}
+  .hero-img-wrap{display:none}
+  .hero-stats{gap:8px}
+  .h-stat{padding:10px 12px;min-width:80px}
+  .h-stat-num{font-size:20px}
+  .strip{padding:14px 20px;gap:16px;flex-wrap:wrap}
+  section{padding:56px 20px}
+  .result-section{padding:56px 20px}
+  .prob-grid,.sol-grid,.course-grid,.voice-grid{grid-template-columns:1fr;gap:12px}
+  .flow-steps{grid-template-columns:repeat(2,1fr);gap:28px 16px}
+  .flow-steps::before{display:none}
+  .result-grid{grid-template-columns:repeat(2,1fr)}
+  .faq-list{padding:0}
+  .cta-section{padding:64px 20px}
+  .cta-btns{flex-direction:column;align-items:center}
+  .btn-cta,.btn-cta-line{width:100%;max-width:360px;justify-content:center}
+  footer{padding:40px 20px 24px}
+  .footer-top{flex-direction:column;gap:32px}
+  .footer-links{flex-direction:column;gap:24px}
+  .footer-bottom{flex-direction:column;gap:8px;text-align:center}
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="logo">
+    <span class="logo-mark">塾</span>
+    <span class="ce">進学塾<span>ルートアップ</span></span>
+  </div>
+  <ul>
+    <li><a href="#method">学習メソッド</a></li>
+    <li><a href="#courses">コース</a></li>
+    <li><a href="#results">合格実績</a></li>
+    <li><a href="#faq">よくある質問</a></li>
+    <li><a href="/contact" class="nav-cta ce">無料相談を申し込む</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<div class="hero ce-bg" data-section="hero">
+  <div class="hero-inner">
+    <div class="hero-text">
+      <div class="hero-badge ce">2026年度 生徒募集中</div>
+      <p class="hero-catch ce">「授業」は、もうやめた。</p>
+      <h1 class="ce">塾に通っても<br>成績が伸びないなら、<br><em>やり方を変えよう</em>。</h1>
+      <p class="hero-sub ce">参考書×自学自習の徹底管理で、<br>偏差値40台からの逆転合格を実現する受験専門塾。</p>
+      <div class="hero-btns">
+        <a href="/contact" class="btn-primary ce">無料体験・相談を申し込む →</a>
+        <a href="#method" class="btn-secondary ce">学習メソッドを見る</a>
+      </div>
+      <div class="hero-stats">
+        <div class="h-stat">
+          <div class="h-stat-num ce">97<span class="h-stat-unit">%</span></div>
+          <div class="h-stat-label ce">成績向上率</div>
+        </div>
+        <div class="h-stat">
+          <div class="h-stat-num ce">12<span class="h-stat-unit">年</span></div>
+          <div class="h-stat-label ce">指導実績</div>
+        </div>
+        <div class="h-stat">
+          <div class="h-stat-num ce">850<span class="h-stat-unit">名+</span></div>
+          <div class="h-stat-label ce">累計卒業生</div>
+        </div>
+        <div class="h-stat">
+          <div class="h-stat-num ce">91<span class="h-stat-unit">%</span></div>
+          <div class="h-stat-label ce">志望校合格率</div>
+        </div>
+      </div>
+    </div>
+    <div class="hero-img-wrap">
+      <div class="hero-img-box">
+        <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=760&q=80" alt="勉強する学生" class="ce-img">
+        <div class="hero-tag ce">参考書ルートで最短合格</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- STRIP -->
+<div class="strip ce-bg" data-section="strip">
+  <div class="strip-item"><span class="strip-dot"></span><span class="ce">授業なし・自学自習メソッド</span></div>
+  <div class="strip-item"><span class="strip-dot"></span><span class="ce">週1回の進捗確認面談</span></div>
+  <div class="strip-item"><span class="strip-dot"></span><span class="ce">参考書ルートを完全個別管理</span></div>
+  <div class="strip-item"><span class="strip-dot"></span><span class="ce">自習室を毎日利用可能</span></div>
+</div>
+
+<!-- 悩みセクション -->
+<section class="problem-section ce-bg" data-section="problem" id="method">
+  <div class="sec-inner">
+    <span class="sec-label">PROBLEM</span>
+    <h2 class="sec-heading ce">こんなお悩み、<em>ありませんか？</em></h2>
+    <p class="sec-sub ce">多くの生徒が「普通の塾」に通い続けて成績が伸びない、という経験をしています。</p>
+    <div class="prob-grid">
+      <div class="prob-card">
+        <div class="prob-icon">😓</div>
+        <div class="prob-title ce">塾に通っているのに成績が上がらない</div>
+        <div class="prob-desc ce">授業を聞いているだけで「わかった気」になるが、テストになると解けない。受け身の学習では定着しません。</div>
+      </div>
+      <div class="prob-card">
+        <div class="prob-icon">📚</div>
+        <div class="prob-title ce">何をどの順番でやればいいかわからない</div>
+        <div class="prob-desc ce">参考書が多すぎて選べない。闇雲に勉強しても効率が悪く、時間だけが過ぎてしまう。</div>
+      </div>
+      <div class="prob-card">
+        <div class="prob-icon">😰</div>
+        <div class="prob-title ce">本番に向けて追い込み方がわからない</div>
+        <div class="prob-desc ce">受験まであと何ヶ月。焦るけど何から手をつければいいかわからず、不安だけが積み重なる。</div>
+      </div>
+    </div>
+    <div class="prob-arrow">
+      <span class="prob-arrow-icon">↓</span>
+      <span class="ce">その悩み、ルートアップが解決します</span>
+    </div>
+  </div>
+</section>
+
+<!-- 解決策セクション -->
+<section class="sol-section ce-bg" data-section="solution">
+  <div class="sec-inner">
+    <span class="sec-label">OUR METHOD</span>
+    <h2 class="sec-heading" style="text-align:center;margin-bottom:20px">
+      <span class="ce">「授業をしない」が、<mark>最強のメソッド</mark>だった</span>
+    </h2>
+    <p class="sol-tagline ce">自分で<em>考え・解き・確認する</em>サイクルこそが、<br>本当の学力を育てる唯一の方法。</p>
+    <div class="sol-grid">
+      <div class="sol-card">
+        <div class="sol-num">01</div>
+        <div class="sol-icon">🗺️</div>
+        <div class="sol-title ce">完全個別の参考書ルート設計</div>
+        <div class="sol-desc ce">現在の学力と志望校を分析し、最短で合格できる参考書ルートをオーダーメイドで作成。無駄のない学習計画で合格に一直線。</div>
+      </div>
+      <div class="sol-card">
+        <div class="sol-num">02</div>
+        <div class="sol-icon">🔄</div>
+        <div class="sol-title ce">理解→演習→確認の反復サイクル</div>
+        <div class="sol-desc ce">読んで理解し、問題を解いて定着させ、翌週の確認テストで仕上げる。この3ステップを繰り返すことで、知識が本物になります。</div>
+      </div>
+      <div class="sol-card">
+        <div class="sol-num">03</div>
+        <div class="sol-icon">📋</div>
+        <div class="sol-title ce">週次面談で進捗を徹底管理</div>
+        <div class="sol-desc ce">毎週の面談で学習状況を確認。サボり・遅れ・つまずきを即キャッチして軌道修正。一人で抱え込まず、常にサポートします。</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- コース -->
+<section class="course-section ce-bg" data-section="courses" id="courses">
+  <div class="sec-inner">
+    <span class="sec-label">COURSES</span>
+    <h2 class="sec-heading ce">目標別<em>コース紹介</em></h2>
+    <p class="sec-sub ce">学年・目標・現在の学力に合わせて最適なコースをご案内します。まずは無料相談でご相談ください。</p>
+    <div class="course-grid">
+      <div class="course-card">
+        <div class="course-head">
+          <div class="course-grade ce">高校1・2年生</div>
+          <div class="course-name ce">基礎力強化コース</div>
+        </div>
+        <div class="course-body">
+          <span class="course-tag ce">基礎から丁寧に</span>
+          <ul class="course-list">
+            <li class="ce">英語・数学の基礎を徹底固め</li>
+            <li class="ce">定期テスト対策も並行実施</li>
+            <li class="ce">受験までの長期計画を策定</li>
+            <li class="ce">週1〜2回の面談サポート</li>
+          </ul>
+          <a href="/contact" class="course-cta ce">詳細・相談はこちら →</a>
+        </div>
+      </div>
+      <div class="course-card">
+        <div class="course-head" style="background:var(--dark)">
+          <div class="course-grade ce">高校3年生・浪人生</div>
+          <div class="course-name ce">大学受験専門コース</div>
+        </div>
+        <div class="course-body">
+          <span class="course-tag ce" style="background:var(--yellow);color:var(--dark);border:none">最も人気</span>
+          <ul class="course-list">
+            <li class="ce">志望校別の参考書ルート設計</li>
+            <li class="ce">過去問分析・弱点集中攻略</li>
+            <li class="ce">週2回の確認テストで定着管理</li>
+            <li class="ce">出願・面接サポートまで一貫対応</li>
+          </ul>
+          <a href="/contact" class="course-cta ce">詳細・相談はこちら →</a>
+        </div>
+      </div>
+      <div class="course-card">
+        <div class="course-head" style="background:#2a5298">
+          <div class="course-grade ce">中学生</div>
+          <div class="course-name ce">高校受験コース</div>
+        </div>
+        <div class="course-body">
+          <span class="course-tag ce">内申＋入試を両立</span>
+          <ul class="course-list">
+            <li class="ce">5教科の基礎から応用まで対応</li>
+            <li class="ce">定期テスト直前2週間集中対策</li>
+            <li class="ce">内申点UP＋入試対策の二段構え</li>
+            <li class="ce">志望校判定・出願アドバイス</li>
+          </ul>
+          <a href="/contact" class="course-cta ce">詳細・相談はこちら →</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 利用の流れ -->
+<section class="flow-section ce-bg" data-section="flow">
+  <div class="sec-inner">
+    <span class="sec-label">HOW TO START</span>
+    <h2 class="sec-heading ce">入塾までの<em>4ステップ</em></h2>
+    <p class="sec-sub ce">まずは無料相談から。費用・コース・スケジュールなど、何でもお気軽にご相談ください。</p>
+    <div class="flow-steps">
+      <div class="flow-step">
+        <div class="step-circle">
+          <div><span class="step-num">STEP</span>1</div>
+        </div>
+        <div class="step-badge ce">完全無料</div>
+        <div class="step-title ce">無料相談・体験</div>
+        <div class="step-desc ce">現状のお悩みをヒアリング。学力診断テストを実施し、課題を明確化します。</div>
+      </div>
+      <div class="flow-step">
+        <div class="step-circle">
+          <div><span class="step-num">STEP</span>2</div>
+        </div>
+        <div class="step-title ce">カリキュラム設計</div>
+        <div class="step-desc ce">志望校と現在の学力から、最短合格ルートとなる参考書プランを作成します。</div>
+      </div>
+      <div class="flow-step">
+        <div class="step-circle">
+          <div><span class="step-num">STEP</span>3</div>
+        </div>
+        <div class="step-title ce">自学自習スタート</div>
+        <div class="step-desc ce">参考書ルートに沿って自習開始。自習室を毎日活用し、わからない問題はその日に解決。</div>
+      </div>
+      <div class="flow-step">
+        <div class="step-circle">
+          <div><span class="step-num">STEP</span>4</div>
+        </div>
+        <div class="step-title ce">週次面談で管理</div>
+        <div class="step-desc ce">週1回の確認テスト＋面談で進捗を管理。合格まで二人三脚でサポートします。</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 実績 -->
+<div class="result-section ce-bg" data-section="results" id="results">
+  <div class="result-inner">
+    <h2 class="result-heading ce">数字で見る、<span style="color:var(--yellow)">ルートアップの実績</span></h2>
+    <p class="result-sub ce">12年間で積み上げた、本物の合格実績</p>
+    <div class="result-grid">
+      <div class="result-item">
+        <div class="result-num ce">97<span class="result-unit">%</span></div>
+        <div class="result-label ce">受講生の成績向上率</div>
+      </div>
+      <div class="result-item">
+        <div class="result-num ce">91<span class="result-unit">%</span></div>
+        <div class="result-label ce">第一志望合格率</div>
+      </div>
+      <div class="result-item">
+        <div class="result-num ce">850<span class="result-unit">名+</span></div>
+        <div class="result-label ce">累計指導実績</div>
+      </div>
+      <div class="result-item">
+        <div class="result-num ce">+23<span class="result-unit">点</span></div>
+        <div class="result-label ce">模試平均点アップ（3ヶ月）</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- お客様の声 -->
+<section class="voice-section ce-bg" data-section="voices">
+  <div class="sec-inner">
+    <span class="sec-label">VOICE</span>
+    <h2 class="sec-heading ce">卒業生・保護者の<em>声</em></h2>
+    <p class="sec-sub ce">実際に通って成長を実感した生徒・保護者の声をご紹介します。</p>
+    <div class="voice-grid">
+      <div class="voice-card">
+        <div class="voice-result ce">偏差値48→62（4ヶ月）</div>
+        <div class="voice-stars">★★★★★</div>
+        <div class="voice-quote ce">最初は「授業なし」に不安でしたが、自分でやり切った達成感が全然違います。テストのたびに手応えが増して、気づいたら志望校がAランクになっていました。</div>
+        <div class="voice-meta">
+          <div class="voice-avatar">👩</div>
+          <div>
+            <div class="voice-name ce">高3・Kさん</div>
+            <div class="voice-role ce">国立大学 合格</div>
+          </div>
+        </div>
+      </div>
+      <div class="voice-card">
+        <div class="voice-result ce">定期テスト +38点（2ヶ月）</div>
+        <div class="voice-stars">★★★★★</div>
+        <div class="voice-quote ce">週1の面談でサボれない環境になったのが大きかったです。先生が毎週進捗を確認してくれるので、「今週ここまでやろう」という目標が明確になりました。</div>
+        <div class="voice-meta">
+          <div class="voice-avatar">👦</div>
+          <div>
+            <div class="voice-name ce">高2・Tくん</div>
+            <div class="voice-role ce">理系難関大志望</div>
+          </div>
+        </div>
+      </div>
+      <div class="voice-card">
+        <div class="voice-result ce">親御さんの声</div>
+        <div class="voice-stars">★★★★★</div>
+        <div class="voice-quote ce">他の塾は授業をただ受けるだけでしたが、ここは毎週レポートで子どもの状況が把握できます。担当の先生と二人三脚で進めていただいている安心感が違います。</div>
+        <div class="voice-meta">
+          <div class="voice-avatar">👩</div>
+          <div>
+            <div class="voice-name ce">高3・Sさんの保護者様</div>
+            <div class="voice-role ce">早慶 合格</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="faq-section ce-bg" data-section="faq" id="faq">
+  <div class="sec-inner">
+    <span class="sec-label">FAQ</span>
+    <h2 class="sec-heading" style="text-align:center;margin-bottom:10px"><span class="ce">よくある<em>ご質問</em></span></h2>
+    <p class="sec-sub" style="text-align:center"><span class="ce">ご不明な点はお気軽にお問い合わせください。</span></p>
+    <div class="faq-list">
+      <div class="faq-item">
+        <div class="faq-q">
+          <span class="faq-q-mark">Q</span>
+          <span class="ce">授業がないなら、わからない問題はどうすればいいですか？</span>
+        </div>
+        <div class="faq-a"><span class="faq-a-mark">A</span><span class="ce">自習室には常駐スタッフが待機しており、いつでも質問可能です。また週1回の面談でまとめて質問もできます。「聞けない」という環境は一切ありません。</span></div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">
+          <span class="faq-q-mark">Q</span>
+          <span class="ce">現在の学力が低くても入塾できますか？</span>
+        </div>
+        <div class="faq-a"><span class="faq-a-mark">A</span><span class="ce">もちろんです。偏差値40台からの逆転合格が最も多いパターンです。無料相談で現在の学力を診断し、最適なスタートプランをご提案します。</span></div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">
+          <span class="faq-q-mark">Q</span>
+          <span class="ce">部活や学校行事と両立できますか？</span>
+        </div>
+        <div class="faq-a"><span class="faq-a-mark">A</span><span class="ce">はい。授業時間が固定されていないため、部活・学校行事に合わせてフレキシブルに自習できます。時期に応じてスケジュールを一緒に調整します。</span></div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">
+          <span class="faq-q-mark">Q</span>
+          <span class="ce">費用はどのくらいかかりますか？</span>
+        </div>
+        <div class="faq-a"><span class="faq-a-mark">A</span><span class="ce">コース・学年によって異なります。無料相談の際に詳細をご説明します。入塾金・年会費なし、月謝制でのご案内です。まずはお気軽にご相談ください。</span></div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">
+          <span class="faq-q-mark">Q</span>
+          <span class="ce">途中で志望校が変わった場合はどうなりますか？</span>
+        </div>
+        <div class="faq-a"><span class="faq-a-mark">A</span><span class="ce">参考書ルートを再設計します。変更に柔軟に対応できるのが個別管理型の強みです。面談時にお申し出ください。</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section ce-bg" data-section="cta">
+  <div class="cta-inner">
+    <div class="cta-badge ce">まずは0円から始めてみよう</div>
+    <h2 class="cta-title ce">無料相談・体験授業、<br><em>今すぐ申し込む。</em></h2>
+    <p class="cta-desc ce">現在の学力・志望校・お悩みを聞かせてください。<br>最短合格への参考書ルートをその場でご提案します。<br>入塾を決めなくても大丈夫。気軽にどうぞ。</p>
+    <div class="cta-btns">
+      <a href="/contact" class="btn-cta ce">無料相談を申し込む →</a>
+      <a href="https://line.me" class="btn-cta-line ce">📱 LINEで相談する</a>
+    </div>
+    <p class="cta-note ce">※ 無料相談は平日10:00〜21:00、土日10:00〜19:00で受け付けています</p>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-top">
+      <div>
+        <div class="footer-logo ce">進学塾<span>ルートアップ</span></div>
+        <div class="footer-desc ce">参考書×自学自習で逆転合格を実現する<br>受験専門塾。2026年度 生徒募集中。</div>
+      </div>
+      <div class="footer-links">
+        <div class="footer-col">
+          <h4>メニュー</h4>
+          <ul>
+            <li><a href="#method" class="ce">学習メソッド</a></li>
+            <li><a href="#courses" class="ce">コース紹介</a></li>
+            <li><a href="#results" class="ce">合格実績</a></li>
+            <li><a href="#faq" class="ce">よくある質問</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>お問い合わせ</h4>
+          <ul>
+            <li><a href="/contact" class="ce">無料相談を申し込む</a></li>
+            <li><a href="/contact" class="ce">資料請求</a></li>
+            <li><a href="/contact" class="ce">アクセス</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span class="ce">© 2026 進学塾ルートアップ. All rights reserved.</span>
+      <span><a href="/privacy" style="color:inherit;text-decoration:none" class="ce">プライバシーポリシー</a></span>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
