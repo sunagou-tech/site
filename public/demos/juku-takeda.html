@@ -43,27 +43,33 @@ nav a:hover{color:var(--yellow)}
 .btn-red{display:inline-flex;align-items:center;justify-content:center;gap:6px;background:var(--red);color:#fff;font-weight:900;font-size:13px;padding:10px 22px;border-radius:4px;border:none;cursor:pointer;transition:.15s;text-decoration:none;white-space:nowrap}
 .btn-red:hover{background:var(--red-dark)}
 
-/* ============ HERO (フルブリード・センター型) ============ */
-.hero{padding-top:60px;background:var(--navy);overflow:hidden;position:relative;min-height:600px;display:flex;align-items:center}
-.hero-bg{position:absolute;inset:0;background-image:url('https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=1600&q=80');background-size:cover;background-position:center 30%;opacity:.18}
-.hero-overlay{position:absolute;inset:0;background:linear-gradient(160deg,var(--navy) 0%,rgba(13,31,60,.85) 60%,rgba(20,40,68,.7) 100%)}
-.hero-inner{max-width:860px;margin:0 auto;padding:72px 24px;text-align:center;position:relative;z-index:1;width:100%}
-.hero-eyebrow{display:inline-block;background:var(--yellow);color:var(--navy);font-size:11px;font-weight:900;letter-spacing:.15em;padding:5px 18px;margin-bottom:20px;border-radius:2px}
-.hero h1{font-size:clamp(2rem,4.5vw,3.4rem);font-weight:900;line-height:1.25;color:#fff;margin-bottom:16px;letter-spacing:-.01em}
+/* ============ HERO (50/50 スプリット型) ============ */
+.hero{padding-top:60px;background:var(--navy);overflow:hidden;display:grid;grid-template-columns:1fr 1fr;min-height:580px}
+.hero-text-col{display:flex;flex-direction:column;justify-content:center;padding:56px 48px 56px 5vw;max-width:600px;margin-left:auto}
+.hero-eyebrow{display:inline-block;background:var(--yellow);color:var(--navy);font-size:11px;font-weight:900;letter-spacing:.15em;padding:5px 16px;margin-bottom:18px;border-radius:2px;align-self:flex-start}
+.hero h1{font-size:clamp(1.7rem,3vw,2.8rem);font-weight:900;line-height:1.3;color:#fff;margin-bottom:14px}
 .hero h1 em{color:var(--yellow);font-style:normal}
-.hero h1 mark{background:var(--yellow);padding:2px 8px;color:var(--navy);font-style:normal;border-radius:2px}
-.hero-catch{font-size:16px;font-weight:500;color:rgba(255,255,255,.7);line-height:1.9;margin-bottom:32px}
-.hero-achievements{display:flex;gap:12px;margin-bottom:36px;flex-wrap:wrap;justify-content:center}
-.hero-ach{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:6px;padding:12px 20px;text-align:center;backdrop-filter:blur(4px)}
-.hero-ach-val{font-size:16px;font-weight:900;color:var(--yellow);line-height:1.2}
-.hero-ach-label{font-size:10px;color:rgba(255,255,255,.5);margin-top:3px;letter-spacing:.05em}
-.hero-btns{display:flex;gap:14px;flex-wrap:wrap;justify-content:center}
-.btn-hero-main{display:inline-flex;align-items:center;gap:8px;background:var(--yellow);color:var(--navy);font-weight:900;font-size:16px;padding:18px 44px;border-radius:4px;text-decoration:none;transition:.15s;box-shadow:0 4px 20px rgba(245,197,24,.35)}
+.hero h1 mark{background:var(--yellow);padding:1px 6px;color:var(--navy);font-style:normal}
+.hero-catch{font-size:14px;color:rgba(255,255,255,.65);line-height:1.9;margin-bottom:24px}
+.hero-achievements{display:flex;gap:8px;margin-bottom:28px;flex-wrap:wrap}
+.hero-ach{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:5px;padding:9px 14px;text-align:center}
+.hero-ach-val{font-size:13px;font-weight:900;color:var(--yellow);line-height:1.2}
+.hero-ach-label{font-size:9px;color:rgba(255,255,255,.45);margin-top:2px;letter-spacing:.04em}
+.hero-btns{display:flex;gap:12px;flex-wrap:wrap}
+.btn-hero-main{display:inline-flex;align-items:center;gap:8px;background:var(--yellow);color:var(--navy);font-weight:900;font-size:15px;padding:16px 36px;border-radius:4px;text-decoration:none;transition:.15s;box-shadow:0 4px 16px rgba(245,197,24,.3)}
 .btn-hero-main:hover{background:var(--yellow2);transform:translateY(-2px)}
-.btn-hero-sub{display:inline-flex;align-items:center;gap:8px;background:transparent;color:rgba(255,255,255,.8);font-weight:700;font-size:14px;padding:17px 32px;border-radius:4px;border:1.5px solid rgba(255,255,255,.3);text-decoration:none;transition:.15s}
+.btn-hero-sub{display:inline-flex;align-items:center;gap:8px;background:transparent;color:rgba(255,255,255,.75);font-weight:700;font-size:13px;padding:15px 24px;border-radius:4px;border:1.5px solid rgba(255,255,255,.25);text-decoration:none;transition:.15s}
 .btn-hero-sub:hover{border-color:var(--yellow);color:var(--yellow)}
-/* 旧2カラム要素は非表示 */
-.hero-img-col,.hero-img-bg,.hero-img,.hero-badge-float{display:none}
+/* 画像カラム */
+.hero-img-col{position:relative;overflow:hidden}
+.hero-img-bg{display:none}
+.hero-img{width:100%;height:100%;object-fit:cover;object-position:center top;display:block}
+.hero-badge-float{position:absolute;top:32px;left:24px;background:var(--yellow);color:var(--navy);padding:10px 16px;border-radius:6px;text-align:center;box-shadow:0 4px 16px rgba(0,0,0,.25)}
+.hero-badge-float .val{font-size:22px;font-weight:900;line-height:1;color:var(--navy)}
+.hero-badge-float .unit{font-size:11px;font-weight:700;color:var(--navy)}
+.hero-badge-float .lbl{font-size:10px;color:var(--navy);opacity:.7;margin-top:2px}
+/* 不要要素は非表示 */
+.hero-inner,.hero-bg,.hero-overlay{display:none}
 
 /* ============ YELLOW STATS STRIP (反転!) ============ */
 .stats-strip{background:var(--yellow);padding:20px 24px}
@@ -227,7 +233,9 @@ footer{background:#111;padding:32px 24px 20px}
 @media(max-width:900px){
   nav ul{display:none}
   .nav-tel{display:none}
-  .hero-inner{padding:56px 20px}
+  .hero{grid-template-columns:1fr}
+  .hero-img-col{height:260px}
+  .hero-text-col{padding:40px 20px;margin-left:0;max-width:100%}
   .stats-strip-inner{grid-template-columns:repeat(2,1fr)}
   .reason-item,.reason-item:nth-child(even){grid-template-columns:1fr;gap:16px}
   .reason-num{font-size:48px;text-align:left}
@@ -269,33 +277,37 @@ footer{background:#111;padding:32px 24px 20px}
 
 <!-- ======== HERO ======== -->
 <section class="hero ce-bg" data-section="hero">
-  <div class="hero-bg"></div>
-  <div class="hero-overlay"></div>
-  <div class="hero-inner">
+  <!-- 左：テキストパネル -->
+  <div class="hero-text-col">
     <div class="hero-eyebrow ce">2026年度 生徒募集中 ｜ 受験専門塾</div>
-    <h1 class="ce"><em>授業をしない</em>から、<br><mark>偏差値が上がる。</mark></h1>
-    <p class="hero-catch ce">参考書×自学自習の徹底管理で、偏差値40台からの難関大合格を実現する受験専門塾。</p>
+    <h1 class="ce"><em>授業をしない</em>から、<br><mark>偏差値が上がる。</mark><br>逆転合格専門塾。</h1>
+    <p class="hero-catch ce">参考書×自学自習の徹底管理で、偏差値40台からの難関大合格を実現。</p>
     <div class="hero-achievements">
       <div class="hero-ach">
-        <div class="hero-ach-val ce">偏差値38 → 72</div>
+        <div class="hero-ach-val ce">偏差値38→72</div>
         <div class="hero-ach-label ce">合格者の実例</div>
       </div>
       <div class="hero-ach">
-        <div class="hero-ach-val ce">3ヶ月で +23点</div>
-        <div class="hero-ach-label ce">模試平均点アップ</div>
+        <div class="hero-ach-val ce">+23点</div>
+        <div class="hero-ach-label ce">模試3ヶ月平均</div>
       </div>
       <div class="hero-ach">
         <div class="hero-ach-val ce">91%</div>
         <div class="hero-ach-label ce">第一志望合格率</div>
       </div>
-      <div class="hero-ach">
-        <div class="hero-ach-val ce">850名+</div>
-        <div class="hero-ach-label ce">累計指導実績</div>
-      </div>
     </div>
     <div class="hero-btns">
       <a href="/contact" class="btn-hero-main ce">✦ 無料相談を申し込む</a>
-      <a href="#why" class="btn-hero-sub ce">選ばれる理由を見る →</a>
+      <a href="#why" class="btn-hero-sub ce">選ばれる理由 →</a>
+    </div>
+  </div>
+  <!-- 右：フルブリード画像 -->
+  <div class="hero-img-col">
+    <img class="hero-img ce-img" src="https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=900&q=80" alt="合格を目指す生徒">
+    <div class="hero-badge-float">
+      <div class="val ce">97%</div>
+      <div class="unit ce">成績向上率</div>
+      <div class="lbl ce">受講生実績</div>
     </div>
   </div>
 </section>
