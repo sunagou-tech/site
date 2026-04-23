@@ -77,6 +77,70 @@ export default function AdminClient() {
   const [htmlUndoCount, setHtmlUndoCount] = useState(0);
   const htmlUndoStackRef = useRef<string[]>([]);
 
+  // HTMLセクションブロック（デモHTMLをセクション単位で管理）
+  const [htmlSections, setHtmlSections] = useState<{ id: string; label: string; html: string }[]>([]);
+  const htmlSkeletonRef = useRef<{ pre: string; post: string }>({ pre: "", post: "" });
+  const [htmlSecDragIdx, setHtmlSecDragIdx] = useState<number | null>(null);
+  const [htmlSecDragOver, setHtmlSecDragOver] = useState<number | null>(null);
+
+  function getSectionLabel(el: Element): string {
+    const cls = Array.from(el.classList).join(" ");
+    const tag = el.tagName.toLowerCase();
+    const classMap: [string, string][] = [
+      ["hero", "ヒーロー"],
+      ["strip", "特徴バナー"],
+      ["problem", "お悩み"],
+      ["solution", "解決策"],
+      ["course", "コース紹介"],
+      ["flow", "流れ・ステップ"],
+      ["results", "実績・数字"],
+      ["voice", "お客様の声"],
+      ["faq", "よくある質問"],
+      ["cta", "お問い合わせCTA"],
+      ["contact", "お問い合わせ"],
+      ["features", "特徴・強み"],
+      ["about", "サービス紹介"],
+      ["steps", "利用の流れ"],
+      ["stats", "実績・数字"],
+      ["testimonials", "お客様の声"],
+    ];
+    for (const [key, label] of classMap) {
+      if (cls.includes(key)) return label;
+    }
+    return cls.split(" ")[0] || tag;
+  }
+
+  function rebuildHtmlFromSections(sections: { id: string; label: string; html: string }[]): string {
+    const { pre, post } = htmlSkeletonRef.current;
+    return pre + "\n" + sections.map(s => s.html).join("\n") + "\n" + post;
+  }
+
+  function parseHtmlIntoSections(html: string): void {
+    try {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, "text/html");
+      const skippedTags = new Set(["nav", "script", "footer", "header"]);
+      const navEl = doc.body.querySelector(":scope > nav");
+      const navHtml = navEl ? navEl.outerHTML : "";
+      const scriptEls = Array.from(doc.body.querySelectorAll(":scope > script"));
+      const scriptsHtml = scriptEls.map(s => s.outerHTML).join("\n");
+      const footerEl = doc.body.querySelector(":scope > footer");
+      const footerHtml = footerEl ? footerEl.outerHTML : "";
+      const headHtml = "<!DOCTYPE html><html lang=\"ja\"><head>" + doc.head.innerHTML + "</head><body>";
+      htmlSkeletonRef.current = {
+        pre: headHtml + navHtml,
+        post: footerHtml + "\n" + scriptsHtml + "\n</body></html>",
+      };
+      const sections: { id: string; label: string; html: string }[] = [];
+      for (const el of Array.from(doc.body.children)) {
+        const tag = el.tagName.toLowerCase();
+        if (skippedTags.has(tag)) continue;
+        sections.push({ id: uid(), label: getSectionLabel(el), html: el.outerHTML });
+      }
+      setHtmlSections(sections);
+    } catch {}
+  }
+
   // HTML → Blob URL（右パネル付きインライン編集）
   useEffect(() => {
     if (!siteHtml) return;
@@ -582,6 +646,7 @@ export default function AdminClient() {
       setSiteHtml(html);
       latestHtmlRef.current = html;
       setSidePanel("blocks");
+      if (html) parseHtmlIntoSections(html);
       // sessionStorageはリフレッシュでも残す（タブを閉じるまで保持）
       return;
     }
@@ -1344,15 +1409,76 @@ export default function AdminClient() {
                 {/* ── ブロックパネル ── */}
                 {sidePanel === "blocks" && (
                   <div>
-                    {/* HTMLモード時の案内（ホームのみ） */}
+                    {/* HTMLセクションブロック一覧（HTMLモード・ホームのみ） */}
                     {htmlMode && activePageId === "home" && (
-                      <div style={{ marginBottom: 14, padding: "12px", background: "#EEF2FF", borderRadius: 8, border: "1px solid #C7D2FE" }}>
-                        <p style={{ fontSize: 11, fontWeight: 700, color: "#4F46E5", margin: "0 0 6px" }}>✏️ AI生成HTMLモード</p>
-                        <p style={{ fontSize: 10, color: "#6366F1", margin: "0 0 10px", lineHeight: 1.7 }}>プレビュー上でテキストを直接クリックして編集できます。ブロック編集にするにはAI生成ページからやり直してください。</p>
+                      <div style={{ marginBottom: 14 }}>
+                        <p style={{ fontSize: 10, fontWeight: 700, color: "#64748B", marginBottom: 8, letterSpacing: "0.05em" }}>セクション（ドラッグで並び替え）</p>
+                        {htmlSections.length > 0 ? (
+                          <div style={{ display: "flex", flexDirection: "column", gap: 0, marginBottom: 10 }}>
+                            {htmlSections.map((sec, idx) => (
+                              <div key={sec.id}>
+                                <div
+                                  draggable
+                                  onDragStart={() => setHtmlSecDragIdx(idx)}
+                                  onDragEnd={() => { setHtmlSecDragIdx(null); setHtmlSecDragOver(null); }}
+                                  onDragOver={e => { e.preventDefault(); setHtmlSecDragOver(idx); }}
+                                  onDragLeave={() => setHtmlSecDragOver(null)}
+                                  onDrop={e => {
+                                    e.preventDefault();
+                                    if (htmlSecDragIdx !== null && htmlSecDragIdx !== idx) {
+                                      const next = [...htmlSections];
+                                      const [moved] = next.splice(htmlSecDragIdx, 1);
+                                      next.splice(idx, 0, moved);
+                                      setHtmlSections(next);
+                                      const newHtml = rebuildHtmlFromSections(next);
+                                      setSiteHtml(newHtml);
+                                      latestHtmlRef.current = newHtml;
+                                      try { sessionStorage.setItem("site-html", newHtml); } catch {}
+                                    }
+                                    setHtmlSecDragIdx(null);
+                                    setHtmlSecDragOver(null);
+                                  }}
+                                  style={{
+                                    display: "flex", alignItems: "center", gap: 8,
+                                    padding: "7px 10px", borderRadius: 8,
+                                    border: htmlSecDragOver === idx && htmlSecDragIdx !== idx ? "1.5px solid #4F46E5" : "1px solid #E2E8F0",
+                                    background: htmlSecDragIdx === idx ? "#EEF2FF" : "#FAFAFA",
+                                    opacity: htmlSecDragIdx === idx ? 0.5 : 1,
+                                    cursor: "grab", marginBottom: 2, transition: "all 0.1s",
+                                  }}>
+                                  <svg width="10" height="14" viewBox="0 0 10 14" fill="#CBD5E1" style={{ flexShrink: 0 }}>
+                                    <circle cx="3" cy="2.5" r="1.3"/><circle cx="7" cy="2.5" r="1.3"/>
+                                    <circle cx="3" cy="7" r="1.3"/><circle cx="7" cy="7" r="1.3"/>
+                                    <circle cx="3" cy="11.5" r="1.3"/><circle cx="7" cy="11.5" r="1.3"/>
+                                  </svg>
+                                  <span style={{ fontSize: 11, fontWeight: 600, color: "#374151", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                    {sec.label}
+                                  </span>
+                                  <button
+                                    onClick={() => {
+                                      const next = htmlSections.filter((_, i) => i !== idx);
+                                      setHtmlSections(next);
+                                      const newHtml = rebuildHtmlFromSections(next);
+                                      setSiteHtml(newHtml);
+                                      latestHtmlRef.current = newHtml;
+                                      try { sessionStorage.setItem("site-html", newHtml); } catch {}
+                                    }}
+                                    style={{ width: 22, height: 22, border: "1px solid #FEE2E2", borderRadius: 5, background: "#FFF5F5", color: "#EF4444", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, flexShrink: 0 }}
+                                    title="セクションを削除">×</button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div style={{ padding: "10px 12px", background: "#F8FAFC", borderRadius: 8, border: "1px solid #E2E8F0", marginBottom: 10 }}>
+                            <p style={{ fontSize: 10, color: "#94A3B8", margin: 0 }}>セクションを読み込み中...</p>
+                          </div>
+                        )}
+                        <div style={{ height: 1, background: "#F1F5F9", margin: "10px 0" }} />
                         <a
                           href="/admin/setup"
-                          style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 5, width: "100%", padding: "8px 0", borderRadius: 6, border: "1.5px solid #818CF8", background: "white", cursor: "pointer", color: "#4F46E5", fontWeight: 700, fontSize: 11, textDecoration: "none" }}>
-                          → ブロックで再生成する
+                          style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 5, width: "100%", padding: "8px 0", borderRadius: 6, border: "1.5px solid #C7D2FE", background: "white", cursor: "pointer", color: "#6366F1", fontWeight: 600, fontSize: 10, textDecoration: "none" }}>
+                          → 別のデモに変更する
                         </a>
                       </div>
                     )}

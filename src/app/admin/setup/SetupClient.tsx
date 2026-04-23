@@ -15,6 +15,7 @@ type Phase = "form" | "generating" | "preview" | "html-preview";
 // ── デモテンプレート ──────────────────────────────────────────
 type DemoTemplate = {
   id: string; name: string; label: string; desc: string;
+  mode?: "html" | "blocks"; // デフォルト: "html"
   thumb: { bg: string; accent: string; textColor: string; subColor: string; gradient?: string; };
   style: Partial<GlobalStyle>;
 };
@@ -46,6 +47,21 @@ const DEMO_TEMPLATES: DemoTemplate[] = [
       cardBgColor: "#f7f9fc", buttonBgColor: "#e50012",
       designStyle: "clean-trusted",
       designNotes: "学習塾、個別指導、白背景、赤アクセント、青サブカラー、Noto Sans JP、清潔感、信頼感、保護者向け、フラットデザイン",
+    },
+  },
+  {
+    id: "design-creavo",
+    name: "CREAVO（デザイン会社）",
+    label: "カラフル × ポップ × 丸み",
+    desc: "ピンク×イエロー×ティールの遊び心あるデザイン。クリエイティブ・スタートアップ向けのポップなスタイル。",
+    mode: "blocks",
+    thumb: { bg: "#FFF2F6", accent: "#ED3A8C", textColor: "#2A2A33", subColor: "#7A7A86", gradient: "linear-gradient(160deg,#FFF2F6 0%,#F4F0FF 60%,#F0FAF8 100%)" },
+    style: {
+      primaryColor: "#2A2A33", accentColor: "#ED3A8C",
+      heroBgColor: "#ffffff", bgColor: "#ffffff",
+      cardBgColor: "#FFF2F6", buttonBgColor: "#ED3A8C",
+      designStyle: "colorful-playful",
+      designNotes: "デザイン会社、クリエイティブ、ピンク、イエロー、ティール、Zen Kaku Gothic New、丸み、ポップ、フレンドリー、スタートアップ向け",
     },
   },
 ];
@@ -95,6 +111,61 @@ function buildDemoConfig(id: string): SiteConfig | null {
           ]
         },
         { id: uid(), type: "cta", heading: "まずは無料体験授業から", body: "入塾金0円・初回授業完全無料。担任制で一人ひとりに合わせた指導をご体験ください。", buttonText: "無料体験を申し込む", buttonUrl: "/contact", buttonText2: "資料請求はこちら", buttonUrl2: "" },
+        { id: uid(), type: "contact", heading: "お問い合わせ", desc: "ご不明な点はお気軽にご相談ください。担当スタッフが丁寧にご案内します。", buttonUrl: "/contact" },
+      ],
+      pages: [],
+    } as unknown as SiteConfig;
+  }
+  if (id === "design-creavo") {
+    return {
+      title: "CREAVO", catchCopy: "デザインで、ビジネスをワクワクに。",
+      primaryColor: "#ED3A8C", accentColor: "#2DC7C0", fontFamily: "sans",
+      logoUrl: "", headerHtml: "", footerHtml: "",
+      globalStyle: { primaryColor: "#ED3A8C", accentColor: "#2DC7C0", bgColor: "#ffffff", cardBgColor: "#FFF2F6", buttonBgColor: "#ED3A8C", buttonTextColor: "#ffffff", buttonRadius: "999", cardBorderRadius: "24", sectionPaddingY: "80" },
+      navLinks: [
+        { id: uid(), label: "サービス", url: "#services" },
+        { id: uid(), label: "実績", url: "#works" },
+        { id: uid(), label: "料金", url: "#pricing" },
+        { id: uid(), label: "FAQ", url: "#faq" },
+        { id: uid(), label: "無料相談", url: "/contact" },
+      ],
+      sections: [
+        { id: uid(), type: "hero-centered", eyebrow: "デザインスタジオ", tagline: "デザインで、\nビジネスを\nワクワクに。", body: "ブランディングからUI/UXまで、あなたのプロダクトをもっと楽しく、もっと愛される存在へ。一緒に、世界を驚かせましょう。", buttonText: "無料で相談する →", buttonUrl: "/contact", buttonText2: "サービスを見る", buttonUrl2: "", imageUrl: "" },
+        { id: uid(), type: "stats", heading: "実績で選ばれています", items: [{ value: "150", suffix: "社+", label: "支援企業数" }, { value: "98", suffix: "%", label: "顧客満足度" }, { value: "2.3", suffix: "倍", label: "平均CVR改善" }, { value: "8", suffix: "年", label: "業界経験" }] },
+        { id: uid(), type: "features", heading: "私たちのサービス", subheading: "Services",
+          items: [
+            { icon: { kind: "lucide", value: "Target", size: 28 }, title: "ブランディング", desc: "ロゴ・BI設計からブランドボイスまで、あなたの事業の「らしさ」を言語化・視覚化します。" },
+            { icon: { kind: "lucide", value: "Star", size: 28 }, title: "UI/UXデザイン", desc: "ユーザーが直感的に動けるインターフェースを設計。体験ファーストのデザインで成果を最大化。" },
+            { icon: { kind: "lucide", value: "Globe", size: 28 }, title: "Webサイト制作", desc: "表示速度・SEO・モバイル対応まで徹底。集客・採用・LP、目的に合ったWebを構築します。" },
+            { icon: { kind: "lucide", value: "BarChart2", size: 28 }, title: "グロースサポート", desc: "公開後のA/Bテスト・分析・改善サイクルをご支援。データを武器にビジネスを加速させます。" },
+            { icon: { kind: "lucide", value: "Lightbulb", size: 28 }, title: "コンサルティング", desc: "ビジネス課題を起点に、戦略・設計・制作まで一貫して伴走。本質的な課題解決を提供します。" },
+            { icon: { kind: "lucide", value: "Users", size: 28 }, title: "チームサポート", desc: "デザイン組織の立ち上げ・採用・育成をサポート。インハウスデザイン体制を構築します。" },
+          ] as [{ icon: { kind: "lucide"; value: string; size: 28 }; title: string; desc: string }, { icon: { kind: "lucide"; value: string; size: 28 }; title: string; desc: string }, { icon: { kind: "lucide"; value: string; size: 28 }; title: string; desc: string }, { icon: { kind: "lucide"; value: string; size: 28 }; title: string; desc: string }, { icon: { kind: "lucide"; value: string; size: 28 }; title: string; desc: string }, { icon: { kind: "lucide"; value: string; size: 28 }; title: string; desc: string }]
+        },
+        { id: uid(), type: "testimonials", heading: "お客様の声",
+          items: [
+            { quote: "デザインが変わっただけで問い合わせが倍に。スピードと提案力に感動しました！", name: "ECブランドオーナー", role: "田中 美咲" },
+            { quote: "ユーザーインタビューから入ってくれたので、本当に使いやすいUIになりました。リピート確定です。", name: "SaaSスタートアップ CTO", role: "佐藤 健太" },
+            { quote: "LP公開後にCVRが2.3倍に改善。コピーからデザインまでトータルで提案してくれて最高でした！", name: "オンラインスクール運営者", role: "中村 優子" },
+          ]
+        },
+        { id: uid(), type: "steps", heading: "ご利用の流れ", subheading: "Flow",
+          items: [
+            { number: "01", title: "お問い合わせ", desc: "フォームまたはSNSからお気軽にご連絡ください。1営業日以内にご返信します。" },
+            { number: "02", title: "ヒアリング・お見積もり", desc: "オンラインにて、ご状況・目的・ご予算をヒアリング。ご提案をお伝えします。" },
+            { number: "03", title: "ご提案・デザイン制作", desc: "コンセプト・ワイヤーフレーム・デザインの順で進行。都度Figmaで確認いただけます。" },
+            { number: "04", title: "制作・納品", desc: "修正を重ねながら最終仕上げへ。納品後もグロース支援をご用意しています。" },
+          ]
+        },
+        { id: uid(), type: "faq", heading: "よくある質問",
+          items: [
+            { question: "どんな規模・業種でも対応できますか？", answer: "はい。個人事業主から上場企業まで、幅広い規模・業種のプロジェクトをご支援しています。まずはお気軽にご相談ください。" },
+            { question: "納期はどのくらいかかりますか？", answer: "LP1ページであれば2〜4週間、Webサイト全体であれば1〜3ヶ月が目安です。急ぎの場合はご相談ください。" },
+            { question: "途中で修正はできますか？", answer: "はい。Figmaを使いながら都度フィードバックをいただく進め方なので、認識のズレが生じにくく、スムーズに修正対応できます。" },
+            { question: "コーディング・実装まで対応していますか？", answer: "GrowthプランおよびScaleプランではコーディングまで一貫対応。Starterプランはデザインデータの納品となります。" },
+          ]
+        },
+        { id: uid(), type: "cta", heading: "一緒に、ワクワクする未来をつくりましょう！", body: "まずは無料相談から。お気軽にお声がけください。", buttonText: "無料で相談する →", buttonUrl: "/contact", buttonText2: "", buttonUrl2: "" },
         { id: uid(), type: "contact", heading: "お問い合わせ", desc: "ご不明な点はお気軽にご相談ください。担当スタッフが丁寧にご案内します。", buttonUrl: "/contact" },
       ],
       pages: [],
@@ -358,14 +429,32 @@ export default function SetupClient() {
     }
   }, [businessName, serviceDesc, target, strengths]);
 
-  // ─── デモをキャンバスブロックとしてロード（AI不使用）──
-  const generateFromDemo = useCallback(() => {
+  // ─── デモロード（mode別に分岐）────────────────────────────────
+  const generateFromDemo = useCallback(async () => {
     if (!selectedDemo) return;
-    const config = buildDemoConfig(selectedDemo.id);
-    if (!config) { setDemoError("このデモは対応していません"); return; }
-    setGeneratedConfig(config);
-    setPhase("preview");
-  }, [selectedDemo]);
+    setDemoError("");
+
+    // ブロックモード: プレビュー画面経由でadminへ
+    if (selectedDemo.mode === "blocks") {
+      const config = buildDemoConfig(selectedDemo.id);
+      if (!config) { setDemoError("このデモは対応していません"); return; }
+      setGeneratedConfig(config);
+      setPhase("preview");
+      return;
+    }
+
+    // HTMLモード: デモHTMLをそのままadminにロード
+    try {
+      const res = await fetch(`/demos/${selectedDemo.id}.html`);
+      if (!res.ok) throw new Error("デモHTMLの取得に失敗しました");
+      const html = await res.text();
+      sessionStorage.setItem("site-mode", "html");
+      sessionStorage.setItem("site-html", html);
+      router.push("/admin");
+    } catch {
+      setDemoError("デモの読み込みに失敗しました。もう一度お試しください。");
+    }
+  }, [selectedDemo, router]);
 
   // ─── チャット: メッセージ送信 ────────────────────────────────
   const runChatGenerate = useCallback(async (msgs: ChatMessage[]) => {
