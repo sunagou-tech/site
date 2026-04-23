@@ -14,17 +14,21 @@
   --red-light:#fff0f0;
   --yellow:#fff100;
   --yellow2:#ffe000;
-  --dark:#111111;
-  --mid:#333333;
-  --sub:#666666;
-  --light:#f5f5f5;
-  --border:#dddddd;
+  --dark:#1a1a1a;
+  --navy:#0f1f3d;
+  --mid:#3d3d3d;
+  --sub:#767676;
+  --cream:#fdfaf3;
+  --cream2:#f7f2e6;
+  --cream3:#f0ead8;
+  --light:#f5f0e6;
+  --border:#ddd5c0;
   --white:#ffffff;
 }
-body{background:var(--white);color:var(--dark);font-family:'Noto Sans JP',sans-serif;overflow-x:hidden;font-size:14px;line-height:1.8;letter-spacing:0.03em}
+body{background:var(--cream);color:var(--dark);font-family:'Noto Sans JP',sans-serif;overflow-x:hidden;font-size:14px;line-height:1.8;letter-spacing:0.03em}
 
 /* ============ NAV ============ */
-nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:#fff;border-bottom:3px solid var(--red);box-shadow:0 2px 8px rgba(0,0,0,.1)}
+nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:var(--cream);border-bottom:3px solid var(--red);box-shadow:0 2px 8px rgba(0,0,0,.08)}
 .nav-inner{max-width:1100px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:60px}
 .logo{font-weight:900;font-size:17px;color:var(--dark);letter-spacing:.04em;display:flex;align-items:center;gap:8px;text-decoration:none}
 .logo-badge{background:var(--red);color:#fff;font-size:10px;font-weight:900;padding:2px 8px;border-radius:3px;letter-spacing:.05em}
@@ -41,7 +45,7 @@ nav a:hover{color:var(--red)}
 .btn-red:hover{background:var(--red-dark)}
 
 /* ============ HERO ============ */
-.hero{padding-top:60px;background:#fff;overflow:hidden}
+.hero{padding-top:60px;background:var(--cream);overflow:hidden}
 .hero-inner{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 400px;gap:0;min-height:520px;padding:0 24px;align-items:center}
 .hero-text{padding:48px 40px 48px 0}
 .hero-eyebrow{display:inline-block;background:var(--red);color:#fff;font-size:11px;font-weight:700;letter-spacing:.15em;padding:4px 14px;margin-bottom:14px}
@@ -50,16 +54,16 @@ nav a:hover{color:var(--red)}
 .hero h1 mark{background:var(--yellow);padding:0 4px;color:var(--dark);font-style:normal}
 .hero-catch{font-size:15px;font-weight:700;color:var(--mid);line-height:1.8;margin-bottom:24px}
 .hero-achievements{display:flex;gap:10px;margin-bottom:28px;flex-wrap:wrap}
-.hero-ach{background:var(--red-light);border:1px solid #f5bcbc;border-radius:6px;padding:10px 16px;text-align:center}
+.hero-ach{background:var(--cream2);border:1px solid var(--border);border-radius:6px;padding:10px 16px;text-align:center}
 .hero-ach-val{font-size:15px;font-weight:900;color:var(--red);line-height:1.2}
 .hero-ach-label{font-size:10px;color:var(--sub);margin-top:2px}
 .hero-btns{display:flex;gap:12px;flex-wrap:wrap}
 .btn-hero-main{display:inline-flex;align-items:center;gap:8px;background:var(--yellow);color:var(--dark);font-weight:900;font-size:16px;padding:18px 36px;border-radius:4px;text-decoration:none;transition:.15s;box-shadow:0 4px 16px rgba(255,193,0,.5)}
 .btn-hero-main:hover{background:var(--yellow2);transform:translateY(-2px)}
-.btn-hero-sub{display:inline-flex;align-items:center;gap:8px;background:#fff;color:var(--red);font-weight:700;font-size:14px;padding:17px 28px;border-radius:4px;border:2px solid var(--red);text-decoration:none;transition:.15s}
-.btn-hero-sub:hover{background:var(--red-light)}
+.btn-hero-sub{display:inline-flex;align-items:center;gap:8px;background:var(--cream);color:var(--dark);font-weight:700;font-size:14px;padding:17px 28px;border-radius:4px;border:2px solid var(--border);text-decoration:none;transition:.15s}
+.btn-hero-sub:hover{background:var(--cream3);border-color:var(--dark)}
 .hero-img-col{position:relative;height:100%;display:flex;align-items:flex-end;justify-content:center}
-.hero-img-bg{position:absolute;top:0;right:-24px;bottom:0;width:420px;background:var(--red-light)}
+.hero-img-bg{position:absolute;top:0;right:-24px;bottom:0;width:420px;background:var(--cream2)}
 .hero-img{position:relative;z-index:1;width:360px;height:480px;object-fit:cover;object-position:top;display:block}
 .hero-badge-float{position:absolute;z-index:2;top:48px;right:10px;background:var(--red);color:#fff;padding:10px 16px;border-radius:6px;text-align:center;box-shadow:0 4px 16px rgba(229,0,18,.4)}
 .hero-badge-float .val{font-size:22px;font-weight:900;line-height:1}
@@ -67,13 +71,13 @@ nav a:hover{color:var(--red)}
 .hero-badge-float .lbl{font-size:10px;opacity:.8;margin-top:3px}
 
 /* ============ RED STATS STRIP ============ */
-.stats-strip{background:var(--red);padding:20px 24px}
-.stats-strip-inner{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:rgba(255,255,255,.2)}
-.stat-item{background:var(--red);padding:16px 12px;text-align:center}
-.stat-num{font-size:32px;font-weight:900;color:#fff;line-height:1}
+.stats-strip{background:var(--navy);padding:20px 24px}
+.stats-strip-inner{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:rgba(255,255,255,.08)}
+.stat-item{background:var(--navy);padding:16px 12px;text-align:center}
+.stat-num{font-size:32px;font-weight:900;color:var(--yellow);line-height:1}
 .stat-num small{font-size:16px}
 .stat-unit{font-size:14px;font-weight:700;color:var(--yellow);display:inline}
-.stat-label{font-size:11px;color:rgba(255,255,255,.8);margin-top:4px;letter-spacing:.04em}
+.stat-label{font-size:11px;color:rgba(255,255,255,.6);margin-top:4px;letter-spacing:.04em}
 
 /* ============ 共通 CTA バナー ============ */
 .cta-banner{background:var(--red);padding:28px 24px;text-align:center}
@@ -85,8 +89,8 @@ nav a:hover{color:var(--red)}
 .btn-cta-big .arrow{font-size:18px}
 
 /* ============ セクション共通 ============ */
-.sec{padding:64px 24px}
-.sec.gray{background:var(--light)}
+.sec{padding:64px 24px;background:var(--cream)}
+.sec.gray{background:var(--cream2)}
 .sec.red{background:var(--red);padding:56px 24px}
 .sec-inner{max-width:1100px;margin:0 auto}
 .sec-label{display:inline-block;background:var(--red);color:#fff;font-size:10px;font-weight:700;letter-spacing:.2em;padding:3px 12px;margin-bottom:10px}
@@ -100,7 +104,7 @@ nav a:hover{color:var(--red)}
 
 /* ============ 理由セクション（なぜ成績が上がる？）============ */
 .reason-grid{display:flex;flex-direction:column;gap:40px;margin-top:40px}
-.reason-item{display:grid;grid-template-columns:80px 1fr 340px;gap:32px;align-items:center;background:#fff;border:1px solid var(--border);border-radius:8px;padding:32px;box-shadow:0 2px 12px rgba(0,0,0,.04)}
+.reason-item{display:grid;grid-template-columns:80px 1fr 340px;gap:32px;align-items:center;background:var(--white);border:1px solid var(--border);border-radius:8px;padding:32px;box-shadow:0 2px 12px rgba(0,0,0,.04)}
 .reason-item:nth-child(even){grid-template-columns:340px 1fr 80px}
 .reason-item:nth-child(even) .reason-img{order:3}
 .reason-item:nth-child(even) .reason-num{order:1}
@@ -119,14 +123,14 @@ nav a:hover{color:var(--red)}
 .jishu-img{border-radius:8px;overflow:hidden;height:300px}
 .jishu-img img{width:100%;height:100%;object-fit:cover}
 .jishu-points{display:flex;flex-direction:column;gap:16px}
-.jishu-point{display:flex;gap:16px;align-items:flex-start;background:#fff;border:1px solid var(--border);border-radius:6px;padding:18px 20px}
+.jishu-point{display:flex;gap:16px;align-items:flex-start;background:var(--cream3);border:1px solid var(--border);border-radius:6px;padding:18px 20px}
 .jishu-icon{width:40px;height:40px;background:var(--red);border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:18px}
 .jishu-point-title{font-size:14px;font-weight:700;color:var(--dark);margin-bottom:4px}
 .jishu-point-desc{font-size:12px;color:var(--sub);line-height:1.8}
 
 /* ============ 確認テストセクション ============ */
 .test-inner{display:grid;grid-template-columns:1fr 400px;gap:48px;align-items:center}
-.test-visual{background:var(--red-light);border-radius:8px;padding:28px;text-align:center}
+.test-visual{background:var(--cream3);border-radius:8px;padding:28px;text-align:center;border:1px solid var(--border)}
 .test-cycle{display:flex;align-items:center;justify-content:center;gap:0;flex-wrap:wrap}
 .cycle-item{background:var(--red);color:#fff;font-size:13px;font-weight:700;padding:14px 20px;border-radius:6px;text-align:center;min-width:90px}
 .cycle-arrow{font-size:20px;color:var(--red);margin:0 8px;font-weight:900}
@@ -163,7 +167,7 @@ nav a:hover{color:var(--red)}
 
 /* ============ お問い合わせ3択 ============ */
 .contact-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:36px}
-.contact-card{background:#fff;border:2px solid var(--border);border-radius:8px;padding:28px 20px;text-align:center;transition:.15s;cursor:pointer}
+.contact-card{background:var(--white);border:2px solid var(--border);border-radius:8px;padding:28px 20px;text-align:center;transition:.15s;cursor:pointer}
 .contact-card:hover{border-color:var(--red);box-shadow:0 4px 20px rgba(229,0,18,.12);transform:translateY(-2px)}
 .contact-card.featured{border-color:var(--red)}
 .contact-icon{font-size:36px;margin-bottom:12px}
@@ -192,13 +196,13 @@ nav a:hover{color:var(--red)}
 .access-row{display:flex;gap:12px;margin-bottom:10px;font-size:13px;align-items:flex-start}
 .access-row-label{font-weight:700;color:var(--red);min-width:60px;flex-shrink:0}
 .access-row-val{color:var(--mid);line-height:1.8}
-.access-hours{background:var(--red-light);border:1px solid #f5bcbc;border-radius:6px;padding:16px 20px;margin-top:16px}
-.access-hours-title{font-size:13px;font-weight:700;color:var(--red);margin-bottom:8px}
+.access-hours{background:var(--cream2);border:1px solid var(--border);border-radius:6px;padding:16px 20px;margin-top:16px}
+.access-hours-title{font-size:13px;font-weight:700;color:var(--dark);margin-bottom:8px}
 .access-hours-row{display:flex;justify-content:space-between;font-size:12px;color:var(--mid);padding:4px 0;border-bottom:1px dashed var(--border)}
 .access-hours-row:last-child{border:none}
 
 /* ============ 最終CTA ============ */
-.final-cta{background:var(--red);padding:72px 24px;text-align:center}
+.final-cta{background:var(--navy);padding:72px 24px;text-align:center}
 .final-cta-inner{max-width:700px;margin:0 auto}
 .final-cta-eyebrow{display:inline-block;background:var(--yellow);color:var(--dark);font-size:11px;font-weight:900;letter-spacing:.15em;padding:4px 16px;margin-bottom:16px}
 .final-cta-title{font-size:clamp(1.4rem,3vw,2rem);font-weight:900;color:#fff;line-height:1.5;margin-bottom:12px}
