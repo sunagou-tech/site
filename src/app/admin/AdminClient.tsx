@@ -173,6 +173,7 @@ export default function AdminClient() {
 
   /* ─ 1. ナビゲーション防止 ──────────────────────────────────── */
   document.addEventListener('click',function(e){
+    if(e.target===bgBadge)return; // バッジは自前ハンドラで処理
     var node=e.target;
     var foundAnchor=null,foundCe=null;
     while(node&&node.tagName){
@@ -211,9 +212,6 @@ export default function AdminClient() {
     '.ce-img{cursor:pointer!important;pointer-events:auto!important}'+
     '.ce-img:hover{box-shadow:0 0 0 3px rgba(79,70,229,0.5)!important;opacity:0.9!important}'+
     '.ce-img.on{box-shadow:0 0 0 3px #4F46E5!important}'+
-    '.ce-bg{cursor:pointer!important}'+
-    '.ce-bg:hover::after{content:"🎨 背景色を変更";position:absolute;top:8px;right:8px;background:rgba(0,0,0,0.65);color:#fff;font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;pointer-events:none;z-index:9999;font-family:system-ui,sans-serif;}'+
-    '.ce-bg{position:relative!important}'+
     '[data-ce-bg-on]{outline:3px solid #4F46E5!important;outline-offset:-3px!important;}';
   document.head.appendChild(st);
 
@@ -254,7 +252,7 @@ export default function AdminClient() {
   document.body.appendChild(panel);
 
   /* ─ 4. 状態 ─────────────────────────────────────────────────── */
-  var cur=null,origHtml='',isImg=false,isBg=false;
+  var cur=null,origHtml='',isImg=false,isBg=false,bgBadge=null,bgHoverEl=null;
 
   function rgb2hex(s){var m=(s||'').match(/rgba?\\((\\d+),\\s*(\\d+),\\s*(\\d+)/);if(!m)return'#000000';return'#'+[m[1],m[2],m[3]].map(function(x){return('0'+parseInt(x).toString(16)).slice(-2);}).join('');}
   function lbl(t){var d=document.createElement('div');d.style.cssText='font-size:10px;font-weight:700;color:#64748B;letter-spacing:0.04em;';d.textContent=t;return d;}
@@ -264,6 +262,9 @@ export default function AdminClient() {
   function getCleanHtml(){
     var s=document.getElementById('__ce_style'),p=document.getElementById('__ce_panel');
     if(s)s.remove();if(p)p.remove();
+    // bgBadgeを一時退避
+    var bgBadgeParent=bgBadge&&bgBadge.parentNode;
+    if(bgBadgeParent)bgBadgeParent.removeChild(bgBadge);
     // body に追加したpadding等をHTMLに焼き付けないよう一時退避
     var origPR=document.body.style.paddingRight;
     var origPB=document.body.style.paddingBottom;
@@ -271,6 +272,7 @@ export default function AdminClient() {
     document.body.style.paddingBottom='';
     var h=document.documentElement.outerHTML;
     if(s)document.head.appendChild(s);if(p)document.body.appendChild(p);
+    if(bgBadgeParent)bgBadgeParent.appendChild(bgBadge);
     document.body.style.paddingRight=origPR;
     document.body.style.paddingBottom=origPB;
     return h;
@@ -563,15 +565,35 @@ export default function AdminClient() {
     if(img.closest('#__ce_panel'))return;
     img.classList.add('ce-img');
   });
-  // 背景色を持つブロック要素に ce-bg クラスを付与
+  // 背景色を持つブロック要素にフローティングバッジで背景色編集を提供
+  bgBadge=document.createElement('button');
+  bgBadge.textContent='🎨 背景色を変更';
+  bgBadge.style.cssText='position:fixed;background:rgba(0,0,0,0.72);color:#fff;font-size:11px;font-weight:700;padding:5px 14px;border-radius:20px;border:none;cursor:pointer;z-index:2147483645;font-family:system-ui,sans-serif;display:none;pointer-events:auto;white-space:nowrap;box-shadow:0 2px 10px rgba(0,0,0,0.3);letter-spacing:0.02em;';
+  document.body.appendChild(bgBadge);
+  bgBadge.addEventListener('click',function(e){
+    e.preventDefault();e.stopImmediatePropagation();
+    bgBadge.style.display='none';
+    if(bgHoverEl)openBg(bgHoverEl);
+  },true);
+  bgBadge.addEventListener('mouseleave',function(){bgBadge.style.display='none';bgHoverEl=null;});
   document.querySelectorAll('section,footer,header,div[class],nav').forEach(function(el){
     if(el.closest('#__ce_panel'))return;
     var bg=window.getComputedStyle(el).backgroundColor;
     if(!bg||bg==='rgba(0, 0, 0, 0)'||bg==='transparent'||bg==='rgb(255, 255, 255)')return;
-    // 親と同じ背景色のネストは除外（一番外側だけマーク）
     var par=el.parentElement;
     if(par&&window.getComputedStyle(par).backgroundColor===bg&&!par.closest('#__ce_panel'))return;
     el.classList.add('ce-bg');
+    el.addEventListener('mouseenter',function(){
+      bgHoverEl=el;
+      var r=el.getBoundingClientRect();
+      bgBadge.style.top=(r.top+10)+'px';
+      bgBadge.style.right=(window.innerWidth-r.right+10)+'px';
+      bgBadge.style.left='auto';
+      bgBadge.style.display='block';
+    });
+    el.addEventListener('mouseleave',function(e){
+      if(e.relatedTarget!==bgBadge){bgBadge.style.display='none';bgHoverEl=null;}
+    });
   });
 
   /* ─ 9. パネル外クリックで保存 ──────────────────────────── */
