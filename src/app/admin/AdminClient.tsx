@@ -185,11 +185,19 @@ export default function AdminClient() {
     if(!foundCe){var t2=e.target;for(var d=0;d<3&&t2&&t2.querySelector;d++){var ci=t2.querySelector('.ce-img');if(ci){foundCe=ci;break;}t2=t2.parentElement;}}
     if(foundAnchor) e.preventDefault();
     if(foundCe||foundAnchor){
-      e.stopImmediatePropagation(); // beneseのすべてのクリックハンドラをブロック
+      e.stopImmediatePropagation();
       if(foundCe){
         if(foundCe.classList.contains('ce-img'))openImg(foundCe);
         else openText(foundCe);
       }
+    } else {
+      // 背景色クリック判定
+      var bgNode=e.target;var foundBg=null;
+      while(bgNode&&bgNode!==document.body){
+        if(bgNode.classList&&bgNode.classList.contains('ce-bg')){foundBg=bgNode;break;}
+        bgNode=bgNode.parentNode;
+      }
+      if(foundBg){e.preventDefault();e.stopImmediatePropagation();openBg(foundBg);}
     }
   },true);
 
@@ -202,7 +210,11 @@ export default function AdminClient() {
     '.ce.on{box-shadow:0 0 0 2px #4F46E5!important;caret-color:#4F46E5!important}'+
     '.ce-img{cursor:pointer!important;pointer-events:auto!important}'+
     '.ce-img:hover{box-shadow:0 0 0 3px rgba(79,70,229,0.5)!important;opacity:0.9!important}'+
-    '.ce-img.on{box-shadow:0 0 0 3px #4F46E5!important}';
+    '.ce-img.on{box-shadow:0 0 0 3px #4F46E5!important}'+
+    '.ce-bg{cursor:pointer!important}'+
+    '.ce-bg:hover::after{content:"🎨 背景色を変更";position:absolute;top:8px;right:8px;background:rgba(0,0,0,0.65);color:#fff;font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;pointer-events:none;z-index:9999;font-family:system-ui,sans-serif;}'+
+    '.ce-bg{position:relative!important}'+
+    '[data-ce-bg-on]{outline:3px solid #4F46E5!important;outline-offset:-3px!important;}';
   document.head.appendChild(st);
 
   /* ─ 3. 右パネル ────────────────────────────────────────────── */
@@ -242,7 +254,7 @@ export default function AdminClient() {
   document.body.appendChild(panel);
 
   /* ─ 4. 状態 ─────────────────────────────────────────────────── */
-  var cur=null,origHtml='',isImg=false;
+  var cur=null,origHtml='',isImg=false,isBg=false;
 
   function rgb2hex(s){var m=(s||'').match(/rgba?\\((\\d+),\\s*(\\d+),\\s*(\\d+)/);if(!m)return'#000000';return'#'+[m[1],m[2],m[3]].map(function(x){return('0'+parseInt(x).toString(16)).slice(-2);}).join('');}
   function lbl(t){var d=document.createElement('div');d.style.cssText='font-size:10px;font-weight:700;color:#64748B;letter-spacing:0.04em;';d.textContent=t;return d;}
@@ -265,16 +277,18 @@ export default function AdminClient() {
   }
 
   function save(){
-    if(cur&&!isImg){cur.contentEditable='false';cur.classList.remove('on');}
+    if(cur&&!isImg&&!isBg){cur.contentEditable='false';cur.classList.remove('on');}
     else if(cur&&isImg){cur.classList.remove('on');}
+    else if(cur&&isBg){cur.removeAttribute('data-ce-bg-on');}
     panel.style.display='none';pB.innerHTML='';
-    var el=cur;cur=null;origHtml='';isImg=false;
+    var el=cur;cur=null;origHtml='';isImg=false;isBg=false;
     if(el)window.parent.postMessage({type:'html-update',html:getCleanHtml()},'*');
   }
   function discard(){
-    if(cur&&!isImg){cur.innerHTML=origHtml;cur.contentEditable='false';cur.classList.remove('on');}
+    if(cur&&!isImg&&!isBg){cur.innerHTML=origHtml;cur.contentEditable='false';cur.classList.remove('on');}
     else if(cur&&isImg){cur.classList.remove('on');}
-    panel.style.display='none';pB.innerHTML='';cur=null;origHtml='';isImg=false;
+    else if(cur&&isBg){cur.style.backgroundColor=origHtml;cur.removeAttribute('data-ce-bg-on');}
+    panel.style.display='none';pB.innerHTML='';cur=null;origHtml='';isImg=false;isBg=false;
   }
   bOk.addEventListener('click',function(e){e.stopPropagation();save();});
   bCnl.addEventListener('click',function(e){e.stopPropagation();discard();});
@@ -468,6 +482,42 @@ export default function AdminClient() {
     var hint=document.createElement('p');hint.style.cssText='font-size:9px;color:#94A3B8;margin:6px 0 0;line-height:1.5;';hint.textContent='💡 左ライブラリから画像をドラッグしてこのエリアにドロップすると差し替えできます';pB.appendChild(hint);
   }
 
+  /* ─ 6b. 背景色パネル ────────────────────────────────────── */
+  function buildBg(el){
+    pB.innerHTML='';
+    var cs=window.getComputedStyle(el);
+    var currentBg=el.style.backgroundColor||cs.backgroundColor||'';
+    var hex=rgb2hex(currentBg)||'#ffffff';
+    pB.appendChild(lbl('背景色'));
+    var wrap=rw();
+    var picker=document.createElement('input');picker.type='color';picker.value=hex;
+    picker.style.cssText='width:52px;height:40px;border:2px solid #E2E8F0;border-radius:8px;cursor:pointer;padding:2px;flex-shrink:0;';
+    var hexInp=document.createElement('input');hexInp.type='text';hexInp.value=hex;hexInp.maxLength=7;
+    hexInp.style.cssText='flex:1;padding:5px 7px;border:1px solid #E2E8F0;border-radius:6px;font-size:11px;color:#111;font-family:monospace;box-sizing:border-box;';
+    picker.addEventListener('input',function(){el.style.backgroundColor=picker.value;hexInp.value=picker.value;});
+    hexInp.addEventListener('input',function(){if(/^#[0-9a-fA-F]{6}$/.test(hexInp.value)){picker.value=hexInp.value;el.style.backgroundColor=hexInp.value;}});
+    wrap.appendChild(picker);wrap.appendChild(hexInp);pB.appendChild(wrap);
+    pB.appendChild(lbl('カラープリセット'));
+    var presets=['#ffffff','#f8fafc','#f1f5f9','#1e293b','#0f172a','#111827','#eff6ff','#dbeafe','#fef2f2','#fee2e2','#f0fdf4','#dcfce7','#fefce8','#fef9c3','#fdf4ff','#f3e8ff','#fff7ed','#ffedd5','#ed3a8c','#2dc7c0','#3b82f6','#ef4444','#22c55e','#f59e0b'];
+    var pgrid=document.createElement('div');pgrid.style.cssText='display:grid;grid-template-columns:repeat(6,1fr);gap:4px;margin-top:2px;';
+    presets.forEach(function(c){
+      var b=document.createElement('button');b.title=c;
+      b.style.cssText='width:100%;aspect-ratio:1;border-radius:5px;cursor:pointer;background:'+c+';border:'+(c==='#ffffff'||c==='#f8fafc'?'1.5px solid #E2E8F0':'1.5px solid transparent')+';transition:transform 0.1s;';
+      b.addEventListener('click',function(){el.style.backgroundColor=c;picker.value=(c==='#ffffff'||c==='#f8fafc')?'#ffffff':c;hexInp.value=c;});
+      b.addEventListener('mouseenter',function(){b.style.transform='scale(1.18)';});
+      b.addEventListener('mouseleave',function(){b.style.transform='scale(1)';});
+      pgrid.appendChild(b);
+    });pB.appendChild(pgrid);
+    var hint=document.createElement('p');hint.style.cssText='font-size:9px;color:#94A3B8;margin:8px 0 0;line-height:1.5;';
+    hint.textContent='💡 確定を押すと保存されます。背景を変えたら文字の見やすさも確認してください。';pB.appendChild(hint);
+  }
+  function openBg(el){
+    if(cur===el)return;if(cur)save();
+    cur=el;origHtml=el.style.backgroundColor||'';isBg=true;isImg=false;
+    el.setAttribute('data-ce-bg-on','1');
+    pHText.textContent='🎨 背景色';buildBg(el);panel.style.display='flex';
+  }
+
   /* ─ 7. 要素を開く ───────────────────────────────────────── */
   function openText(el){
     if(cur===el)return;if(cur)save();
@@ -512,6 +562,16 @@ export default function AdminClient() {
   document.querySelectorAll('img').forEach(function(img){
     if(img.closest('#__ce_panel'))return;
     img.classList.add('ce-img');
+  });
+  // 背景色を持つブロック要素に ce-bg クラスを付与
+  document.querySelectorAll('section,footer,header,div[class],nav').forEach(function(el){
+    if(el.closest('#__ce_panel'))return;
+    var bg=window.getComputedStyle(el).backgroundColor;
+    if(!bg||bg==='rgba(0, 0, 0, 0)'||bg==='transparent'||bg==='rgb(255, 255, 255)')return;
+    // 親と同じ背景色のネストは除外（一番外側だけマーク）
+    var par=el.parentElement;
+    if(par&&window.getComputedStyle(par).backgroundColor===bg&&!par.closest('#__ce_panel'))return;
+    el.classList.add('ce-bg');
   });
 
   /* ─ 9. パネル外クリックで保存 ──────────────────────────── */
