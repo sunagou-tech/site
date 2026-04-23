@@ -49,20 +49,6 @@ const DEMO_TEMPLATES: DemoTemplate[] = [
       designNotes: "学習塾、個別指導、白背景、赤アクセント、青サブカラー、Noto Sans JP、清潔感、信頼感、保護者向け、フラットデザイン",
     },
   },
-  {
-    id: "design-creavo",
-    name: "CREAVO（デザイン会社）",
-    label: "カラフル × ポップ × 丸み",
-    desc: "ピンク×イエロー×ティールの遊び心あるデザイン。クリエイティブ・スタートアップ向けのポップなスタイル。",
-    thumb: { bg: "#FFF2F6", accent: "#ED3A8C", textColor: "#2A2A33", subColor: "#7A7A86", gradient: "linear-gradient(160deg,#FFF2F6 0%,#F4F0FF 60%,#F0FAF8 100%)" },
-    style: {
-      primaryColor: "#2A2A33", accentColor: "#ED3A8C",
-      heroBgColor: "#ffffff", bgColor: "#ffffff",
-      cardBgColor: "#FFF2F6", buttonBgColor: "#ED3A8C",
-      designStyle: "colorful-playful",
-      designNotes: "デザイン会社、クリエイティブ、ピンク、イエロー、ティール、Zen Kaku Gothic New、丸み、ポップ、フレンドリー、スタートアップ向け",
-    },
-  },
 ];
 
 // ── デモ用キャンバスブロック設定（静的・AI不使用）────────────
