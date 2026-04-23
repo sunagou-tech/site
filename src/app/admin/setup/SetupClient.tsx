@@ -54,7 +54,7 @@ const DEMO_TEMPLATES: DemoTemplate[] = [
     name: "逆転塾ルートアップ",
     label: "武田塾系 × 逆転合格",
     desc: "白×赤×イエローの武田塾系LP。授業をしない自学自習メソッドで難関大逆転合格を狙う受験専門塾に最適。",
-    thumb: { bg: "#fdfaf3", accent: "#e50012", textColor: "#1a1a1a", subColor: "#767676", gradient: "linear-gradient(160deg,#fdfaf3 0%,#f7f2e6 100%)" },
+    thumb: { bg: "#0d1f3c", accent: "#fff100", textColor: "#ffffff", subColor: "rgba(255,255,255,0.6)", gradient: "linear-gradient(160deg,#0d1f3c 0%,#142844 100%)" },
     style: {
       primaryColor: "#df2525", accentColor: "#fff972",
       heroBgColor: "#fcfbf6", bgColor: "#fcfbf6",
