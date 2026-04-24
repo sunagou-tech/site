@@ -687,24 +687,97 @@ function heroLight(data: SectionData, tk: Tk, dna: GlobalStyle | undefined, y0: 
   return H;
 }
 
+// ── ヒーローブロック ランダム選択（14パターン対応）─────────────
+function pickHeroBlock(data: SectionData, dna?: GlobalStyle): SectionBlock {
+  const h = data.hero;
+  const hasImage = !!h.imageUrl;
+  const style    = dna?.designStyle?.toLowerCase() ?? "";
+  const notes    = (dna?.designNotes ?? "").toLowerCase();
+  const stats    = h.stats ?? [];
+
+  // デザインスタイル別のヒーロープール
+  const pool: string[] = (() => {
+    // 医療・ミニマル: シンプルな中央or写真フロートのみ
+    if (style === "minimal" || notes.includes("クリニック") || notes.includes("医療"))
+      return hasImage ? ["hero-centered", "hero-photo", "hero-glass"] : ["hero-centered"];
+    // 受験・juku-red / exam-prep: 重厚な暗系hero
+    if (style.includes("exam-prep") || style.includes("juku-red") || style === "exam-prep-bold")
+      return hasImage
+        ? ["hero-photo", "hero-dark", "hero-diagonal", "hero-asym"]
+        : ["hero-gradient", "hero-dark", "hero-centered"];
+    // corporate・navy系
+    if (style === "corporate" || style.includes("trustworthy") || style.includes("navy"))
+      return hasImage
+        ? ["hero-dark", "hero-asym", "hero-diagonal", "hero-photo"]
+        : ["hero-gradient", "hero-centered"];
+    // creative・bold
+    if (style === "bold" || style.includes("creative"))
+      return hasImage
+        ? ["hero-glass", "hero-diagonal", "hero-asym", "hero-photo"]
+        : ["hero-interactive", "hero-gradient", "hero-centered"];
+    // lifestyle・elegant
+    if (style === "elegant" || notes.includes("ビューティ") || notes.includes("女性"))
+      return hasImage
+        ? ["hero-glass", "hero-photo", "hero-asym", "hero-centered"]
+        : ["hero-gradient", "hero-centered"];
+    // warm・orange系
+    if (style === "warm" || style.includes("orange") || style.includes("friendly"))
+      return hasImage
+        ? ["hero-photo", "hero-centered", "hero-asym"]
+        : ["hero-centered", "hero-gradient", "hero-interactive"];
+    // tech / SaaS
+    if (style.includes("tech") || notes.includes("saas") || notes.includes("ai"))
+      return hasImage
+        ? ["hero-dark", "hero-gradient", "hero-glass", "hero-diagonal"]
+        : ["hero-gradient", "hero-interactive", "hero-centered"];
+    // default: 幅広く選択
+    return hasImage
+      ? ["hero-centered", "hero-photo", "hero-dark", "hero-glass", "hero-diagonal", "hero-asym", "hero-gradient"]
+      : ["hero-centered", "hero-gradient", "hero-interactive"];
+  })();
+
+  const heroType = pool[Math.floor(Math.random() * pool.length)];
+  const s0 = stats[0], s1 = stats[1], s2 = stats[2];
+  const heading = (h.heading ?? "").replace(/\\n/g, "\n");
+  const cta  = h.ctaText ?? "お問い合わせ";
+  const href = h.ctaHref ?? "#cta";
+  const imgUrl = h.imageUrl ?? "";
+  const eyebrow = h.eyebrow ?? "";
+  const body    = h.body ?? "";
+
+  switch (heroType) {
+    case "hero-photo":
+      return { id: uid(), type: "hero-photo", imageUrl: imgUrl, eyebrow, tagline: heading, body, buttonText: cta, buttonUrl: href, caption: "" };
+    case "hero-dark":
+      return { id: uid(), type: "hero-dark", imageUrl: imgUrl, eyebrow, tagline: heading, body, buttonText: cta, buttonUrl: href,
+        stat1Value: s0?.value ?? "", stat1Label: s0?.label ?? "",
+        stat2Value: s1?.value ?? "", stat2Label: s1?.label ?? "" };
+    case "hero-glass":
+      return { id: uid(), type: "hero-glass", imageUrl: imgUrl, eyebrow, tagline: heading, body, buttonText: cta, buttonUrl: href, scrollLabel: "SCROLL" };
+    case "hero-diagonal":
+      return { id: uid(), type: "hero-diagonal", imageUrl: imgUrl, eyebrow, tagline: heading, body, buttonText: cta, buttonUrl: href, buttonText2: "詳しく見る", buttonUrl2: "#features" };
+    case "hero-asym":
+      return { id: uid(), type: "hero-asym", imageUrl: imgUrl, eyebrow, tagline: heading, body, buttonText: cta, buttonUrl: href,
+        accentWord: heading.split(/[\n\s、。]/)[0].slice(0, 6) };
+    case "hero-gradient":
+      return { id: uid(), type: "hero-gradient", eyebrow, tagline: heading, body, buttonText: cta, buttonUrl: href,
+        buttonText2: "詳しく見る", buttonUrl2: "#features",
+        stats: [s0,s1,s2].filter(Boolean).map(s => ({ value: s!.value, label: s!.label })) };
+    case "hero-interactive":
+      return { id: uid(), type: "hero-interactive", tagline: heading, taglineSub: body, buttonText: cta, buttonUrl: href };
+    case "hero-centered":
+    default:
+      return { id: uid(), type: "hero-centered", eyebrow, tagline: heading, body, buttonText: cta, buttonUrl: href, buttonText2: "詳しく見る", buttonUrl2: "#features", imageUrl: imgUrl };
+  }
+}
+
 // ── SectionData → SectionBlock[] (SitePreview用) ─────────────
-function buildSectionsFromData(data: SectionData): SectionBlock[] {
+function buildSectionsFromData(data: SectionData, dna?: GlobalStyle): SectionBlock[] {
   const sections: SectionBlock[] = [];
   const defaultIcon: IconValue = { kind: "emoji", value: "✓" };
 
-  // Hero → hero-centered
-  sections.push({
-    id: uid(),
-    type: "hero-centered",
-    eyebrow: data.hero.eyebrow ?? "",
-    tagline: data.hero.heading ?? "",
-    body: data.hero.body ?? "",
-    buttonText: data.hero.ctaText ?? "お問い合わせ",
-    buttonUrl: data.hero.ctaHref ?? "/contact",
-    buttonText2: "",
-    buttonUrl2: "",
-    imageUrl: data.hero.imageUrl ?? "",
-  });
+  // Hero: デザインプリセット×画像有無でランダム選択
+  sections.push(pickHeroBlock(data, dna));
 
   // Problem
   if (data.problem?.items?.length) {
@@ -1294,7 +1367,7 @@ export async function POST(req: NextRequest) {
     }
 
     const elements = buildCanvasFromSections(parsed, effectiveDesign);
-    const sections = buildSectionsFromData(parsed);
+    const sections = buildSectionsFromData(parsed, effectiveDesign);
 
     const config = {
       title:        parsed.title,
