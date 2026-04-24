@@ -860,7 +860,7 @@ export default function SetupClient() {
             真似したいサイトのURLを入れると、その配色・フォントをサイトに反映します
           </p>
           <input type="url" value={referenceUrl} onChange={e => setReferenceUrl(e.target.value)}
-            onKeyDown={e => { if (e.key === "Enter") analyzeUrl(); }}
+            onKeyDown={e => { if (e.key === "Enter" && !e.nativeEvent.isComposing) analyzeUrl(); }}
             placeholder="https://example.com"
             className="w-full text-xs rounded-lg px-3 py-2.5 outline-none focus:ring-2 focus:ring-blue-200 mb-2"
             style={{ border: "1px solid #E2E8F0", background: "#F9FAFB", color: "#111827" }} />
@@ -1115,7 +1115,7 @@ export default function SetupClient() {
               <input ref={chatInputRef}
                 value={chatInput}
                 onChange={e => setChatInput(e.target.value)}
-                onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
+                onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) { e.preventDefault(); handleSend(); } }}
                 placeholder="メッセージを入力… (Enterで送信)"
                 disabled={isChatLoading}
                 className="flex-1 text-sm outline-none"
