@@ -282,6 +282,7 @@ export default function SetupClient() {
   const [isAnalyzing,    setIsAnalyzing]    = useState(false);
   const [analysisResult, setAnalysisResultState] = useState<GlobalStyle | null>(null);
   const analysisResultRef = useRef<GlobalStyle | null>(null);
+  const chatDesignKeyRef = useRef<string>("");
   const [generatedConfig, setGeneratedConfig] = useState<SiteConfig | null>(null);
   const [error,          setError]          = useState("");
   const [urlError,       setUrlError]       = useState("");
@@ -471,6 +472,7 @@ export default function SetupClient() {
           phase: "generate",
           messages: msgs,
           analysisResult: analysisResultRef.current ?? undefined,
+          designKey: chatDesignKeyRef.current || undefined,
         }),
       });
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -497,6 +499,7 @@ export default function SetupClient() {
       if (data.error) throw new Error(data.error);
       const allMsgs: ChatMessage[] = [...msgs, { role: "assistant", content: data.reply }];
       setChatMessages(allMsgs);
+      if (data.designKey) chatDesignKeyRef.current = data.designKey;
       if (data.shouldGenerate) {
         setTimeout(() => runChatGenerate(allMsgs), 600);
       }
