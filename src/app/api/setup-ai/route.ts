@@ -1294,7 +1294,11 @@ export async function POST(req: NextRequest) {
         );
         if (!res.ok) continue;
         const data = await res.json();
-        const reply: string = data.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
+        const parts = data.candidates?.[0]?.content?.parts ?? [];
+        const reply: string = parts
+          .filter((p: { thought?: boolean; text?: string }) => !p.thought)
+          .map((p: { text?: string }) => p.text ?? "")
+          .join("");
         if (!reply) continue;
         const shouldGenerate = reply.includes("[GENERATE]");
         const designMatch = reply.match(/\[DESIGN:(\w+)\]/);
