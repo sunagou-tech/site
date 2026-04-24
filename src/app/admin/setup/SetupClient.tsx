@@ -351,6 +351,15 @@ export default function SetupClient() {
     }
   }, [referenceUrl, isAnalyzing]);
 
+  // ─── エディターへ直接遷移 ────────────────────────────────
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const goToEditor = useCallback((config: any) => {
+    localStorage.setItem("site-config", JSON.stringify(config));
+    sessionStorage.removeItem("site-mode");
+    sessionStorage.removeItem("site-html");
+    router.push("/admin");
+  }, [router]);
+
   // ─── サイト生成 ──────────────────────────────────────────
   const generateSite = useCallback(async () => {
     setPhase("generating");
@@ -377,12 +386,12 @@ export default function SetupClient() {
       if (!res.ok || data.error) throw new Error(data.error ?? "生成に失敗しました");
 
       setGenPct(100);
-      setTimeout(() => { setGeneratedConfig(data.config); setPhase("preview"); }, 800);
+      setTimeout(() => { setGeneratedConfig(data.config); goToEditor(data.config); }, 800);
     } catch (e) {
       setError(e instanceof Error ? e.message : "生成に失敗しました");
       setPhase("form");
     }
-  }, [businessName, serviceDesc, target, strengths]);
+  }, [businessName, serviceDesc, target, strengths, goToEditor]);
 
   // ─── HTML LP 生成 ──────────────────────────────────────────
   const generateHtml = useCallback(async () => {
@@ -434,12 +443,12 @@ export default function SetupClient() {
     if (!selectedDemo) return;
     setDemoError("");
 
-    // ブロックモード: プレビュー画面経由でadminへ
+    // ブロックモード: そのままadminへ
     if (selectedDemo.mode === "blocks") {
       const config = buildDemoConfig(selectedDemo.id);
       if (!config) { setDemoError("このデモは対応していません"); return; }
       setGeneratedConfig(config);
-      setPhase("preview");
+      goToEditor(config);
       return;
     }
 
@@ -480,12 +489,12 @@ export default function SetupClient() {
       try { data = await res.json(); } catch { throw new Error("サーバーエラーが発生しました。もう一度お試しください。"); }
       if (!res.ok || data.error) throw new Error(data.error ?? "生成に失敗しました");
       setGenPct(100);
-      setTimeout(() => { setGeneratedConfig(data.config); setPhase("preview"); }, 800);
+      setTimeout(() => { setGeneratedConfig(data.config); goToEditor(data.config); }, 800);
     } catch (e) {
       setError(e instanceof Error ? e.message : "生成に失敗しました");
       setPhase("form");
     }
-  }, []);
+  }, [goToEditor]);
 
   const sendChatMessage = useCallback(async (msgs: ChatMessage[]) => {
     setIsChatLoading(true);
@@ -544,12 +553,8 @@ export default function SetupClient() {
 
   const startEditing = useCallback(() => {
     if (!generatedConfig) return;
-    localStorage.setItem("site-config", JSON.stringify(generatedConfig));
-    // HTMLモードの残留フラグを確実に消去してブロック編集に遷移
-    sessionStorage.removeItem("site-mode");
-    sessionStorage.removeItem("site-html");
-    router.push("/admin");
-  }, [generatedConfig, router]);
+    goToEditor(generatedConfig);
+  }, [generatedConfig, goToEditor]);
 
   const reset = useCallback(() => {
     setPhase("form");
