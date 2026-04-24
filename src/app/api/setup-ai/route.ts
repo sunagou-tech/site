@@ -1300,10 +1300,10 @@ export async function POST(req: NextRequest) {
           .map((p: { text?: string }) => p.text ?? "")
           .join("");
         if (!reply) continue;
-        const shouldGenerate = reply.includes("[GENERATE]");
-        const designMatch = reply.match(/\[DESIGN:(\w+)\]/);
+        const shouldGenerate = reply.includes("[GENERATE");
+        const designMatch = reply.match(/\[DESIGN:([\w-]+)\]?/);
         const designKey = designMatch?.[1] ?? "";
-        const cleanReply = reply.replace(/\[GENERATE\]/g, "").replace(/\[DESIGN:\w+\]/g, "").trim();
+        const cleanReply = reply.replace(/\[GENERATE\]?/g, "").replace(/\[DESIGN:[\w-]+\]?/g, "").trim();
         return NextResponse.json({ reply: cleanReply, shouldGenerate, designKey });
       } catch { continue; }
     }
