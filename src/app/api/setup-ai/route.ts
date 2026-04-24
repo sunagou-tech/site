@@ -1018,7 +1018,7 @@ export async function POST(req: NextRequest) {
             body: JSON.stringify({
               systemInstruction: { parts: [{ text: CHAT_SYSTEM }] },
               contents,
-              generationConfig: { maxOutputTokens: 400 },
+              generationConfig: { maxOutputTokens: 1024 },
             }),
             signal: AbortSignal.timeout(10000),
           }
