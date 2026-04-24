@@ -417,41 +417,47 @@ type Tk = ReturnType<typeof resolveTokens>;
 type AddFn = (el: Omit<CanvasElement, "id">) => void;
 
 function heroSplit(data: SectionData, tk: Tk, dna: GlobalStyle | undefined, y0: number, CW: number, add: AddFn) {
-  const H = 700;
+  const H = 760;
+  const SPLIT = 600; // left panel width
+
   add({ type: "rect", x: 0, y: y0, width: CW, height: H, style: { backgroundColor: tk.heroBgDark }, zIndex: 1 });
-  // Gradient glow blobs
+  // Glow blobs — left panel only
   add({ type: "rect", x: -160, y: y0 + 260, width: 480, height: 480, style: { backgroundColor: tk.accent, borderRadius: 999, opacity: 0.12 }, zIndex: 1 });
-  add({ type: "rect", x: CW - 80, y: y0 - 80, width: 340, height: 340, style: { backgroundColor: tk.primary, borderRadius: 999, opacity: 0.1 }, zIndex: 1 });
+  add({ type: "rect", x: 120, y: y0 - 80, width: 300, height: 300, style: { backgroundColor: tk.primary, borderRadius: 999, opacity: 0.08 }, zIndex: 1 });
 
   const hf = dna?.headingFont ? { fontFamily: `'${dna.headingFont}'` } : {};
   const bf = dna?.bodyFont    ? { fontFamily: `'${dna.bodyFont}'`    } : {};
 
   // Left accent bar
   add({ type: "rect", x: 64, y: y0 + 88, width: 3, height: 32, style: { backgroundColor: tk.accent, borderRadius: 2 }, zIndex: 3 });
-  add({ type: "text", x: 76, y: y0 + 88, width: 520, height: 28, html: data.hero.eyebrow,
+  add({ type: "text", x: 76, y: y0 + 88, width: 490, height: 28, html: data.hero.eyebrow,
     style: { fontSize: 11, color: tk.labelColor, textAlign: "left", letterSpacing: "0.22em", fontWeight: "700", ...hf }, zIndex: 3 });
-  add({ type: "text", x: 64, y: y0 + 136, width: 565, height: 175,
+  add({ type: "text", x: 64, y: y0 + 136, width: 510, height: 190,
     html: (data.hero.heading ?? "").replace(/\\n/g, "<br>"),
     style: { fontSize: parseInt(dna?.h1Size || "54") || 54, fontWeight: dna?.headingWeight ?? 900, color: "#FFFFFF", textAlign: "left", lineHeight: dna?.headingLineHeight ?? 1.18, ...hf }, zIndex: 3 });
-  add({ type: "text", x: 64, y: y0 + 326, width: 510, height: 80, html: data.hero.body,
+  add({ type: "text", x: 64, y: y0 + 340, width: 490, height: 72, html: data.hero.body,
     style: { fontSize: 15, color: "rgba(255,255,255,0.80)", textAlign: "left", lineHeight: 1.88, ...bf }, zIndex: 3 });
-  add({ type: "button", x: 64, y: y0 + 428, width: 242, height: 58, html: data.hero.ctaText, href: data.hero.ctaHref,
+  add({ type: "button", x: 64, y: y0 + 434, width: 242, height: 58, html: data.hero.ctaText, href: data.hero.ctaHref,
     style: { fontSize: 15, fontWeight: "bold", color: tk.btnText, backgroundColor: tk.btnBg, borderRadius: tk.btnR, textAlign: "center" }, zIndex: 3 });
-  add({ type: "button", x: 320, y: y0 + 428, width: 176, height: 58, html: "詳しく見る", href: "#features",
+  add({ type: "button", x: 318, y: y0 + 434, width: 172, height: 58, html: "詳しく見る", href: "#features",
     style: { fontSize: 14, fontWeight: "600", color: "#FFFFFF", backgroundColor: "transparent", borderRadius: tk.btnR, textAlign: "center", border: "1.5px solid rgba(255,255,255,0.35)" }, zIndex: 3 });
 
-  // Stats row with separator lines
+  // Stats row
   (data.hero.stats ?? []).slice(0, 3).forEach((s, i) => {
-    if (i > 0) add({ type: "rect", x: 64 + i * 162 - 12, y: y0 + 516, width: 1, height: 42, style: { backgroundColor: "rgba(255,255,255,0.2)" }, zIndex: 3 });
-    add({ type: "text", x: 64 + i * 162, y: y0 + 508, width: 154, height: 68,
+    if (i > 0) add({ type: "rect", x: 64 + i * 162 - 12, y: y0 + 616, width: 1, height: 42, style: { backgroundColor: "rgba(255,255,255,0.2)" }, zIndex: 3 });
+    add({ type: "text", x: 64 + i * 162, y: y0 + 608, width: 154, height: 68,
       html: `<div style="font-size:30px;font-weight:900;color:#FFFFFF;line-height:1.1">${s.value}</div><div style="font-size:10px;letter-spacing:0.08em;color:rgba(255,255,255,0.55);margin-top:5px">${s.label}</div>`,
       style: { textAlign: "left" }, zIndex: 3 });
   });
 
-  // ── Right: image or styled feature card grid ──────────────────
-  const GX = 652, GY = y0 + 32;
+  // ── Right: full-bleed image or styled feature card grid ────────
   if (data.hero.imageUrl) {
-    add({ type: "image", x: GX, y: GY, width: 526, height: 618, style: { borderRadius: 20, objectFit: "cover" }, src: data.hero.imageUrl, zIndex: 2 });
+    // Full-bleed: covers right panel top-to-bottom, no border radius
+    add({ type: "image", x: SPLIT, y: y0, width: CW - SPLIT, height: H, style: { objectFit: "cover" }, src: data.hero.imageUrl, zIndex: 2 });
+    // Soft dark-to-transparent overlay at left edge of image (3 overlapping rects to simulate gradient)
+    add({ type: "rect", x: SPLIT,      y: y0, width: 60, height: H, style: { backgroundColor: tk.heroBgDark, opacity: 0.75 }, zIndex: 2 });
+    add({ type: "rect", x: SPLIT + 55, y: y0, width: 60, height: H, style: { backgroundColor: tk.heroBgDark, opacity: 0.40 }, zIndex: 2 });
+    add({ type: "rect", x: SPLIT + 110,y: y0, width: 60, height: H, style: { backgroundColor: tk.heroBgDark, opacity: 0.15 }, zIndex: 2 });
   } else {
     const GC = [
       { bg: tk.primary,  acc: tk.accent   },
@@ -461,7 +467,8 @@ function heroSplit(data: SectionData, tk: Tk, dna: GlobalStyle | undefined, y0: 
       { bg: "#0F172A",   acc: tk.accent   },
       { bg: tk.primary,  acc: "#7C3AED"   },
     ];
-    const CW2 = 258, CH2 = 188, GAP = 10;
+    const GX = SPLIT + 16, GY = y0 + 32;
+    const CW2 = 282, CH2 = 188, GAP = 8;
     (data.features?.items ?? []).slice(0, 6).forEach((item, i) => {
       const cx = GX + (i % 2) * (CW2 + GAP), cy = GY + Math.floor(i / 2) * (CH2 + GAP);
       const { bg: c1, acc: c2 } = GC[i];
@@ -486,11 +493,19 @@ function heroSplit(data: SectionData, tk: Tk, dna: GlobalStyle | undefined, y0: 
 
 function heroCentered(data: SectionData, tk: Tk, dna: GlobalStyle | undefined, y0: number, CW: number, add: AddFn) {
   const H = 720;
-  // Background + gradient glow blobs (NOT rings — rings look like wireframes)
-  add({ type: "rect", x: 0, y: y0, width: CW, height: H, style: { backgroundColor: tk.heroBgDark }, zIndex: 1 });
-  add({ type: "rect", x: -120, y: y0 + 80, width: 520, height: 520, style: { backgroundColor: tk.primary, borderRadius: 999, opacity: 0.14 }, zIndex: 1 });
-  add({ type: "rect", x: CW - 300, y: y0 + 180, width: 440, height: 440, style: { backgroundColor: tk.accent, borderRadius: 999, opacity: 0.11 }, zIndex: 1 });
-  add({ type: "rect", x: CW / 2 - 180, y: y0 - 60, width: 360, height: 360, style: { backgroundColor: tk.accent, borderRadius: 999, opacity: 0.07 }, zIndex: 1 });
+  if (data.hero.imageUrl) {
+    // Full-bleed photo hero: image fills entire hero, dark scrim on top for text readability
+    add({ type: "image", x: 0, y: y0, width: CW, height: H, style: { objectFit: "cover" }, src: data.hero.imageUrl, zIndex: 1 });
+    add({ type: "rect", x: 0, y: y0, width: CW, height: H, style: { backgroundColor: "rgba(0,0,0,0.62)" }, zIndex: 2 });
+    // Extra scrim on bottom half for stat cards readability
+    add({ type: "rect", x: 0, y: y0 + H / 2, width: CW, height: H / 2, style: { backgroundColor: "rgba(0,0,0,0.30)" }, zIndex: 2 });
+  } else {
+    // Gradient glow blobs (no image)
+    add({ type: "rect", x: 0, y: y0, width: CW, height: H, style: { backgroundColor: tk.heroBgDark }, zIndex: 1 });
+    add({ type: "rect", x: -120, y: y0 + 80, width: 520, height: 520, style: { backgroundColor: tk.primary, borderRadius: 999, opacity: 0.14 }, zIndex: 1 });
+    add({ type: "rect", x: CW - 300, y: y0 + 180, width: 440, height: 440, style: { backgroundColor: tk.accent, borderRadius: 999, opacity: 0.11 }, zIndex: 1 });
+    add({ type: "rect", x: CW / 2 - 180, y: y0 - 60, width: 360, height: 360, style: { backgroundColor: tk.accent, borderRadius: 999, opacity: 0.07 }, zIndex: 1 });
+  }
 
   const hf = dna?.headingFont ? { fontFamily: `'${dna.headingFont}'` } : {};
   const bf = dna?.bodyFont    ? { fontFamily: `'${dna.bodyFont}'`    } : {};
@@ -639,27 +654,35 @@ function heroLight(data: SectionData, tk: Tk, dna: GlobalStyle | undefined, y0: 
       ${stats.map((s, i) => `${i > 0 ? '<span style="color:#E2E8F0;font-size:20px">|</span>' : ''}<div><span style="font-size:22px;font-weight:900;color:${tk.primary}">${s.value}</span> <span style="font-size:12px;color:#94A3B8">${s.label}</span></div>`).join("")}
     </div>`, style: {}, zIndex: 3 });
 
-  // ── RIGHT: stacked feature cards ─────────────────────────────
-  const features = (data.features?.items ?? []).slice(0, 3);
-  const FEAT_COLORS = [tk.primary, tk.accent, "#7C3AED"];
-  const rx = 700, ry = y0 + 54;
-  features.forEach((item, i) => {
-    const cy = ry + i * 192;
-    add({ type: "text", x: rx, y: cy, width: 460, height: 178,
-      html: `<div style="background:#FFFFFF;border:1px solid #E2E8F0;border-radius:16px;box-shadow:0 4px 20px rgba(0,0,0,0.06);overflow:hidden;box-sizing:border-box;height:178px">
-        <div style="height:4px;background:${FEAT_COLORS[i]}"></div>
-        <div style="padding:20px 24px">
-          <div style="display:flex;align-items:flex-start;gap:14px">
-            <div style="min-width:42px;height:42px;border-radius:10px;background:${FEAT_COLORS[i]}15;border:1.5px solid ${FEAT_COLORS[i]}40;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;color:${FEAT_COLORS[i]};flex-shrink:0">0${i+1}</div>
-            <div>
-              <div style="font-size:16px;font-weight:700;color:#111827;line-height:1.3;margin-bottom:8px">${item.title}</div>
-              <div style="font-size:13px;color:#6B7280;line-height:1.75">${item.desc.slice(0, 60)}${item.desc.length > 60 ? "…" : ""}</div>
+  // ── RIGHT: full-bleed image or stacked feature cards ──────────
+  if (data.hero.imageUrl) {
+    // Full-bleed right panel (no border radius)
+    add({ type: "image", x: 680, y: y0, width: CW - 680, height: H, style: { objectFit: "cover" }, src: data.hero.imageUrl, zIndex: 2 });
+    // White-to-transparent fade at left edge of image
+    add({ type: "rect", x: 680, y: y0, width: 56, height: H, style: { backgroundColor: "#F8FAFC", opacity: 0.75 }, zIndex: 2 });
+    add({ type: "rect", x: 726, y: y0, width: 56, height: H, style: { backgroundColor: "#F8FAFC", opacity: 0.35 }, zIndex: 2 });
+  } else {
+    const features = (data.features?.items ?? []).slice(0, 3);
+    const FEAT_COLORS = [tk.primary, tk.accent, "#7C3AED"];
+    const rx = 700, ry = y0 + 54;
+    features.forEach((item, i) => {
+      const cy = ry + i * 192;
+      add({ type: "text", x: rx, y: cy, width: 460, height: 178,
+        html: `<div style="background:#FFFFFF;border:1px solid #E2E8F0;border-radius:16px;box-shadow:0 4px 20px rgba(0,0,0,0.06);overflow:hidden;box-sizing:border-box;height:178px">
+          <div style="height:4px;background:${FEAT_COLORS[i]}"></div>
+          <div style="padding:20px 24px">
+            <div style="display:flex;align-items:flex-start;gap:14px">
+              <div style="min-width:42px;height:42px;border-radius:10px;background:${FEAT_COLORS[i]}15;border:1.5px solid ${FEAT_COLORS[i]}40;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;color:${FEAT_COLORS[i]};flex-shrink:0">0${i+1}</div>
+              <div>
+                <div style="font-size:16px;font-weight:700;color:#111827;line-height:1.3;margin-bottom:8px">${item.title}</div>
+                <div style="font-size:13px;color:#6B7280;line-height:1.75">${item.desc.slice(0, 60)}${item.desc.length > 60 ? "…" : ""}</div>
+              </div>
             </div>
           </div>
-        </div>
-      </div>`,
-      style: {}, zIndex: 2 });
-  });
+        </div>`,
+        style: {}, zIndex: 2 });
+    });
+  }
 
   return H;
 }
@@ -850,27 +873,37 @@ function buildCanvasFromSections(data: SectionData, dna?: GlobalStyle): CanvasEl
 
   nextSection(); // ── PROBLEM ─────────────────────────────────
   const H_PROB = 560;
-  add({ type: "rect", x: 0, y, width: CW, height: H_PROB, style: { backgroundColor: data.problem.bgColor || "#F8FAFC" }, zIndex: 1 });
+  // Problem background: use a dark version of primary for bold presets, light grey otherwise
+  const probBgColor = isLight(tk.primary) ? (data.problem.bgColor || "#F8FAFC") : tk.heroBgDark;
+  const probIsLight = isLight(probBgColor);
+  const probTextMain = probIsLight ? tk.textMain : "#FFFFFF";
+  const probTextMid  = probIsLight ? "#6B7280" : "rgba(255,255,255,0.65)";
+  const probCardBg   = probIsLight ? "#FFFFFF" : "rgba(255,255,255,0.07)";
+  const probCardBorder = probIsLight ? `${tk.primary}30` : "rgba(255,255,255,0.15)";
+  const probAccentStrip = `${tk.accent}`;
+  const probIconBg   = probIsLight ? `${tk.primary}18` : "rgba(255,255,255,0.12)";
+  const probIconColor = probIsLight ? tk.primary : tk.accent;
+  add({ type: "rect", x: 0, y, width: CW, height: H_PROB, style: { backgroundColor: probBgColor }, zIndex: 1 });
   add({ type: "text", x: 400, y: y + 56, width: 400, height: 32,
-    html: `<div style="text-align:center"><span style="display:inline-block;background:#FEF2F2;color:#EF4444;padding:5px 18px;border-radius:999px;font-size:10px;font-weight:700;letter-spacing:0.22em;border:1px solid #FECACA">PROBLEM</span></div>`,
+    html: `<div style="text-align:center"><span style="display:inline-block;background:${tk.accent}25;color:${tk.accent};padding:5px 18px;border-radius:999px;font-size:10px;font-weight:700;letter-spacing:0.22em;border:1px solid ${tk.accent}50">PROBLEM</span></div>`,
     style: {}, zIndex: 2 });
   add({ type: "text", x: 80, y: y + 100, width: 1040, height: 64,
     html: data.problem.heading,
-    style: { fontSize: 34, fontWeight: dna?.headingWeight ?? 900, color: tk.textMain, textAlign: "center",
+    style: { fontSize: 34, fontWeight: dna?.headingWeight ?? 900, color: probTextMain, textAlign: "center",
       ...(dna?.headingFont ? { fontFamily: `'${dna.headingFont}'` } : {}) }, zIndex: 2 });
   const probXs = [60, 430, 800];
   (data.problem.items ?? []).slice(0, 3).forEach((item, i) => {
     const cx = probXs[i];
     add({ type: "text", x: cx, y: y + 186, width: 340, height: 320,
-      html: `<div style="height:320px;background:#fff;border-radius:${tk.cardR}px;border:1px solid #FEE2E2;box-shadow:0 4px 24px rgba(239,68,68,0.08);overflow:hidden;box-sizing:border-box">
-        <div style="height:5px;background:linear-gradient(90deg,#EF4444,#F97316)"></div>
+      html: `<div style="height:320px;background:${probCardBg};border-radius:${tk.cardR}px;border:1px solid ${probCardBorder};box-shadow:0 4px 24px rgba(0,0,0,0.08);overflow:hidden;box-sizing:border-box">
+        <div style="height:5px;background:${probAccentStrip}"></div>
         <div style="padding:24px">
           <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
-            <div style="min-width:40px;height:40px;border-radius:50%;background:#FEF2F2;border:1.5px solid #FCA5A5;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;color:#EF4444;flex-shrink:0">0${i+1}</div>
-            <div style="font-size:15px;font-weight:700;color:#111827;line-height:1.35">${item.title}</div>
+            <div style="min-width:40px;height:40px;border-radius:50%;background:${probIconBg};border:1.5px solid ${probIconColor}50;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;color:${probIconColor};flex-shrink:0">0${i+1}</div>
+            <div style="font-size:15px;font-weight:700;color:${probTextMain};line-height:1.35">${item.title}</div>
           </div>
-          <div style="font-size:13px;color:#6B7280;line-height:1.8;margin-bottom:16px">${item.desc}</div>
-          <div style="font-size:11px;font-weight:700;color:#EF4444;border-top:1px solid #FEE2E2;padding-top:12px">→ このお悩み、解決できます</div>
+          <div style="font-size:13px;color:${probTextMid};line-height:1.8;margin-bottom:16px">${item.desc}</div>
+          <div style="font-size:11px;font-weight:700;color:${probIconColor};border-top:1px solid ${probCardBorder};padding-top:12px">→ このお悩み、解決できます</div>
         </div>
       </div>`,
       style: {}, zIndex: 2 });
@@ -878,24 +911,33 @@ function buildCanvasFromSections(data: SectionData, dna?: GlobalStyle): CanvasEl
   y += H_PROB;
 
   nextSection(); // ── SOLUTION ──────────────────────────────────────────────
-  const H_SOL = 520;
+  const H_SOL = 540;
   add({ type: "rect", x: 0, y, width: CW, height: H_SOL, style: { backgroundColor: data.solution.bgColor || tk.cardBg }, zIndex: 1 });
-  add({ type: "text", x: 200, y: y + 60, width: 800, height: 26,
+  // Left column: eyebrow + heading + body + CTA
+  add({ type: "text", x: 80, y: y + 64, width: 180, height: 22,
     html: "SOLUTION",
-    style: { fontSize: 10, color: tk.labelColor, textAlign: "center", letterSpacing: "0.35em", fontWeight: "700" }, zIndex: 2 });
-  add({ type: "text", x: 80, y: y + 94, width: 1040, height: 64,
+    style: { fontSize: 10, color: tk.labelColor, letterSpacing: "0.35em", fontWeight: "700" }, zIndex: 2 });
+  add({ type: "rect", x: 80, y: y + 92, width: 40, height: 4, style: { backgroundColor: tk.accent, borderRadius: 2 }, zIndex: 2 });
+  add({ type: "text", x: 80, y: y + 108, width: 520, height: 96,
     html: data.solution.heading,
-    style: { fontSize: 36, fontWeight: dna?.headingWeight ?? 900, color: tk.textMain, textAlign: "center",
+    style: { fontSize: 38, fontWeight: dna?.headingWeight ?? 900, color: tk.textMain, textAlign: "left",
       ...(dna?.headingFont ? { fontFamily: `'${dna.headingFont}'` } : {}) }, zIndex: 2 });
-  add({ type: "text", x: 200, y: y + 172, width: 800, height: 68,
+  add({ type: "text", x: 80, y: y + 216, width: 500, height: 88,
     html: data.solution.body,
-    style: { fontSize: 16, color: tk.textMid, textAlign: "center", lineHeight: 1.85 }, zIndex: 2 });
-  const ptXs = [60, 340, 620, 900];
-  (data.solution.points ?? []).slice(0, 4).forEach((pt, i) => {
-    add({ type: "button", x: ptXs[i], y: y + 272, width: 258, height: 56,
-      html: pt,
-      style: { fontSize: 14, fontWeight: "bold", color: tk.primary, backgroundColor: tk.primary + "18",
-        borderRadius: tk.btnR * 0.7, textAlign: "center" }, zIndex: 2 });
+    style: { fontSize: 15, color: tk.textMid, textAlign: "left", lineHeight: 1.9 }, zIndex: 2 });
+  add({ type: "button", x: 80, y: y + 320, width: 226, height: 54, html: "詳しくみる",
+    style: { fontSize: 14, fontWeight: "bold", color: tk.btnText, backgroundColor: tk.btnBg, borderRadius: tk.btnR, textAlign: "center" }, zIndex: 2 });
+  // Right column: 4 feature-point cards (2x2 grid)
+  const pts = (data.solution.points ?? []).slice(0, 4);
+  const ptGrid = [[660, y + 60], [930, y + 60], [660, y + 200], [930, y + 200]];
+  pts.forEach((pt, i) => {
+    const [px, py] = ptGrid[i];
+    add({ type: "text", x: px, y: py, width: 248, height: 110,
+      html: `<div style="background:#fff;border:1.5px solid ${tk.primary}22;border-radius:${Math.min(tk.cardR, 16)}px;padding:16px 18px;height:110px;box-sizing:border-box;display:flex;gap:12px;align-items:flex-start;box-shadow:0 2px 12px rgba(0,0,0,0.06)">
+        <div style="min-width:28px;height:28px;border-radius:50%;background:${tk.primary};display:flex;align-items:center;justify-content:center;margin-top:1px;flex-shrink:0;font-size:14px;color:${tk.btnText};font-weight:900">✓</div>
+        <div style="font-size:14px;font-weight:600;color:#111827;line-height:1.6">${pt}</div>
+      </div>`,
+      style: {}, zIndex: 2 });
   });
   y += H_SOL;
 
