@@ -650,6 +650,35 @@ export interface SitePage {
   noindex?: boolean;         // 検索エンジンのインデックス除外
 }
 
+// ─── コラム記事 ブロック ────────────────────────────────────────
+export type ArticleBlock =
+  | { id: string; type: "paragraph"; html: string }
+  | { id: string; type: "heading"; level: 2 | 3; text: string }
+  | { id: string; type: "image"; url: string; alt: string; caption: string }
+  | { id: string; type: "list"; ordered: boolean; items: string[] }
+  | { id: string; type: "quote"; text: string; cite: string }
+  | { id: string; type: "divider" }
+  | { id: string; type: "callout"; variant: "info" | "warn" | "tip"; text: string };
+
+function _esc(s: string) { return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+
+export function blocksToHtml(blocks: ArticleBlock[]): string {
+  return blocks.map(b => {
+    switch (b.type) {
+      case "paragraph": return `<p>${b.html || "<br>"}</p>`;
+      case "heading":   return `<h${b.level}>${_esc(b.text)}</h${b.level}>`;
+      case "image":     return `<figure style="margin:1.5rem 0">${b.url ? `<img src="${_esc(b.url)}" alt="${_esc(b.alt)}" style="width:100%;border-radius:8px;display:block">` : ""}${b.caption ? `<figcaption style="text-align:center;font-size:0.8rem;color:#6B7280;margin-top:0.5rem">${_esc(b.caption)}</figcaption>` : ""}</figure>`;
+      case "list":      return `<${b.ordered?"ol":"ul"}>${b.items.map(i=>`<li>${_esc(i)}</li>`).join("")}</${b.ordered?"ol":"ul"}>`;
+      case "quote":     return `<blockquote style="border-left:4px solid #E5E7EB;padding:0.5rem 0 0.5rem 1.5rem;margin:1.5rem 0;color:#6B7280;font-style:italic">${_esc(b.text)}${b.cite?`<cite style="display:block;font-size:0.85rem;margin-top:0.5rem">— ${_esc(b.cite)}</cite>`:""}</blockquote>`;
+      case "divider":   return `<hr style="border:none;border-top:1px solid #E5E7EB;margin:2rem 0">`;
+      case "callout": {
+        const v={info:["#EFF6FF","#2563EB","#DBEAFE"],warn:["#FFFBEB","#D97706","#FEF3C7"],tip:["#F0FDF4","#16A34A","#DCFCE7"]}[b.variant];
+        return `<div style="background:${v[2]};border-left:4px solid ${v[1]};border-radius:8px;padding:1rem 1.25rem;margin:1.5rem 0"><p style="color:${v[0]};margin:0">${_esc(b.text)}</p></div>`;
+      }
+    }
+  }).join("\n");
+}
+
 // ─── コラム記事 ─────────────────────────────────────────────────
 export interface Article {
   id: string;
@@ -658,7 +687,8 @@ export interface Article {
   date: string;
   category: string;
   excerpt: string;
-  body: string;
+  body: string;          // HTML（blocksToHtmlで生成）
+  bodyBlocks?: ArticleBlock[];  // ブロックエディター用
   imageUrl: string;
   author: string;
   published: boolean;

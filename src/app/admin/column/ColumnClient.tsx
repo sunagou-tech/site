@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Article, SiteConfig, defaultConfig, uid } from "@/types/site";
+import { Article, ArticleBlock, SiteConfig, defaultConfig, uid } from "@/types/site";
+import ArticleBlockEditor from "@/components/admin/ArticleBlockEditor";
 
 // ── helpers ──────────────────────────────────────────────────
 function newArticle(): Article {
@@ -14,6 +15,7 @@ function newArticle(): Article {
     author: "編集部",
     excerpt: "記事の概要をここに入力してください。検索結果にも表示される重要な文章です。",
     body: "<p>記事の本文をここから書き始めてください。</p>",
+    bodyBlocks: [{ id: uid(), type: "paragraph", html: "" }],
     imageUrl: "",
     published: false,
   };
@@ -37,7 +39,6 @@ export default function ColumnClient() {
   const [filterCat, setFilterCat] = useState("all");
   const [editorTab, setEditorTab] = useState<"article" | "seo">("article");
   const [saving, setSaving] = useState(false);
-  const bodyRef = useRef<HTMLDivElement>(null);
 
   // Load config from localStorage
   useEffect(() => {
@@ -88,20 +89,6 @@ export default function ColumnClient() {
     const next = articles.filter(a => a.id !== id);
     saveConfig({ ...config, articles: next });
     setSelectedId(next.length > 0 ? next[0].id : null);
-  }
-
-  // Sync body editor when switching articles
-  useEffect(() => {
-    if (bodyRef.current && selected) {
-      if (bodyRef.current.innerHTML !== (selected.body || "")) {
-        bodyRef.current.innerHTML = selected.body || "";
-      }
-    }
-  }, [selected?.id]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  function execCmd(cmd: string, val?: string) {
-    document.execCommand(cmd, false, val);
-    if (bodyRef.current) updateArticle({ body: bodyRef.current.innerHTML });
   }
 
   if (!config) return (
@@ -306,74 +293,16 @@ export default function ColumnClient() {
                     placeholder="概要文（一覧・SNS・検索結果に表示されます）"
                     style={{ width: "100%", fontSize: 14, color: "#6B7280", border: "none", borderBottom: "1px dashed #E5E7EB", outline: "none", resize: "none", lineHeight: 1.7, background: "transparent", marginBottom: 24, paddingBottom: 16, boxSizing: "border-box" }} />
 
-                  {/* Body toolbar */}
-                  <div style={{ display: "flex", alignItems: "center", gap: 2, marginBottom: 12, padding: "6px 8px", background: "#F9FAFB", borderRadius: 8, border: "1px solid #E5E7EB" }}>
-                    {[
-                      { label: "B", cmd: "bold", title: "太字 (Ctrl+B)", style: { fontWeight: 700 } },
-                      { label: "I", cmd: "italic", title: "斜体 (Ctrl+I)", style: { fontStyle: "italic" } },
-                      { label: "U", cmd: "underline", title: "下線 (Ctrl+U)", style: { textDecoration: "underline" } },
-                    ].map(b => (
-                      <button key={b.cmd} onClick={() => execCmd(b.cmd)} title={b.title}
-                        style={{ padding: "3px 8px", borderRadius: 4, border: "none", background: "transparent", cursor: "pointer", fontSize: 13, color: "#374151", ...b.style }}>
-                        {b.label}
-                      </button>
-                    ))}
-                    <div style={{ width: 1, height: 16, background: "#E5E7EB", margin: "0 4px" }} />
-                    {[
-                      { label: "H2", cmd: "formatBlock", val: "h2" },
-                      { label: "H3", cmd: "formatBlock", val: "h3" },
-                      { label: "¶",  cmd: "formatBlock", val: "p" },
-                    ].map(b => (
-                      <button key={b.label} onClick={() => execCmd(b.cmd, b.val)}
-                        style={{ padding: "3px 8px", borderRadius: 4, border: "none", background: "transparent", cursor: "pointer", fontSize: 11, fontWeight: 700, color: "#374151" }}>
-                        {b.label}
-                      </button>
-                    ))}
-                    <div style={{ width: 1, height: 16, background: "#E5E7EB", margin: "0 4px" }} />
-                    <button onClick={() => execCmd("insertUnorderedList")}
-                      style={{ padding: "3px 8px", borderRadius: 4, border: "none", background: "transparent", cursor: "pointer", fontSize: 13, color: "#374151" }}>
-                      • リスト
-                    </button>
-                    <button onClick={() => execCmd("insertOrderedList")}
-                      style={{ padding: "3px 8px", borderRadius: 4, border: "none", background: "transparent", cursor: "pointer", fontSize: 13, color: "#374151" }}>
-                      1. 番号
-                    </button>
-                    <div style={{ width: 1, height: 16, background: "#E5E7EB", margin: "0 4px" }} />
-                    <button onClick={() => {
-                      const url = window.prompt("リンクURL:");
-                      if (url) execCmd("createLink", url);
-                    }}
-                      style={{ padding: "3px 8px", borderRadius: 4, border: "none", background: "transparent", cursor: "pointer", fontSize: 11, color: "#4F46E5" }}>
-                      🔗 リンク
-                    </button>
-                    <button onClick={() => execCmd("removeFormat")}
-                      style={{ padding: "3px 8px", borderRadius: 4, border: "none", background: "transparent", cursor: "pointer", fontSize: 11, color: "#9CA3AF", marginLeft: "auto" }}>
-                      T✕ 書式削除
-                    </button>
+                  {/* Block Editor */}
+                  <div style={{ borderTop: "1px dashed #E5E7EB", paddingTop: 20 }}>
+                    <p style={{ fontSize: 11, color: "#9CA3AF", fontWeight: 700, marginBottom: 12, letterSpacing: "0.05em" }}>本文ブロック — + で追加 / でコマンド</p>
+                    <ArticleBlockEditor
+                      blocks={selected.bodyBlocks ?? []}
+                      onChange={(blocks, html) => updateArticle({ bodyBlocks: blocks, body: html })}
+                    />
                   </div>
-
-                  {/* Body editor */}
-                  <div
-                    ref={bodyRef}
-                    contentEditable
-                    suppressContentEditableWarning
-                    onInput={() => bodyRef.current && updateArticle({ body: bodyRef.current.innerHTML })}
-                    style={{
-                      minHeight: 320, fontSize: 15, color: "#374151", lineHeight: 1.85,
-                      outline: "none",
-                    }}
-                    data-placeholder="本文を入力してください..."
-                  />
                   <style>{`
-                    [data-placeholder]:empty:before { content: attr(data-placeholder); color: #CBD5E1; }
-                    [contenteditable] h2 { font-size: 1.25rem; font-weight: 700; color: #111827; margin: 2rem 0 0.75rem; padding-bottom: 0.5rem; border-bottom: 1px solid #E5E7EB; }
-                    [contenteditable] h3 { font-size: 1.05rem; font-weight: 700; color: #1E293B; margin: 1.5rem 0 0.5rem; }
-                    [contenteditable] p  { margin-bottom: 1rem; }
-                    [contenteditable] ul { list-style: disc; padding-left: 1.5rem; margin: 0.75rem 0; }
-                    [contenteditable] ol { list-style: decimal; padding-left: 1.5rem; margin: 0.75rem 0; }
-                    [contenteditable] li { margin-bottom: 0.25rem; }
-                    [contenteditable] a  { color: #4F46E5; text-decoration: underline; }
-                    [contenteditable] strong { font-weight: 700; }
+                    [data-placeholder]:empty:before { content: attr(data-placeholder); color: #CBD5E1; pointer-events: none; }
                   `}</style>
                 </div>
               </div>
