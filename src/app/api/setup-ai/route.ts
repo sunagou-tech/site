@@ -1281,13 +1281,10 @@ export async function POST(req: NextRequest) {
           parts: [{ text: m.content }],
         }));
 
-    // チャットはthinking不要 → 2.0-flash(高速・無思考)を先頭に、2.5系はthinkingBudget:0で明示無効化
-    const chatModels = [
-      { model: "gemini-2.0-flash",  cfg: { maxOutputTokens: 1024 } },
-      { model: "gemini-2.5-flash",  cfg: { maxOutputTokens: 1024, thinkingConfig: { thinkingBudget: 0 } } },
-      { model: "gemini-1.5-flash",  cfg: { maxOutputTokens: 1024 } },
-    ];
-    for (const { model, cfg } of chatModels) {
+    // チャットはthinking不要 → シンプルなモデルリスト（thinkingConfigは除外）
+    const chatModelList = ["gemini-2.0-flash", "gemini-2.5-flash", "gemini-1.5-flash", "gemini-2.5-pro"];
+    const chatErrors: string[] = [];
+    for (const model of chatModelList) {
       try {
         const res = await fetch(
           `${GEMINI_BASE}/${model}:generateContent?key=${API_KEY}`,
@@ -1297,27 +1294,35 @@ export async function POST(req: NextRequest) {
             body: JSON.stringify({
               systemInstruction: { parts: [{ text: CHAT_SYSTEM }] },
               contents,
-              generationConfig: cfg,
+              generationConfig: { maxOutputTokens: 1024 },
             }),
-            signal: AbortSignal.timeout(20000),
+            signal: AbortSignal.timeout(25000),
           }
         );
-        if (!res.ok) continue;
+        if (!res.ok) {
+          const errText = await res.text().catch(() => "");
+          chatErrors.push(`${model}:${res.status}(${errText.slice(0, 80)})`);
+          continue;
+        }
         const data = await res.json();
         const parts = data.candidates?.[0]?.content?.parts ?? [];
         const reply: string = parts
           .filter((p: { thought?: boolean; text?: string }) => !p.thought)
           .map((p: { text?: string }) => p.text ?? "")
           .join("");
-        if (!reply) continue;
+        if (!reply) { chatErrors.push(`${model}:empty`); continue; }
         const shouldGenerate = reply.includes("[GENERATE");
         const designMatch = reply.match(/\[DESIGN:([\w-]+)\]?/);
         const designKey = designMatch?.[1] ?? "";
         const cleanReply = reply.replace(/\[GENERATE\]?/g, "").replace(/\[DESIGN:[\w-]+\]?/g, "").trim();
         return NextResponse.json({ reply: cleanReply, shouldGenerate, designKey });
-      } catch { continue; }
+      } catch (e) {
+        chatErrors.push(`${model}:${e instanceof Error ? e.message : "err"}`);
+        continue;
+      }
     }
-    return NextResponse.json({ error: "AIに接続できませんでした。" }, { status: 503 });
+    console.error("[setup-ai chat] all models failed:", chatErrors);
+    return NextResponse.json({ error: `AIに接続できませんでした。[${chatErrors.join(" / ")}]` }, { status: 503 });
   }
 
   // ── Generate phase（フォーム or チャット履歴）────────────────
