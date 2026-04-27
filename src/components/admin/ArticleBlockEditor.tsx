@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback, KeyboardEvent } from "react";
 import { ArticleBlock, blocksToHtml } from "@/types/site";
+import ImageGenModal from "@/components/admin/ImageGenModal";
 
 function uid() { return Math.random().toString(36).slice(2, 9); }
 
@@ -326,38 +327,8 @@ function BlockContent({ block, focusedId, onFocus, onUpdate, onEnter, onBackspac
       );
 
     case "image":
-      return (
-        <div style={{ padding: "4px 0" }}>
-          {block.url ? (
-            <div style={{ position: "relative", marginBottom: 8 }}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={block.url} alt={block.alt} style={{ width: "100%", borderRadius: 8, display: "block", maxHeight: 320, objectFit: "cover" }} />
-              <button onClick={() => onUpdate({ url: "" })}
-                style={{ position: "absolute", top: 8, right: 8, background: "rgba(0,0,0,0.6)", color: "#fff", border: "none", borderRadius: 6, padding: "4px 8px", fontSize: 11, cursor: "pointer" }}>
-                変更
-              </button>
-            </div>
-          ) : (
-            <div style={{ border: "2px dashed #E5E7EB", borderRadius: 8, padding: "24px", textAlign: "center", marginBottom: 8 }}>
-              <p style={{ color: "#9CA3AF", fontSize: 13, marginBottom: 10 }}>🖼 画像URLを入力してください</p>
-              <input
-                type="url" placeholder="https://example.com/image.jpg"
-                style={{ width: "100%", padding: "8px 12px", border: "1px solid #E5E7EB", borderRadius: 8, fontSize: 13, outline: "none", boxSizing: "border-box" }}
-                onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); const v = (e.target as HTMLInputElement).value; if (v) onUpdate({ url: v }); } }}
-                onBlur={e => { if (e.target.value) onUpdate({ url: e.target.value }); }}
-                autoFocus
-              />
-            </div>
-          )}
-          <input
-            value={block.caption} placeholder="キャプション（任意）"
-            onChange={e => onUpdate({ caption: e.target.value })}
-            style={{ width: "100%", fontSize: 12, color: "#6B7280", textAlign: "center", border: "none", borderBottom: "1px solid transparent", outline: "none", background: "transparent", boxSizing: "border-box" }}
-            onFocus={e => (e.target.style.borderBottomColor = "#E5E7EB")}
-            onBlur={e => (e.target.style.borderBottomColor = "transparent")}
-          />
-        </div>
-      );
+      return <ImageBlock block={block} onUpdate={onUpdate} />;
+
 
     case "list":
       return (
@@ -542,6 +513,64 @@ function BalloonBlock({ block, focusedId, onFocus, onUpdate, onEnter, onBackspac
           onBackspaceEmpty={onBackspaceEmpty}
         />
       </div>
+    </div>
+  );
+}
+
+// ── 画像ブロック ──────────────────────────────────────────────
+function ImageBlock({ block, onUpdate }:
+  { block: ArticleBlock & { type: "image" }; onUpdate: (p: Partial<ArticleBlock>) => void }) {
+  const [showGen, setShowGen] = useState(false);
+
+  return (
+    <div style={{ padding: "4px 0" }}>
+      {block.url ? (
+        <div style={{ position: "relative", marginBottom: 8 }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={block.url} alt={block.alt} style={{ width: "100%", borderRadius: 8, display: "block", maxHeight: 320, objectFit: "cover" }} />
+          <div style={{ position: "absolute", top: 8, right: 8, display: "flex", gap: 6 }}>
+            <button onClick={() => setShowGen(true)}
+              style={{ background: "linear-gradient(135deg,#4F46E5,#7C3AED)", color: "#fff", border: "none", borderRadius: 6, padding: "4px 10px", fontSize: 11, cursor: "pointer", fontWeight: 700 }}>
+              ✨ AI再生成
+            </button>
+            <button onClick={() => onUpdate({ url: "" })}
+              style={{ background: "rgba(0,0,0,0.6)", color: "#fff", border: "none", borderRadius: 6, padding: "4px 8px", fontSize: 11, cursor: "pointer" }}>
+              URL変更
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div style={{ border: "2px dashed #E5E7EB", borderRadius: 8, padding: "20px", textAlign: "center", marginBottom: 8 }}>
+          <p style={{ color: "#9CA3AF", fontSize: 13, marginBottom: 10 }}>🖼 画像を追加</p>
+          <div style={{ display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap", marginBottom: 12 }}>
+            <button onClick={() => setShowGen(true)}
+              style={{ background: "linear-gradient(135deg,#4F46E5,#7C3AED)", color: "#fff", border: "none", borderRadius: 8, padding: "8px 18px", fontSize: 13, cursor: "pointer", fontWeight: 700 }}>
+              ✨ AIで生成する
+            </button>
+          </div>
+          <p style={{ color: "#9CA3AF", fontSize: 11, margin: "0 0 8px" }}>または URLを直接入力</p>
+          <input
+            type="url" placeholder="https://example.com/image.jpg"
+            style={{ width: "100%", padding: "8px 12px", border: "1px solid #E5E7EB", borderRadius: 8, fontSize: 13, outline: "none", boxSizing: "border-box" }}
+            onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); const v = (e.target as HTMLInputElement).value; if (v) onUpdate({ url: v }); } }}
+            onBlur={e => { if (e.target.value) onUpdate({ url: e.target.value }); }}
+          />
+        </div>
+      )}
+      <input
+        value={block.caption} placeholder="キャプション（任意）"
+        onChange={e => onUpdate({ caption: e.target.value })}
+        style={{ width: "100%", fontSize: 12, color: "#6B7280", textAlign: "center", border: "none", borderBottom: "1px solid transparent", outline: "none", background: "transparent", boxSizing: "border-box" }}
+        onFocus={e => (e.target.style.borderBottomColor = "#E5E7EB")}
+        onBlur={e => (e.target.style.borderBottomColor = "transparent")}
+      />
+      {showGen && (
+        <ImageGenModal
+          defaultAspect="16:9"
+          onClose={() => setShowGen(false)}
+          onSelect={url => onUpdate({ url })}
+        />
+      )}
     </div>
   );
 }

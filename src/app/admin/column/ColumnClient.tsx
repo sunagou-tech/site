@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Article, ArticleBlock, SiteConfig, defaultConfig, uid } from "@/types/site";
 import ArticleBlockEditor from "@/components/admin/ArticleBlockEditor";
+import ImageGenModal from "@/components/admin/ImageGenModal";
 
 // ── helpers ──────────────────────────────────────────────────
 function newArticle(): Article {
@@ -271,19 +272,11 @@ export default function ColumnClient() {
                     <div style={{ maxWidth: 760, margin: "0 auto", padding: "32px 32px 80px" }}>
 
                       {/* OGP Image */}
-                      <div style={{ marginBottom: 24 }}>
-                        <label style={{ fontSize: 11, color: "#6B7280", fontWeight: 600, display: "block", marginBottom: 6 }}>アイキャッチ画像 URL</label>
-                        <input
-                          value={selected.imageUrl} onChange={e => updateArticle({ imageUrl: e.target.value })}
-                          placeholder="https://example.com/image.jpg"
-                          style={{ width: "100%", fontSize: 12, padding: "8px 12px", border: "1px solid #E5E7EB", borderRadius: 8, outline: "none", boxSizing: "border-box", background: "#FAFAFA" }} />
-                        {selected.imageUrl && (
-                          <div style={{ marginTop: 8, height: 180, borderRadius: 10, overflow: "hidden", background: "#F3F4F6" }}>
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src={selected.imageUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                          </div>
-                        )}
-                      </div>
+                      <EyecatchField
+                        value={selected.imageUrl}
+                        onChange={url => updateArticle({ imageUrl: url })}
+                        articleTitle={selected.title}
+                      />
 
                       {/* Category badge + date */}
                       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
@@ -512,6 +505,44 @@ export default function ColumnClient() {
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+// ── アイキャッチ画像フィールド（AI生成対応）──────────────────
+function EyecatchField({ value, onChange, articleTitle }: { value: string; onChange: (url: string) => void; articleTitle?: string }) {
+  const [showGen, setShowGen] = useState(false);
+  return (
+    <div style={{ marginBottom: 24 }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+        <label style={{ fontSize: 11, color: "#6B7280", fontWeight: 600 }}>アイキャッチ画像 URL</label>
+        <button onClick={() => setShowGen(true)}
+          style={{ fontSize: 11, fontWeight: 700, color: "#4F46E5", background: "#EEF2FF", border: "1px solid #C7D2FE", borderRadius: 8, padding: "3px 10px", cursor: "pointer" }}>
+          ✨ AIで生成
+        </button>
+      </div>
+      <input
+        value={value} onChange={e => onChange(e.target.value)}
+        placeholder="https://example.com/image.jpg"
+        style={{ width: "100%", fontSize: 12, padding: "8px 12px", border: "1px solid #E5E7EB", borderRadius: 8, outline: "none", boxSizing: "border-box", background: "#FAFAFA" }} />
+      {value && (
+        <div style={{ marginTop: 8, height: 180, borderRadius: 10, overflow: "hidden", background: "#F3F4F6", position: "relative" }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={value} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          <button onClick={() => setShowGen(true)}
+            style={{ position: "absolute", top: 8, right: 8, fontSize: 11, fontWeight: 700, color: "#fff", background: "linear-gradient(135deg,#4F46E5,#7C3AED)", border: "none", borderRadius: 8, padding: "4px 10px", cursor: "pointer" }}>
+            ✨ AI再生成
+          </button>
+        </div>
+      )}
+      {showGen && (
+        <ImageGenModal
+          defaultPrompt={articleTitle ? `${articleTitle}に関連するプロフェッショナルな画像` : ""}
+          defaultAspect="16:9"
+          onClose={() => setShowGen(false)}
+          onSelect={onChange}
+        />
+      )}
     </div>
   );
 }

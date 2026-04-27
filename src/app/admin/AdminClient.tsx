@@ -6,6 +6,7 @@ import {
   uid, BLOCK_META, FooterBlock, FooterNavConfig, FooterNavColumn, FooterNavLink,
 } from "@/types/site";
 import ArticleBlockEditor from "@/components/admin/ArticleBlockEditor";
+import ImageGenModal from "@/components/admin/ImageGenModal";
 import SitePreview from "@/components/preview/SitePreview";
 import NavBar from "@/components/preview/NavBar";
 import BlockRenderer from "@/components/preview/blocks/BlockRenderer";
@@ -2206,6 +2207,7 @@ function ArticleEditModal({ article, onSave, onClose }: {
     : [{ id: uid(), type: "paragraph", html: "" }];
   const [form, setForm] = useState<Article>({ ...article, bodyBlocks: initBlocks });
   const [preview, setPreview] = useState(false);
+  const [showImgGen, setShowImgGen] = useState(false);
   const f = (patch: Partial<Article>) => setForm((prev) => ({ ...prev, ...patch }));
 
   const inp: React.CSSProperties = { fontSize: 13, padding: "8px 11px", border: "1px solid #E2E8F0", borderRadius: 7, outline: "none", color: "#111", width: "100%", boxSizing: "border-box" };
@@ -2266,10 +2268,23 @@ function ArticleEditModal({ article, onSave, onClose }: {
               <input style={inp} value={form.author} onChange={e => f({ author: e.target.value })} />
             </div>
             <div>
-              <label style={lbl}>アイキャッチ画像 URL</label>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
+                <label style={lbl}>アイキャッチ画像 URL</label>
+                <button onClick={() => setShowImgGen(true)}
+                  style={{ fontSize: 11, fontWeight: 700, color: "#4F46E5", background: "#EEF2FF", border: "1px solid #C7D2FE", borderRadius: 8, padding: "3px 10px", cursor: "pointer" }}>
+                  ✨ AIで生成
+                </button>
+              </div>
               <input style={inp} value={form.imageUrl} onChange={e => f({ imageUrl: e.target.value })} placeholder="https://..." />
               {form.imageUrl && (
-                <img src={form.imageUrl} alt="" style={{ marginTop: 8, width: "100%", height: 120, objectFit: "cover", borderRadius: 6, border: "1px solid #E2E8F0" }} />
+                <div style={{ position: "relative", marginTop: 8 }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={form.imageUrl} alt="" style={{ width: "100%", height: 120, objectFit: "cover", borderRadius: 6, border: "1px solid #E2E8F0", display: "block" }} />
+                  <button onClick={() => setShowImgGen(true)}
+                    style={{ position: "absolute", top: 6, right: 6, fontSize: 11, fontWeight: 700, color: "#fff", background: "linear-gradient(135deg,#4F46E5,#7C3AED)", border: "none", borderRadius: 6, padding: "3px 8px", cursor: "pointer" }}>
+                    ✨ 再生成
+                  </button>
+                </div>
               )}
             </div>
             <div>
@@ -2368,6 +2383,14 @@ function ArticleEditModal({ article, onSave, onClose }: {
           </div>
         </div>
       </div>
+      {showImgGen && (
+        <ImageGenModal
+          defaultPrompt={form.title ? `${form.title}に関連するプロフェッショナルな画像` : ""}
+          defaultAspect="16:9"
+          onClose={() => setShowImgGen(false)}
+          onSelect={url => { f({ imageUrl: url }); setShowImgGen(false); }}
+        />
+      )}
     </div>
   );
 }
