@@ -312,6 +312,7 @@ export default function SetupClient() {
   const [demoError,      setDemoError]    = useState("");
   const chatEndRef = useRef<HTMLDivElement>(null);
   const chatInputRef = useRef<HTMLInputElement>(null);
+  const sendingRef = useRef(false); // 二重送信防止（Stateは非同期なのでRefで管理）
 
   function setAnalysisResult(val: GlobalStyle | null) {
     analysisResultRef.current = val;
@@ -506,6 +507,7 @@ export default function SetupClient() {
       });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
+      setError(""); // 成功したらエラーをクリア
       const allMsgs: ChatMessage[] = [...msgs, { role: "assistant", content: data.reply }];
       setChatMessages(allMsgs);
       if (data.designKey) chatDesignKeyRef.current = data.designKey;
@@ -515,6 +517,7 @@ export default function SetupClient() {
     } catch (e) {
       setError(e instanceof Error ? e.message : "チャットエラーが発生しました");
     } finally {
+      sendingRef.current = false;
       setIsChatLoading(false);
       setTimeout(() => chatInputRef.current?.focus(), 100);
     }
@@ -522,12 +525,13 @@ export default function SetupClient() {
 
   const handleSend = useCallback(() => {
     const text = chatInput.trim();
-    if (!text || isChatLoading) return;
+    if (!text || sendingRef.current) return;
+    sendingRef.current = true;
     const newMsgs: ChatMessage[] = [...chatMessages, { role: "user", content: text }];
     setChatMessages(newMsgs);
     setChatInput("");
     sendChatMessage(newMsgs);
-  }, [chatInput, chatMessages, isChatLoading, sendChatMessage]);
+  }, [chatInput, chatMessages, sendChatMessage]);
 
   // チャットタブに切り替えた時に初回メッセージを取得（lazy init）
   useEffect(() => {
