@@ -120,6 +120,19 @@ export default function GlobalFormatBar() {
 
         <div className="w-px h-5 bg-white/20 mx-0.5" />
 
+        {/* 見出し */}
+        {(["h2","h3","p"] as const).map(tag => (
+          <button key={tag}
+            onMouseDown={(e) => { handleMouseDown(e); exec("formatBlock", tag); }}
+            className="min-w-[28px] h-7 px-1.5 rounded-lg flex items-center justify-center hover:bg-white/20 transition-colors text-xs font-bold"
+            title={tag === "h2" ? "見出し2" : tag === "h3" ? "見出し3" : "段落に戻す"}
+          >
+            {tag === "h2" ? "H2" : tag === "h3" ? "H3" : "¶"}
+          </button>
+        ))}
+
+        <div className="w-px h-5 bg-white/20 mx-0.5" />
+
         {/* 文字色 */}
         <div className="relative">
           <button
