@@ -1281,7 +1281,13 @@ export async function POST(req: NextRequest) {
           parts: [{ text: m.content }],
         }));
 
-    for (const model of ["gemini-2.5-flash", "gemini-2.5-pro"]) {
+    // チャットはthinking不要 → 2.0-flash(高速・無思考)を先頭に、2.5系はthinkingBudget:0で明示無効化
+    const chatModels = [
+      { model: "gemini-2.0-flash",  cfg: { maxOutputTokens: 1024 } },
+      { model: "gemini-2.5-flash",  cfg: { maxOutputTokens: 1024, thinkingConfig: { thinkingBudget: 0 } } },
+      { model: "gemini-1.5-flash",  cfg: { maxOutputTokens: 1024 } },
+    ];
+    for (const { model, cfg } of chatModels) {
       try {
         const res = await fetch(
           `${GEMINI_BASE}/${model}:generateContent?key=${API_KEY}`,
@@ -1291,9 +1297,9 @@ export async function POST(req: NextRequest) {
             body: JSON.stringify({
               systemInstruction: { parts: [{ text: CHAT_SYSTEM }] },
               contents,
-              generationConfig: { maxOutputTokens: 1024 },
+              generationConfig: cfg,
             }),
-            signal: AbortSignal.timeout(10000),
+            signal: AbortSignal.timeout(20000),
           }
         );
         if (!res.ok) continue;
