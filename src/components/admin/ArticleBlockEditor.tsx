@@ -463,25 +463,63 @@ function BalloonBlock({ block, focusedId, onFocus, onUpdate, onEnter, onBackspac
   { block: ArticleBlock & { type: "balloon" }; focusedId: string | null; onFocus: () => void;
     onUpdate: (p: Partial<ArticleBlock>) => void; onEnter: () => void; onBackspaceEmpty: () => void }) {
   const isR = block.direction === "right";
-  const inp = { fontSize: 12, border: "none", outline: "none", background: "transparent", color: "#6B7280", width: "100%" };
+  const [editingImg, setEditingImg] = useState(false);
+  const [imgDraft, setImgDraft] = useState(block.imageUrl);
 
   return (
     <div style={{ display: "flex", alignItems: "flex-start", gap: 12, margin: "8px 0", flexDirection: isR ? "row-reverse" : "row" }}>
       {/* アバター */}
-      <div style={{ flexShrink: 0, textAlign: "center", width: 72 }}>
-        {block.imageUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={block.imageUrl} alt={block.name} style={{ width: 60, height: 60, borderRadius: "50%", objectFit: "cover", border: "2px solid #E5E7EB", display: "block", margin: "0 auto" }} />
+      <div style={{ flexShrink: 0, textAlign: "center", width: 80 }}>
+        {/* 画像エリア */}
+        {editingImg ? (
+          <div style={{ marginBottom: 6 }}>
+            <input
+              autoFocus
+              value={imgDraft}
+              onChange={e => setImgDraft(e.target.value)}
+              placeholder="画像URLを入力"
+              style={{ width: "100%", fontSize: 11, padding: "4px 6px", border: "1px solid #6366F1", borderRadius: 6, outline: "none", boxSizing: "border-box", textAlign: "center" }}
+              onKeyDown={e => {
+                if (e.key === "Enter") { e.preventDefault(); onUpdate({ imageUrl: imgDraft }); setEditingImg(false); }
+                if (e.key === "Escape") { setImgDraft(block.imageUrl); setEditingImg(false); }
+              }}
+              onBlur={() => { onUpdate({ imageUrl: imgDraft }); setEditingImg(false); }}
+            />
+            <p style={{ fontSize: 9, color: "#9CA3AF", margin: "2px 0 0" }}>Enterで確定</p>
+          </div>
         ) : (
-          <div style={{ width: 60, height: 60, borderRadius: "50%", background: "#F3F4F6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28, margin: "0 auto" }}>👤</div>
+          <div
+            onClick={() => { setImgDraft(block.imageUrl); setEditingImg(true); }}
+            style={{ cursor: "pointer", position: "relative", display: "inline-block", marginBottom: 6 }}
+            title="クリックして画像URLを変更">
+            {block.imageUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={block.imageUrl} alt={block.name} style={{ width: 60, height: 60, borderRadius: "50%", objectFit: "cover", border: "2px solid #E5E7EB", display: "block" }} />
+            ) : (
+              <div style={{ width: 60, height: 60, borderRadius: "50%", background: "#F3F4F6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, border: "2px dashed #D1D5DB" }}>👤</div>
+            )}
+            {/* ホバーオーバーレイ */}
+            <div style={{ position: "absolute", inset: 0, borderRadius: "50%", background: "rgba(0,0,0,0.35)", display: "flex", alignItems: "center", justifyContent: "center", opacity: 0, transition: "opacity 0.15s" }}
+              onMouseEnter={e => (e.currentTarget.style.opacity = "1")}
+              onMouseLeave={e => (e.currentTarget.style.opacity = "0")}>
+              <span style={{ fontSize: 16 }}>✏️</span>
+            </div>
+          </div>
         )}
-        <input value={block.imageUrl} onChange={e => onUpdate({ imageUrl: e.target.value })}
-          placeholder="画像URL" style={{ ...inp, fontSize: 10, marginTop: 4, textAlign: "center" }} />
-        <input value={block.name} onChange={e => onUpdate({ name: e.target.value })}
-          placeholder="名前" style={{ ...inp, fontSize: 11, textAlign: "center", fontWeight: 600 }} />
+
+        {/* 名前入力 */}
+        <input
+          value={block.name}
+          onChange={e => onUpdate({ name: e.target.value })}
+          placeholder="名前"
+          style={{ width: "100%", fontSize: 11, fontWeight: 600, textAlign: "center", border: "1px solid transparent", borderRadius: 4, outline: "none", background: "transparent", color: "#374151", padding: "2px 4px", boxSizing: "border-box" }}
+          onFocus={e => (e.target.style.borderColor = "#D1D5DB")}
+          onBlur={e => (e.target.style.borderColor = "transparent")}
+        />
+
         {/* 向き切り替え */}
         <button onClick={() => onUpdate({ direction: isR ? "left" : "right" })}
-          style={{ fontSize: 10, color: "#9CA3AF", background: "none", border: "none", cursor: "pointer", marginTop: 2 }}>
+          style={{ fontSize: 10, color: "#6366F1", background: "#EEF2FF", border: "1px solid #C7D2FE", borderRadius: 10, padding: "2px 6px", cursor: "pointer", marginTop: 4 }}>
           {isR ? "← 左向き" : "右向き →"}
         </button>
       </div>
