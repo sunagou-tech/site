@@ -151,16 +151,21 @@ function BlockWrapper({ children, onUp, onDown, onDelete, isFirst, isLast }:
   );
 }
 
-// ── 追加ボタン ────────────────────────────────────────────────
+// ── 追加ボタン（ホバーのみ表示）────────────────────────────────
 function AddButton({ onAdd }: { onAdd: (e: React.MouseEvent) => void }) {
   const [hovered, setHovered] = useState(false);
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "2px 0 2px 40px", opacity: hovered ? 1 : 0.3, transition: "opacity 0.15s" }}
+    <div style={{ height: 20, display: "flex", alignItems: "center", paddingLeft: 40, cursor: "default" }}
       onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}>
-      <button onClick={onAdd}
-        style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: "#9CA3AF", background: "none", border: "1px dashed #D1D5DB", borderRadius: 6, padding: "3px 10px", cursor: "pointer" }}>
-        <span style={{ fontSize: 16, lineHeight: 1 }}>+</span> ブロックを追加
-      </button>
+      {/* 区切り線（常時） */}
+      <div style={{ flex: 1, height: 1, background: hovered ? "#C7D2FE" : "transparent", transition: "background 0.15s" }} />
+      {/* ホバー時だけ + ボタン表示 */}
+      {hovered && (
+        <button onClick={onAdd}
+          style={{ position: "absolute", left: "50%", transform: "translateX(-50%)", display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: "#6366F1", background: "#EEF2FF", border: "1px solid #C7D2FE", borderRadius: 20, padding: "2px 10px", cursor: "pointer", whiteSpace: "nowrap" }}>
+          <span style={{ fontSize: 14, lineHeight: 1 }}>+</span> 追加
+        </button>
+      )}
     </div>
   );
 }
