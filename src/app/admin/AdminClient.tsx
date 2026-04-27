@@ -2205,6 +2205,7 @@ function ArticleEditModal({ article, onSave, onClose }: {
     ? article.bodyBlocks
     : [{ id: uid(), type: "paragraph", html: "" }];
   const [form, setForm] = useState<Article>({ ...article, bodyBlocks: initBlocks });
+  const [preview, setPreview] = useState(false);
   const f = (patch: Partial<Article>) => setForm((prev) => ({ ...prev, ...patch }));
 
   const inp: React.CSSProperties = { fontSize: 13, padding: "8px 11px", border: "1px solid #E2E8F0", borderRadius: 7, outline: "none", color: "#111", width: "100%", boxSizing: "border-box" };
@@ -2294,19 +2295,76 @@ function ArticleEditModal({ article, onSave, onClose }: {
             </div>
           </div>
 
-          {/* 右: 本文エディタ */}
+          {/* 右: 本文エディタ / プレビュー */}
           <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
-            <div style={{ padding: "8px 20px", borderBottom: "1px solid #F1F5F9", flexShrink: 0, background: "#FAFAFA" }}>
-              <p style={{ margin: 0, fontSize: 11, color: "#64748B" }}>
-                本文 — <strong>+</strong> でブロック追加 &nbsp;|&nbsp; <strong>/</strong> でコマンド &nbsp;|&nbsp; ↑↓ で並び替え
-              </p>
+            {/* タブ切り替え */}
+            <div style={{ padding: "0 20px", borderBottom: "1px solid #F1F5F9", flexShrink: 0, background: "#FAFAFA", display: "flex", alignItems: "center", gap: 0 }}>
+              {[{ id: false, label: "✏️ 編集" }, { id: true, label: "👁 プレビュー" }].map(tab => (
+                <button key={String(tab.id)} onClick={() => setPreview(tab.id)}
+                  style={{ padding: "10px 16px", fontSize: 12, fontWeight: 600, border: "none", borderBottom: preview === tab.id ? "2px solid #4F46E5" : "2px solid transparent", background: "transparent", cursor: "pointer", color: preview === tab.id ? "#4F46E5" : "#94A3B8", transition: "color 0.15s" }}>
+                  {tab.label}
+                </button>
+              ))}
+              {!preview && (
+                <span style={{ fontSize: 11, color: "#CBD5E1", marginLeft: 12 }}>
+                  + で追加 &nbsp;/&nbsp; / でコマンド
+                </span>
+              )}
             </div>
-            <div style={{ flex: 1, overflowY: "auto", padding: "24px 32px" }}>
-              <ArticleBlockEditor
-                blocks={form.bodyBlocks ?? []}
-                onChange={(blocks, html) => f({ bodyBlocks: blocks, body: html })}
-              />
-            </div>
+
+            {/* 編集モード */}
+            {!preview && (
+              <div style={{ flex: 1, overflowY: "auto", padding: "24px 32px" }}>
+                <ArticleBlockEditor
+                  blocks={form.bodyBlocks ?? []}
+                  onChange={(blocks, html) => f({ bodyBlocks: blocks, body: html })}
+                />
+              </div>
+            )}
+
+            {/* プレビューモード */}
+            {preview && (
+              <div style={{ flex: 1, overflowY: "auto", background: "#fff" }}>
+                <div style={{ maxWidth: 720, margin: "0 auto", padding: "40px 32px 80px", fontFamily: "'Noto Sans JP', -apple-system, sans-serif" }}>
+                  {/* アイキャッチ */}
+                  {form.imageUrl && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={form.imageUrl} alt={form.title}
+                      style={{ width: "100%", height: 280, objectFit: "cover", borderRadius: 12, marginBottom: 28, display: "block" }} />
+                  )}
+                  {/* メタ */}
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+                    <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 999, background: "#EEF2FF", color: "#4F46E5" }}>{form.category}</span>
+                    <span style={{ fontSize: 12, color: "#9CA3AF" }}>{form.date}</span>
+                    {form.author && <span style={{ fontSize: 12, color: "#9CA3AF" }}>by {form.author}</span>}
+                  </div>
+                  {/* タイトル */}
+                  <h1 style={{ fontSize: 28, fontWeight: 800, color: "#111827", lineHeight: 1.4, marginBottom: 16, letterSpacing: "-0.02em" }}>{form.title}</h1>
+                  {/* 概要 */}
+                  {form.excerpt && (
+                    <p style={{ fontSize: 15, color: "#6B7280", lineHeight: 1.8, marginBottom: 32, paddingBottom: 24, borderBottom: "1px solid #F3F4F6" }}>{form.excerpt}</p>
+                  )}
+                  {/* 本文 */}
+                  <div className="article-preview" style={{ fontSize: 16, color: "#374151", lineHeight: 1.9 }}
+                    dangerouslySetInnerHTML={{ __html: form.body }} />
+                  <style>{`
+                    .article-preview h2{font-size:1.35rem;font-weight:700;color:#111827;margin:2.5rem 0 1rem;padding-bottom:.5rem;border-bottom:2px solid #E5E7EB}
+                    .article-preview h3{font-size:1.1rem;font-weight:700;color:#1E293B;margin:2rem 0 .75rem}
+                    .article-preview p{margin-bottom:1.25rem}
+                    .article-preview ul{list-style:disc;padding-left:1.75rem;margin:1rem 0}
+                    .article-preview ol{list-style:decimal;padding-left:1.75rem;margin:1rem 0}
+                    .article-preview li{margin-bottom:.4rem}
+                    .article-preview a{color:#4F46E5;text-decoration:underline}
+                    .article-preview strong{font-weight:700}
+                    .article-preview blockquote{border-left:4px solid #E5E7EB;padding:.5rem 0 .5rem 1.5rem;margin:1.5rem 0;color:#6B7280;font-style:italic}
+                    .article-preview img{max-width:100%;border-radius:8px}
+                    .article-preview figure{margin:1.5rem 0}
+                    .article-preview figcaption{text-align:center;font-size:.8rem;color:#6B7280;margin-top:.5rem}
+                    .article-preview hr{border:none;border-top:1px solid #E5E7EB;margin:2rem 0}
+                  `}</style>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

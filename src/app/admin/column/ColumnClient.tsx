@@ -38,6 +38,7 @@ export default function ColumnClient() {
   const [search, setSearch] = useState("");
   const [filterCat, setFilterCat] = useState("all");
   const [editorTab, setEditorTab] = useState<"article" | "seo">("article");
+  const [preview, setPreview] = useState(false);
   const [saving, setSaving] = useState(false);
 
   // Load config from localStorage
@@ -252,59 +253,114 @@ export default function ColumnClient() {
 
             {/* ── ARTICLE TAB ── */}
             {editorTab === "article" && (
-              <div style={{ flex: 1, overflow: "auto", minHeight: 0 }}>
-                <div style={{ maxWidth: 760, margin: "0 auto", padding: "32px 32px 80px" }}>
+              <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", minHeight: 0 }}>
 
-                  {/* OGP Image */}
-                  <div style={{ marginBottom: 24 }}>
-                    <label style={{ fontSize: 11, color: "#6B7280", fontWeight: 600, display: "block", marginBottom: 6 }}>アイキャッチ画像 URL</label>
-                    <input
-                      value={selected.imageUrl} onChange={e => updateArticle({ imageUrl: e.target.value })}
-                      placeholder="https://example.com/image.jpg"
-                      style={{ width: "100%", fontSize: 12, padding: "8px 12px", border: "1px solid #E5E7EB", borderRadius: 8, outline: "none", boxSizing: "border-box", background: "#FAFAFA" }} />
-                    {selected.imageUrl && (
-                      <div style={{ marginTop: 8, height: 180, borderRadius: 10, overflow: "hidden", background: "#F3F4F6" }}>
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={selected.imageUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Category badge + date */}
-                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
-                    <span style={{ fontSize: 12, padding: "3px 10px", borderRadius: 999, background: "#EEF2FF", color: "#4F46E5", fontWeight: 600 }}>{selected.category}</span>
-                    <span style={{ fontSize: 12, color: "#9CA3AF" }}>{selected.date}</span>
-                    <span style={{ fontSize: 12, color: "#9CA3AF" }}>by {selected.author}</span>
-                  </div>
-
-                  {/* Title */}
-                  <textarea
-                    value={selected.title}
-                    onChange={e => updateArticle({ title: e.target.value })}
-                    rows={2}
-                    placeholder="記事タイトルを入力"
-                    style={{ width: "100%", fontSize: 28, fontWeight: 700, color: "#111827", border: "none", outline: "none", resize: "none", lineHeight: 1.4, background: "transparent", marginBottom: 12, boxSizing: "border-box" }} />
-
-                  {/* Excerpt */}
-                  <textarea
-                    value={selected.excerpt}
-                    onChange={e => updateArticle({ excerpt: e.target.value })}
-                    rows={2}
-                    placeholder="概要文（一覧・SNS・検索結果に表示されます）"
-                    style={{ width: "100%", fontSize: 14, color: "#6B7280", border: "none", borderBottom: "1px dashed #E5E7EB", outline: "none", resize: "none", lineHeight: 1.7, background: "transparent", marginBottom: 24, paddingBottom: 16, boxSizing: "border-box" }} />
-
-                  {/* Block Editor */}
-                  <div style={{ borderTop: "1px dashed #E5E7EB", paddingTop: 20 }}>
-                    <p style={{ fontSize: 11, color: "#9CA3AF", fontWeight: 700, marginBottom: 12, letterSpacing: "0.05em" }}>本文ブロック — + で追加 / でコマンド</p>
-                    <ArticleBlockEditor
-                      blocks={selected.bodyBlocks ?? []}
-                      onChange={(blocks, html) => updateArticle({ bodyBlocks: blocks, body: html })}
-                    />
-                  </div>
-                  <style>{`
-                    [data-placeholder]:empty:before { content: attr(data-placeholder); color: #CBD5E1; pointer-events: none; }
-                  `}</style>
+                {/* 編集 / プレビュー タブ */}
+                <div style={{ display: "flex", alignItems: "center", borderBottom: "1px solid #E5E7EB", background: "#FAFAFA", flexShrink: 0 }}>
+                  {[{ v: false, label: "✏️ 編集" }, { v: true, label: "👁 プレビュー" }].map(tab => (
+                    <button key={String(tab.v)} onClick={() => setPreview(tab.v)}
+                      style={{ padding: "9px 18px", fontSize: 12, fontWeight: 600, border: "none", borderBottom: preview === tab.v ? "2px solid #4F46E5" : "2px solid transparent", background: "transparent", cursor: "pointer", color: preview === tab.v ? "#4F46E5" : "#9CA3AF" }}>
+                      {tab.label}
+                    </button>
+                  ))}
                 </div>
+
+                {/* 編集エリア */}
+                {!preview && (
+                  <div style={{ flex: 1, overflow: "auto", minHeight: 0 }}>
+                    <div style={{ maxWidth: 760, margin: "0 auto", padding: "32px 32px 80px" }}>
+
+                      {/* OGP Image */}
+                      <div style={{ marginBottom: 24 }}>
+                        <label style={{ fontSize: 11, color: "#6B7280", fontWeight: 600, display: "block", marginBottom: 6 }}>アイキャッチ画像 URL</label>
+                        <input
+                          value={selected.imageUrl} onChange={e => updateArticle({ imageUrl: e.target.value })}
+                          placeholder="https://example.com/image.jpg"
+                          style={{ width: "100%", fontSize: 12, padding: "8px 12px", border: "1px solid #E5E7EB", borderRadius: 8, outline: "none", boxSizing: "border-box", background: "#FAFAFA" }} />
+                        {selected.imageUrl && (
+                          <div style={{ marginTop: 8, height: 180, borderRadius: 10, overflow: "hidden", background: "#F3F4F6" }}>
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={selected.imageUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Category badge + date */}
+                      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+                        <span style={{ fontSize: 12, padding: "3px 10px", borderRadius: 999, background: "#EEF2FF", color: "#4F46E5", fontWeight: 600 }}>{selected.category}</span>
+                        <span style={{ fontSize: 12, color: "#9CA3AF" }}>{selected.date}</span>
+                        <span style={{ fontSize: 12, color: "#9CA3AF" }}>by {selected.author}</span>
+                      </div>
+
+                      {/* Title */}
+                      <textarea
+                        value={selected.title}
+                        onChange={e => updateArticle({ title: e.target.value })}
+                        rows={2}
+                        placeholder="記事タイトルを入力"
+                        style={{ width: "100%", fontSize: 28, fontWeight: 700, color: "#111827", border: "none", outline: "none", resize: "none", lineHeight: 1.4, background: "transparent", marginBottom: 12, boxSizing: "border-box" }} />
+
+                      {/* Excerpt */}
+                      <textarea
+                        value={selected.excerpt}
+                        onChange={e => updateArticle({ excerpt: e.target.value })}
+                        rows={2}
+                        placeholder="概要文（一覧・SNS・検索結果に表示されます）"
+                        style={{ width: "100%", fontSize: 14, color: "#6B7280", border: "none", borderBottom: "1px dashed #E5E7EB", outline: "none", resize: "none", lineHeight: 1.7, background: "transparent", marginBottom: 24, paddingBottom: 16, boxSizing: "border-box" }} />
+
+                      {/* Block Editor */}
+                      <div style={{ borderTop: "1px dashed #E5E7EB", paddingTop: 20 }}>
+                        <p style={{ fontSize: 11, color: "#9CA3AF", fontWeight: 700, marginBottom: 12, letterSpacing: "0.05em" }}>本文ブロック — + で追加 / でコマンド</p>
+                        <ArticleBlockEditor
+                          blocks={selected.bodyBlocks ?? []}
+                          onChange={(blocks, html) => updateArticle({ bodyBlocks: blocks, body: html })}
+                        />
+                      </div>
+                      <style>{`
+                        [data-placeholder]:empty:before { content: attr(data-placeholder); color: #CBD5E1; pointer-events: none; }
+                      `}</style>
+                    </div>
+                  </div>
+                )}
+
+                {/* プレビューエリア */}
+                {preview && (
+                  <div style={{ flex: 1, overflow: "auto", background: "#fff", minHeight: 0 }}>
+                    <div style={{ maxWidth: 720, margin: "0 auto", padding: "40px 32px 80px", fontFamily: "'Noto Sans JP', -apple-system, sans-serif" }}>
+                      {selected.imageUrl && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={selected.imageUrl} alt={selected.title}
+                          style={{ width: "100%", height: 280, objectFit: "cover", borderRadius: 12, marginBottom: 28, display: "block" }} />
+                      )}
+                      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+                        <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 999, background: "#EEF2FF", color: "#4F46E5" }}>{selected.category}</span>
+                        <span style={{ fontSize: 12, color: "#9CA3AF" }}>{selected.date}</span>
+                        {selected.author && <span style={{ fontSize: 12, color: "#9CA3AF" }}>by {selected.author}</span>}
+                      </div>
+                      <h1 style={{ fontSize: 28, fontWeight: 800, color: "#111827", lineHeight: 1.4, marginBottom: 16, letterSpacing: "-0.02em" }}>{selected.title}</h1>
+                      {selected.excerpt && (
+                        <p style={{ fontSize: 15, color: "#6B7280", lineHeight: 1.8, marginBottom: 32, paddingBottom: 24, borderBottom: "1px solid #F3F4F6" }}>{selected.excerpt}</p>
+                      )}
+                      <div className="col-preview" style={{ fontSize: 16, color: "#374151", lineHeight: 1.9 }}
+                        dangerouslySetInnerHTML={{ __html: selected.body }} />
+                      <style>{`
+                        .col-preview h2{font-size:1.35rem;font-weight:700;color:#111827;margin:2.5rem 0 1rem;padding-bottom:.5rem;border-bottom:2px solid #E5E7EB}
+                        .col-preview h3{font-size:1.1rem;font-weight:700;color:#1E293B;margin:2rem 0 .75rem}
+                        .col-preview p{margin-bottom:1.25rem}
+                        .col-preview ul{list-style:disc;padding-left:1.75rem;margin:1rem 0}
+                        .col-preview ol{list-style:decimal;padding-left:1.75rem;margin:1rem 0}
+                        .col-preview li{margin-bottom:.4rem}
+                        .col-preview a{color:#4F46E5;text-decoration:underline}
+                        .col-preview strong{font-weight:700}
+                        .col-preview blockquote{border-left:4px solid #E5E7EB;padding:.5rem 0 .5rem 1.5rem;margin:1.5rem 0;color:#6B7280;font-style:italic}
+                        .col-preview img{max-width:100%;border-radius:8px}
+                        .col-preview figure{margin:1.5rem 0}
+                        .col-preview figcaption{text-align:center;font-size:.8rem;color:#6B7280;margin-top:.5rem}
+                        .col-preview hr{border:none;border-top:1px solid #E5E7EB;margin:2rem 0}
+                      `}</style>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
