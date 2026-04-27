@@ -5,14 +5,7 @@ export const maxDuration = 60;
 
 const API_KEY         = process.env.GEMINI_API_KEY ?? "";
 const GEMINI_BASE     = "https://generativelanguage.googleapis.com/v1beta/models";
-const GEMINI_MODELS   = [
-  "gemini-2.5-flash-preview-04-17",
-  "gemini-2.0-flash-001",
-  "gemini-2.0-flash-exp",
-  "gemini-1.5-flash-latest",
-  "gemini-1.5-flash-001",
-  "gemini-2.5-pro-preview-03-25",
-];
+const GEMINI_MODELS   = ["gemini-2.5-flash", "gemini-2.5-pro"];
 
 // ── 6種のデザインシステム定義 ────────────────────────────────
 const DESIGN_SYSTEMS: Record<string, GlobalStyle & { _desc: string }> = {
@@ -1217,43 +1210,42 @@ async function geminiFetch(
   const generationConfig: Record<string, unknown> = { maxOutputTokens: maxTokens };
   if (forceJson) generationConfig.responseMimeType = "application/json";
 
+  const waitMs = (ms: number) => new Promise(r => setTimeout(r, ms));
   for (const model of GEMINI_MODELS) {
-    try {
-      const res = await fetch(
-        `${GEMINI_BASE}/${model}:generateContent?key=${API_KEY}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            systemInstruction: { parts: [{ text: systemPrompt }] },
-            contents: [{ role: "user", parts: [{ text: userPrompt }] }],
-            generationConfig,
-          }),
-          signal: AbortSignal.timeout(MODEL_TIMEOUT_MS),
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        if (attempt > 0) await waitMs(2000);
+        const res = await fetch(
+          `${GEMINI_BASE}/${model}:generateContent?key=${API_KEY}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              systemInstruction: { parts: [{ text: systemPrompt }] },
+              contents: [{ role: "user", parts: [{ text: userPrompt }] }],
+              generationConfig,
+            }),
+            signal: AbortSignal.timeout(MODEL_TIMEOUT_MS),
+          }
+        );
+
+        if (res.ok) {
+          const data = await res.json();
+          const parts = data.candidates?.[0]?.content?.parts ?? [];
+          const text = parts
+            .filter((p: { thought?: boolean; text?: string }) => !p.thought)
+            .map((p: { text?: string }) => p.text ?? "")
+            .join("");
+          if (text) return text;
+          break; // 空レスポンス → 次モデル
         }
-      );
 
-      if (res.ok) {
-        const data = await res.json();
-        const parts = data.candidates?.[0]?.content?.parts ?? [];
-        const text = parts
-          .filter((p: { thought?: boolean; text?: string }) => !p.thought)
-          .map((p: { text?: string }) => p.text ?? "")
-          .join("");
-        if (text) return text;
-        continue; // 空ならば次モデルへ
+        const is503 = res.status === 503 || res.status === 429;
+        if (is503 && attempt === 0) continue; // 503なら1回リトライ
+        break; // 他エラーは次モデルへ
+      } catch {
+        break; // タイムアウト等は次モデルへ
       }
-
-      const errText = await res.text();
-      // 過負荷系は即次モデルへ（リトライなし）
-      const isRetryable = res.status === 503 || res.status === 429 ||
-        errText.includes("UNAVAILABLE") || errText.includes("RESOURCE_EXHAUSTED");
-      if (isRetryable) continue;
-      // それ以外のエラー（400など）も次モデルへ
-      continue;
-    } catch {
-      // タイムアウト・ネットワークエラー → 次モデルへ
-      continue;
     }
   }
   throw new Error("AIサービスが混雑しています。しばらく待ってからやり直してください。");
@@ -1288,36 +1280,35 @@ export async function POST(req: NextRequest) {
           parts: [{ text: m.content }],
         }));
 
-    // チャットはthinking不要 → 正しいバージョン付きモデル名を使用
-    const chatModelList = [
-      "gemini-2.0-flash-001",
-      "gemini-2.0-flash-exp",
-      "gemini-2.5-flash-preview-04-17",
-      "gemini-1.5-flash-latest",
-      "gemini-1.5-flash-001",
-      "gemini-2.5-pro-preview-03-25",
-    ];
+    // バージョン付き名称は404になるため、シンプルな名前のみ使用
+    // 503(過負荷)の場合は1秒待ってリトライ、それでも失敗なら次へ
+    const chatModelList = ["gemini-2.5-flash", "gemini-2.5-pro"];
     const chatErrors: string[] = [];
+    const wait = (ms: number) => new Promise(r => setTimeout(r, ms));
     for (const model of chatModelList) {
-      try {
-        const res = await fetch(
-          `${GEMINI_BASE}/${model}:generateContent?key=${API_KEY}`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              systemInstruction: { parts: [{ text: CHAT_SYSTEM }] },
-              contents,
-              generationConfig: { maxOutputTokens: 1024 },
-            }),
-            signal: AbortSignal.timeout(25000),
+      for (let attempt = 0; attempt < 2; attempt++) {
+        try {
+          if (attempt > 0) await wait(1500);
+          const res = await fetch(
+            `${GEMINI_BASE}/${model}:generateContent?key=${API_KEY}`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                systemInstruction: { parts: [{ text: CHAT_SYSTEM }] },
+                contents,
+                generationConfig: { maxOutputTokens: 1024 },
+              }),
+              signal: AbortSignal.timeout(30000),
+            }
+          );
+          if (!res.ok) {
+            const errText = await res.text().catch(() => "");
+            const is503 = res.status === 503 || res.status === 429;
+            chatErrors.push(`${model}[${attempt}]:${res.status}(${errText.slice(0, 60)})`);
+            if (is503 && attempt === 0) continue; // 1回だけリトライ
+            break; // 404等はリトライしない
           }
-        );
-        if (!res.ok) {
-          const errText = await res.text().catch(() => "");
-          chatErrors.push(`${model}:${res.status}(${errText.slice(0, 80)})`);
-          continue;
-        }
         const data = await res.json();
         const parts = data.candidates?.[0]?.content?.parts ?? [];
         const reply: string = parts
@@ -1328,13 +1319,14 @@ export async function POST(req: NextRequest) {
         const shouldGenerate = reply.includes("[GENERATE");
         const designMatch = reply.match(/\[DESIGN:([\w-]+)\]?/);
         const designKey = designMatch?.[1] ?? "";
-        const cleanReply = reply.replace(/\[GENERATE\]?/g, "").replace(/\[DESIGN:[\w-]+\]?/g, "").trim();
-        return NextResponse.json({ reply: cleanReply, shouldGenerate, designKey });
-      } catch (e) {
-        chatErrors.push(`${model}:${e instanceof Error ? e.message : "err"}`);
-        continue;
-      }
-    }
+          const cleanReply = reply.replace(/\[GENERATE\]?/g, "").replace(/\[DESIGN:[\w-]+\]?/g, "").trim();
+          return NextResponse.json({ reply: cleanReply, shouldGenerate, designKey });
+        } catch (e) {
+          chatErrors.push(`${model}[${attempt}]:${e instanceof Error ? e.message : "err"}`);
+          break; // catch時は次モデルへ
+        }
+      } // end attempt
+    } // end model
     console.error("[setup-ai chat] all models failed:", chatErrors);
     return NextResponse.json({ error: `AIに接続できませんでした。[${chatErrors.join(" / ")}]` }, { status: 503 });
   }
