@@ -1228,7 +1228,11 @@ async function geminiFetch(
 
       if (res.ok) {
         const data = await res.json();
-        const text = data.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
+        const parts = data.candidates?.[0]?.content?.parts ?? [];
+        const text = parts
+          .filter((p: { thought?: boolean; text?: string }) => !p.thought)
+          .map((p: { text?: string }) => p.text ?? "")
+          .join("");
         if (text) return text;
         continue; // 空ならば次モデルへ
       }
