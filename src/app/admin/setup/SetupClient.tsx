@@ -466,7 +466,7 @@ export default function SetupClient() {
     }
   }, [selectedDemo, router]);
 
-  // ─── チャット: メッセージ送信 ────────────────────────────────
+  // ─── チャット: サイト生成（503混雑時に1回自動リトライ）───────
   const runChatGenerate = useCallback(async (msgs: ChatMessage[]) => {
     setPhase("generating");
     setGenPct(0);
@@ -474,7 +474,8 @@ export default function SetupClient() {
     GEN_STEPS.forEach(({ pct, text }, i) => {
       setTimeout(() => { setGenPct(pct); setGenText(text); }, i * 1600);
     });
-    try {
+
+    const tryGenerate = async () => {
       const res = await fetch("/api/setup-ai", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -489,8 +490,21 @@ export default function SetupClient() {
       let data: { error?: string; config?: any };
       try { data = await res.json(); } catch { throw new Error("サーバーエラーが発生しました。もう一度お試しください。"); }
       if (!res.ok || data.error) throw new Error(data.error ?? "生成に失敗しました");
+      return data.config;
+    };
+
+    try {
+      let config;
+      try {
+        config = await tryGenerate();
+      } catch {
+        // 503混雑時は3秒後に1回自動リトライ
+        setGenText("AIが混雑中です。少し待ってから再試行します...");
+        await new Promise(r => setTimeout(r, 3000));
+        config = await tryGenerate();
+      }
       setGenPct(100);
-      setTimeout(() => { setGeneratedConfig(data.config); goToEditor(data.config); }, 800);
+      setTimeout(() => { setGeneratedConfig(config); goToEditor(config); }, 800);
     } catch (e) {
       setError(e instanceof Error ? e.message : "生成に失敗しました");
       setPhase("form");
@@ -979,7 +993,15 @@ export default function SetupClient() {
             {error && (
               <span className="text-xs flex items-center gap-1.5" style={{ color: "#DC2626" }}>
                 <MsIcon name="error" size={14} color="#DC2626" />
-                {error}
+                AIが混雑しています
+                {/* チャット完了後の生成失敗 → 再試行ボタン */}
+                {chatMessages.length > 0 && (
+                  <button
+                    onClick={() => { setError(""); runChatGenerate(chatMessages); }}
+                    style={{ marginLeft: 6, padding: "3px 10px", borderRadius: 6, border: "1px solid #DC2626", background: "#FEF2F2", color: "#DC2626", cursor: "pointer", fontSize: 11, fontWeight: 700, whiteSpace: "nowrap" }}>
+                    ↻ 再試行
+                  </button>
+                )}
               </span>
             )}
             <a href="/admin" className="text-xs px-3 py-1.5 rounded-lg"
