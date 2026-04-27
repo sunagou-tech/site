@@ -18,6 +18,9 @@ const BLOCK_MENU = [
   { key: "callout-info",     icon: "💡",  label: "吹き出し（情報）", desc: "注目ボックス" },
   { key: "callout-warn",     icon: "⚠️",  label: "吹き出し（注意）", desc: "警告ボックス" },
   { key: "callout-tip",      icon: "✅",  label: "吹き出し（ヒント）", desc: "ヒントボックス" },
+  { key: "balloon-left",     icon: "💬",  label: "ふきだし（左）",  desc: "アバター＋会話バブル" },
+  { key: "balloon-right",    icon: "🗨",  label: "ふきだし（右）",  desc: "右向きふきだし" },
+  { key: "linkcard",         icon: "🔗",  label: "内部リンクカード", desc: "記事カードを自動生成" },
 ];
 
 function createBlock(key: string): ArticleBlock {
@@ -30,9 +33,12 @@ function createBlock(key: string): ArticleBlock {
   if (key === "list-ordered") return { id, type: "list", ordered: true, items: [""] };
   if (key === "quote")        return { id, type: "quote", text: "", cite: "" };
   if (key === "divider")      return { id, type: "divider" };
-  if (key === "callout-info") return { id, type: "callout", variant: "info", text: "" };
-  if (key === "callout-warn") return { id, type: "callout", variant: "warn", text: "" };
-  if (key === "callout-tip")  return { id, type: "callout", variant: "tip", text: "" };
+  if (key === "callout-info")  return { id, type: "callout", variant: "info", text: "" };
+  if (key === "callout-warn")  return { id, type: "callout", variant: "warn", text: "" };
+  if (key === "callout-tip")   return { id, type: "callout", variant: "tip", text: "" };
+  if (key === "balloon-left")  return { id, type: "balloon", imageUrl: "", name: "", text: "", direction: "left" };
+  if (key === "balloon-right") return { id, type: "balloon", imageUrl: "", name: "", text: "", direction: "right" };
+  if (key === "linkcard")      return { id, type: "linkcard", slug: "", title: "", imageUrl: "", label: "あわせて読みたい" };
   return { id, type: "paragraph", html: "" };
 }
 
@@ -391,6 +397,12 @@ function BlockContent({ block, focusedId, onFocus, onUpdate, onEnter, onBackspac
         </div>
       );
     }
+
+    case "balloon":
+      return <BalloonBlock block={block} focusedId={focusedId} onFocus={onFocus} onUpdate={onUpdate} onEnter={onEnter} onBackspaceEmpty={onBackspaceEmpty} />;
+
+    case "linkcard":
+      return <LinkCardBlock block={block} onUpdate={onUpdate} />;
   }
 }
 
@@ -438,5 +450,122 @@ function ListBlock({ block, focusedId, onFocus, onUpdate }:
         </li>
       ))}
     </Tag>
+  );
+}
+
+// ── ふきだし（balloon）─────────────────────────────────────────
+function BalloonBlock({ block, focusedId, onFocus, onUpdate, onEnter, onBackspaceEmpty }:
+  { block: ArticleBlock & { type: "balloon" }; focusedId: string | null; onFocus: () => void;
+    onUpdate: (p: Partial<ArticleBlock>) => void; onEnter: () => void; onBackspaceEmpty: () => void }) {
+  const isR = block.direction === "right";
+  const inp = { fontSize: 12, border: "none", outline: "none", background: "transparent", color: "#6B7280", width: "100%" };
+
+  return (
+    <div style={{ display: "flex", alignItems: "flex-start", gap: 12, margin: "8px 0", flexDirection: isR ? "row-reverse" : "row" }}>
+      {/* アバター */}
+      <div style={{ flexShrink: 0, textAlign: "center", width: 72 }}>
+        {block.imageUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={block.imageUrl} alt={block.name} style={{ width: 60, height: 60, borderRadius: "50%", objectFit: "cover", border: "2px solid #E5E7EB", display: "block", margin: "0 auto" }} />
+        ) : (
+          <div style={{ width: 60, height: 60, borderRadius: "50%", background: "#F3F4F6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28, margin: "0 auto" }}>👤</div>
+        )}
+        <input value={block.imageUrl} onChange={e => onUpdate({ imageUrl: e.target.value })}
+          placeholder="画像URL" style={{ ...inp, fontSize: 10, marginTop: 4, textAlign: "center" }} />
+        <input value={block.name} onChange={e => onUpdate({ name: e.target.value })}
+          placeholder="名前" style={{ ...inp, fontSize: 11, textAlign: "center", fontWeight: 600 }} />
+        {/* 向き切り替え */}
+        <button onClick={() => onUpdate({ direction: isR ? "left" : "right" })}
+          style={{ fontSize: 10, color: "#9CA3AF", background: "none", border: "none", cursor: "pointer", marginTop: 2 }}>
+          {isR ? "← 左向き" : "右向き →"}
+        </button>
+      </div>
+
+      {/* バブル */}
+      <div style={{ flex: 1, position: "relative", background: isR ? "#E0F2FE" : "#F9FAFB", border: "1px solid #D1D5DB", borderRadius: 12, padding: "10px 14px" }}>
+        {/* 三角矢印 */}
+        <div style={{
+          position: "absolute", top: 18,
+          ...(isR ? { right: -8, borderLeft: "8px solid #D1D5DB", borderTop: "8px solid transparent", borderBottom: "8px solid transparent" }
+                   : { left: -8, borderRight: "8px solid #D1D5DB", borderTop: "8px solid transparent", borderBottom: "8px solid transparent" }),
+          width: 0, height: 0
+        }} />
+        <TextBlock tag="p" value={block.text} placeholder="セリフを入力…"
+          style={{ fontSize: 14, color: "#374151", lineHeight: 1.75 }}
+          focusId={focusedId} blockId={block.id}
+          onFocus={onFocus}
+          onUpdate={v => onUpdate({ text: v })}
+          onEnter={onEnter}
+          onBackspaceEmpty={onBackspaceEmpty}
+        />
+      </div>
+    </div>
+  );
+}
+
+// ── 内部リンクカード（linkcard）────────────────────────────────
+function LinkCardBlock({ block, onUpdate }:
+  { block: ArticleBlock & { type: "linkcard" }; onUpdate: (p: Partial<ArticleBlock>) => void }) {
+  const [slugInput, setSlugInput] = useState(block.slug);
+  const [status, setStatus] = useState<"idle" | "found" | "notfound">("idle");
+
+  function lookup(slug: string) {
+    if (!slug) return;
+    try {
+      const saved = localStorage.getItem("site-config");
+      if (saved) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const cfg = JSON.parse(saved) as { articles?: any[] };
+        const art = cfg.articles?.find((a: { slug: string }) => a.slug === slug);
+        if (art) {
+          onUpdate({ slug: art.slug, title: art.title, imageUrl: art.imageUrl || "" });
+          setStatus("found");
+          return;
+        }
+      }
+    } catch {}
+    setStatus("notfound");
+  }
+
+  return (
+    <div style={{ border: "2px solid #E5E7EB", borderRadius: 8, overflow: "hidden", margin: "4px 0" }}>
+      {/* ラベル */}
+      <div style={{ background: "#FFF7ED", padding: "4px 12px", display: "flex", alignItems: "center", gap: 8 }}>
+        <span style={{ fontSize: 11, fontWeight: 700, color: "#EA580C" }}>📎</span>
+        <input value={block.label} onChange={e => onUpdate({ label: e.target.value })}
+          style={{ fontSize: 11, fontWeight: 700, color: "#EA580C", border: "none", outline: "none", background: "transparent", flex: 1 }}
+          placeholder="あわせて読みたい" />
+      </div>
+
+      {/* スラッグ入力 */}
+      <div style={{ padding: "8px 12px", borderBottom: "1px solid #F3F4F6", display: "flex", gap: 8, alignItems: "center" }}>
+        <span style={{ fontSize: 11, color: "#9CA3AF", flexShrink: 0 }}>スラッグ:</span>
+        <input value={slugInput}
+          onChange={e => setSlugInput(e.target.value)}
+          onBlur={() => lookup(slugInput)}
+          onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); lookup(slugInput); } }}
+          placeholder="記事スラッグ（例: my-article）"
+          style={{ flex: 1, fontSize: 12, border: "1px solid #E5E7EB", borderRadius: 6, padding: "4px 8px", outline: "none", fontFamily: "monospace" }} />
+        <button onClick={() => lookup(slugInput)}
+          style={{ fontSize: 11, padding: "4px 10px", borderRadius: 6, border: "none", background: "#4F46E5", color: "#fff", cursor: "pointer" }}>
+          取得
+        </button>
+        {status === "found" && <span style={{ fontSize: 11, color: "#16A34A" }}>✓</span>}
+        {status === "notfound" && <span style={{ fontSize: 11, color: "#EF4444" }}>記事が見つかりません</span>}
+      </div>
+
+      {/* プレビュー */}
+      <div style={{ display: "flex", alignItems: "center", gap: 12, padding: 12 }}>
+        {block.imageUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={block.imageUrl} alt={block.title} style={{ width: 100, height: 70, objectFit: "cover", borderRadius: 4, flexShrink: 0 }} />
+        ) : (
+          <div style={{ width: 100, height: 70, background: "#F3F4F6", borderRadius: 4, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, color: "#CBD5E1" }}>🖼</div>
+        )}
+        <span style={{ fontSize: 14, fontWeight: 600, color: "#1558D6", textDecoration: "underline" }}>
+          {block.title || (block.slug ? `/${block.slug}` : "スラッグを入力して取得ボタンを押してください")}
+        </span>
+      </div>
+    </div>
   );
 }

@@ -658,7 +658,9 @@ export type ArticleBlock =
   | { id: string; type: "list"; ordered: boolean; items: string[] }
   | { id: string; type: "quote"; text: string; cite: string }
   | { id: string; type: "divider" }
-  | { id: string; type: "callout"; variant: "info" | "warn" | "tip"; text: string };
+  | { id: string; type: "callout"; variant: "info" | "warn" | "tip"; text: string }
+  | { id: string; type: "balloon"; imageUrl: string; name: string; text: string; direction: "left" | "right" }
+  | { id: string; type: "linkcard"; slug: string; title: string; imageUrl: string; label: string };
 
 function _esc(s: string) { return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
 
@@ -675,6 +677,18 @@ export function blocksToHtml(blocks: ArticleBlock[]): string {
         const v={info:["#EFF6FF","#2563EB","#DBEAFE"],warn:["#FFFBEB","#D97706","#FEF3C7"],tip:["#F0FDF4","#16A34A","#DCFCE7"]}[b.variant];
         return `<div style="background:${v[2]};border-left:4px solid ${v[1]};border-radius:8px;padding:1rem 1.25rem;margin:1.5rem 0"><p style="color:${v[0]};margin:0">${_esc(b.text)}</p></div>`;
       }
+      case "balloon": {
+        const isR = b.direction === "right";
+        const avatar = b.imageUrl
+          ? `<img src="${_esc(b.imageUrl)}" alt="${_esc(b.name)}" style="width:60px;height:60px;border-radius:50%;object-fit:cover;border:2px solid #E5E7EB;display:block">`
+          : `<div style="width:60px;height:60px;border-radius:50%;background:#F3F4F6;display:flex;align-items:center;justify-content:center;font-size:28px">👤</div>`;
+        const nameTag = b.name ? `<p style="font-size:11px;color:#6B7280;margin:4px 0 0;text-align:center">${_esc(b.name)}</p>` : "";
+        const avatarCol = `<div style="flex-shrink:0;text-align:center">${avatar}${nameTag}</div>`;
+        const bubble = `<div style="position:relative;background:${isR?"#E0F2FE":"#F9FAFB"};border:1px solid #D1D5DB;border-radius:12px;padding:10px 14px;flex:1;font-size:14px;line-height:1.7">${_esc(b.text)}</div>`;
+        return `<div style="display:flex;align-items:flex-start;gap:12px;margin:1.5rem 0;flex-direction:${isR?"row-reverse":"row"}">${avatarCol}${bubble}</div>`;
+      }
+      case "linkcard":
+        return `<div style="border:2px solid #E5E7EB;border-radius:8px;overflow:hidden;margin:1.5rem 0"><div style="background:#FFF7ED;padding:4px 12px;font-size:11px;font-weight:700;color:#EA580C">${_esc(b.label||"あわせて読みたい")}</div><a href="/column/${_esc(b.slug)}" style="display:flex;align-items:center;gap:12px;padding:12px;text-decoration:none;color:inherit">${b.imageUrl?`<img src="${_esc(b.imageUrl)}" alt="${_esc(b.title)}" style="width:100px;height:70px;object-fit:cover;border-radius:4px;flex-shrink:0">`:""}<span style="font-size:14px;font-weight:600;color:#1558D6;text-decoration:underline">${_esc(b.title||b.slug)}</span></a></div>`;
     }
   }).join("\n");
 }
