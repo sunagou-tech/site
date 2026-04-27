@@ -2,9 +2,10 @@
 
 import { useState, useEffect, useRef } from "react";
 import {
-  defaultConfig, SiteConfig, SitePage, SectionBlock, Article,
+  defaultConfig, SiteConfig, SitePage, SectionBlock, Article, ArticleBlock, blocksToHtml,
   uid, BLOCK_META, FooterBlock, FooterNavConfig, FooterNavColumn, FooterNavLink,
 } from "@/types/site";
+import ArticleBlockEditor from "@/components/admin/ArticleBlockEditor";
 import SitePreview from "@/components/preview/SitePreview";
 import NavBar from "@/components/preview/NavBar";
 import BlockRenderer from "@/components/preview/blocks/BlockRenderer";
@@ -2200,7 +2201,10 @@ function ArticleEditModal({ article, onSave, onClose }: {
   onSave: (a: Article) => void;
   onClose: () => void;
 }) {
-  const [form, setForm] = useState<Article>({ ...article });
+  const initBlocks: ArticleBlock[] = article.bodyBlocks?.length
+    ? article.bodyBlocks
+    : [{ id: uid(), type: "paragraph", html: "" }];
+  const [form, setForm] = useState<Article>({ ...article, bodyBlocks: initBlocks });
   const f = (patch: Partial<Article>) => setForm((prev) => ({ ...prev, ...patch }));
 
   const inp: React.CSSProperties = { fontSize: 13, padding: "8px 11px", border: "1px solid #E2E8F0", borderRadius: 7, outline: "none", color: "#111", width: "100%", boxSizing: "border-box" };
@@ -2292,17 +2296,17 @@ function ArticleEditModal({ article, onSave, onClose }: {
 
           {/* 右: 本文エディタ */}
           <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
-            <div style={{ padding: "10px 20px", borderBottom: "1px solid #F1F5F9", flexShrink: 0, background: "#FAFAFA" }}>
+            <div style={{ padding: "8px 20px", borderBottom: "1px solid #F1F5F9", flexShrink: 0, background: "#FAFAFA" }}>
               <p style={{ margin: 0, fontSize: 11, color: "#64748B" }}>
-                本文（HTML可）— &lt;h2&gt;、&lt;p&gt;、&lt;ul&gt;、&lt;strong&gt; などのタグが使えます
+                本文 — <strong>+</strong> でブロック追加 &nbsp;|&nbsp; <strong>/</strong> でコマンド &nbsp;|&nbsp; ↑↓ で並び替え
               </p>
             </div>
-            <textarea
-              style={{ flex: 1, resize: "none", border: "none", outline: "none", padding: "20px 24px", fontSize: 14, lineHeight: 1.8, color: "#1E293B", fontFamily: "'Noto Sans JP', sans-serif", background: "#fff" }}
-              value={form.body}
-              onChange={e => f({ body: e.target.value })}
-              placeholder="<p>ここに本文を入力...</p>&#10;<h2>見出し</h2>&#10;<p>続きの文章</p>"
-            />
+            <div style={{ flex: 1, overflowY: "auto", padding: "24px 32px" }}>
+              <ArticleBlockEditor
+                blocks={form.bodyBlocks ?? []}
+                onChange={(blocks, html) => f({ bodyBlocks: blocks, body: html })}
+              />
+            </div>
           </div>
         </div>
       </div>
