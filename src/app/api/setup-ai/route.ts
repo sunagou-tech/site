@@ -5,7 +5,14 @@ export const maxDuration = 60;
 
 const API_KEY         = process.env.GEMINI_API_KEY ?? "";
 const GEMINI_BASE     = "https://generativelanguage.googleapis.com/v1beta/models";
-const GEMINI_MODELS   = ["gemini-2.0-flash", "gemini-2.5-flash", "gemini-1.5-flash", "gemini-2.5-pro"];
+const GEMINI_MODELS   = [
+  "gemini-2.5-flash-preview-04-17",
+  "gemini-2.0-flash-001",
+  "gemini-2.0-flash-exp",
+  "gemini-1.5-flash-latest",
+  "gemini-1.5-flash-001",
+  "gemini-2.5-pro-preview-03-25",
+];
 
 // ── 6種のデザインシステム定義 ────────────────────────────────
 const DESIGN_SYSTEMS: Record<string, GlobalStyle & { _desc: string }> = {
@@ -1281,8 +1288,15 @@ export async function POST(req: NextRequest) {
           parts: [{ text: m.content }],
         }));
 
-    // チャットはthinking不要 → シンプルなモデルリスト（thinkingConfigは除外）
-    const chatModelList = ["gemini-2.0-flash", "gemini-2.5-flash", "gemini-1.5-flash", "gemini-2.5-pro"];
+    // チャットはthinking不要 → 正しいバージョン付きモデル名を使用
+    const chatModelList = [
+      "gemini-2.0-flash-001",
+      "gemini-2.0-flash-exp",
+      "gemini-2.5-flash-preview-04-17",
+      "gemini-1.5-flash-latest",
+      "gemini-1.5-flash-001",
+      "gemini-2.5-pro-preview-03-25",
+    ];
     const chatErrors: string[] = [];
     for (const model of chatModelList) {
       try {
