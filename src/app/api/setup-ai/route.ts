@@ -5,7 +5,7 @@ export const maxDuration = 60;
 
 const API_KEY         = process.env.GEMINI_API_KEY ?? "";
 const GEMINI_BASE     = "https://generativelanguage.googleapis.com/v1beta/models";
-const GEMINI_MODELS   = ["gemini-2.0-flash", "gemini-2.5-flash", "gemini-2.0-flash-lite"];
+const GEMINI_MODELS   = ["gemini-2.0-flash", "gemini-2.0-flash-lite", "gemini-1.5-flash"];
 
 // ── 6種のデザインシステム定義 ────────────────────────────────
 const DESIGN_SYSTEMS: Record<string, GlobalStyle & { _desc: string }> = {
@@ -1259,6 +1259,7 @@ async function geminiFetch(
   if (forceJson) generationConfig.responseMimeType = "application/json";
 
   const waitMs = (ms: number) => new Promise(r => setTimeout(r, ms));
+  const modelErrors: string[] = [];
   for (const model of GEMINI_MODELS) {
     for (let attempt = 0; attempt < 2; attempt++) {
       try {
@@ -1285,18 +1286,26 @@ async function geminiFetch(
             .map((p: { text?: string }) => p.text ?? "")
             .join("");
           if (text) return text;
+          modelErrors.push(`${model}:empty`);
           break; // 空レスポンス → 次モデル
         }
 
-        const is503 = res.status === 503 || res.status === 429;
-        if (is503 && attempt === 0) continue; // 503なら1回リトライ
+        const errText = await res.text().catch(() => "");
+        modelErrors.push(`${model}[${attempt}]:${res.status}`);
+        const is429 = res.status === 429 || errText.includes("RESOURCE_EXHAUSTED");
+        const is503 = res.status === 503 || errText.includes("UNAVAILABLE");
+        if ((is503 || is429) && attempt === 0) {
+          if (is429) await waitMs(2000); // レート制限は少し待つ
+          continue;
+        }
         break; // 他エラーは次モデルへ
-      } catch {
+      } catch (e) {
+        modelErrors.push(`${model}[${attempt}]:${e instanceof Error ? e.message.slice(0, 40) : "err"}`);
         break; // タイムアウト等は次モデルへ
       }
     }
   }
-  throw new Error("AIサービスが混雑しています。しばらく待ってからやり直してください。");
+  throw new Error(`AIサービスが混雑しています。[${modelErrors.join(" / ")}]`);
 }
 
 // ── Route handler ────────────────────────────────────────────
@@ -1330,7 +1339,7 @@ export async function POST(req: NextRequest) {
 
     // チャットは1024トークン程度 → 8秒で十分。60秒制限内に収める
     // 3モデル × 2回 × (8s + 0.3s) = 最大50秒
-    const chatModelList = ["gemini-2.0-flash-lite", "gemini-2.0-flash", "gemini-2.5-flash"];
+    const chatModelList = ["gemini-2.0-flash-lite", "gemini-2.0-flash", "gemini-1.5-flash"];
     const chatErrors: string[] = [];
     const wait = (ms: number) => new Promise(r => setTimeout(r, ms));
     for (const model of chatModelList) {
