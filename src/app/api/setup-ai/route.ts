@@ -7,7 +7,7 @@ export const maxDuration = 60;
 
 const API_KEY         = process.env.GEMINI_API_KEY ?? "";
 const GEMINI_BASE     = "https://generativelanguage.googleapis.com/v1beta/models";
-const GEMINI_MODELS   = ["gemini-2.0-flash", "gemini-2.0-flash-lite", "gemini-1.5-flash"];
+const GEMINI_MODELS   = ["gemini-2.0-flash-lite", "gemini-2.0-flash", "gemini-1.5-flash"];
 
 // ── 6種のデザインシステム定義 ────────────────────────────────
 const DESIGN_SYSTEMS: Record<string, GlobalStyle & { _desc: string }> = {
@@ -334,29 +334,10 @@ ${DESIGN_CONTROL_RULES}
     "email": "info@example.com",
     "copyright": "© 2025 会社名 All Rights Reserved."
   },
-  "articles": [
-    {
-      "slug": "article-1",
-      "title": "SEOタイトル（30字以内）",
-      "category": "カテゴリ名",
-      "excerpt": "概要1文（60字以内）",
-      "body": "<p>リード文。</p><h2>見出し</h2><p>本文2〜3文。</p>"
-    },
-    {
-      "slug": "article-2",
-      "title": "SEOタイトル2",
-      "category": "カテゴリ名",
-      "excerpt": "概要1文",
-      "body": "<p>本文2〜3文。</p>"
-    },
-    {
-      "slug": "article-3",
-      "title": "SEOタイトル3",
-      "category": "カテゴリ名",
-      "excerpt": "概要1文",
-      "body": "<p>本文2〜3文。</p>"
-    }
-  ]
+  "columnCategory": "業種に合った記事カテゴリ名（例：塾ならば「学習法」）",
+  "columnTopic1": "記事タイトル1（30字以内・SEO向き）",
+  "columnTopic2": "記事タイトル2",
+  "columnTopic3": "記事タイトル3"
 }
 \`\`\``;
 }
@@ -406,9 +387,10 @@ type SectionData = {
     bgColor: string; companyName: string; address: string;
     tel?: string; email?: string; copyright: string;
   };
-  articles?: Array<{
-    slug: string; title: string; category: string; excerpt: string; body: string;
-  }>;
+  columnCategory?: string;
+  columnTopic1?: string;
+  columnTopic2?: string;
+  columnTopic3?: string;
 };
 
 // ── Color utility ────────────────────────────────────────────
@@ -1270,14 +1252,14 @@ function buildCanvasFromSections(data: SectionData, dna?: GlobalStyle): CanvasEl
 }
 
 // ── Gemini fetch with retry + model fallback ─────────────────
-// chat: 8s (1024トークン ≈ 7秒), generate: 30s (3000トークン ≈ 20〜25秒)
-// generate は 2モデル × 1リトライ = 最大62秒（通常1モデルで完結）
-const MODEL_TIMEOUT_MS = 30000;
+// chat: 8s (1024トークン ≈ 7秒), generate: 20s (2000トークン ≈ 13〜17秒)
+// Edge Runtime 30秒制限: model1(20s) + model2(10s余裕あり)
+const MODEL_TIMEOUT_MS = 20000;
 
 async function geminiFetch(
   systemPrompt: string,
   userPrompt: string,
-  maxTokens = 2500,
+  maxTokens = 2000,
   forceJson = false,
 ): Promise<string> {
   const generationConfig: Record<string, unknown> = { maxOutputTokens: maxTokens };
@@ -1444,7 +1426,7 @@ export async function POST(req: NextRequest) {
     raw = await geminiFetch(
       GENERATE_SYSTEM,
       buildGeneratePrompt(conversationText, effectiveDesign),
-      3000,
+      2000,
     );
   } catch (e) {
     return NextResponse.json(
@@ -1509,19 +1491,23 @@ export async function POST(req: NextRequest) {
     const sections = buildSectionsFromData(parsed, designForBuild);
 
     const today = new Date();
-    const articles = (parsed.articles ?? []).map((a, i) => ({
-      id: uid(),
-      slug: a.slug || `article-${i + 1}`,
-      title: a.title,
-      date: new Date(today.getTime() - i * 7 * 24 * 60 * 60 * 1000)
-        .toISOString().slice(0, 10),
-      category: a.category || "コラム",
-      excerpt: a.excerpt,
-      body: a.body,
-      imageUrl: "",
-      author: "編集部",
-      published: true,
-    }));
+    const cat = parsed.columnCategory || "コラム";
+    const topics = [parsed.columnTopic1, parsed.columnTopic2, parsed.columnTopic3]
+      .filter(Boolean) as string[];
+    // AIが返したタイトルからプレースホルダー記事を3件生成（本文は後から編集）
+    const articles = (topics.length > 0 ? topics : ["お役立ち情報①", "お役立ち情報②", "お役立ち情報③"])
+      .slice(0, 3).map((title, i) => ({
+        id: uid(),
+        slug: `article-${i + 1}`,
+        title,
+        date: new Date(today.getTime() - i * 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
+        category: cat,
+        excerpt: `${parsed.title || ""}の${title}についてご紹介します。`,
+        body: `<p>${title}についての詳しい内容をここに記入してください。</p>`,
+        imageUrl: "",
+        author: "編集部",
+        published: true,
+      }));
 
     const config = {
       title:        parsed.title,
