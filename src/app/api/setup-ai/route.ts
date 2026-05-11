@@ -5,7 +5,7 @@ export const maxDuration = 60;
 
 const API_KEY         = process.env.GEMINI_API_KEY ?? "";
 const GEMINI_BASE     = "https://generativelanguage.googleapis.com/v1beta/models";
-const GEMINI_MODELS   = ["gemini-2.0-flash", "gemini-2.5-flash", "gemini-1.5-flash"];
+const GEMINI_MODELS   = ["gemini-2.0-flash", "gemini-2.5-flash", "gemini-2.0-flash-lite"];
 
 // ── 6種のデザインシステム定義 ────────────────────────────────
 const DESIGN_SYSTEMS: Record<string, GlobalStyle & { _desc: string }> = {
@@ -1246,8 +1246,8 @@ function buildCanvasFromSections(data: SectionData, dna?: GlobalStyle): CanvasEl
 }
 
 // ── Gemini fetch with retry + model fallback ─────────────────
-// タイムアウト設定: 1モデル12秒 × 最大2モデル = 24秒 → 30秒以内に収める
-const MODEL_TIMEOUT_MS = 25000;
+// タイムアウト: 12秒 × 最大3モデル = 36秒以内 → 60秒制限に余裕を持たせる
+const MODEL_TIMEOUT_MS = 12000;
 
 async function geminiFetch(
   systemPrompt: string,
@@ -1262,7 +1262,7 @@ async function geminiFetch(
   for (const model of GEMINI_MODELS) {
     for (let attempt = 0; attempt < 2; attempt++) {
       try {
-        if (attempt > 0) await waitMs(2000);
+        if (attempt > 0) await waitMs(500);
         const res = await fetch(
           `${GEMINI_BASE}/${model}:generateContent?key=${API_KEY}`,
           {
@@ -1328,15 +1328,15 @@ export async function POST(req: NextRequest) {
           parts: [{ text: m.content }],
         }));
 
-    // バージョン付き名称は404になるため、シンプルな名前のみ使用
-    // 503(過負荷)の場合は1秒待ってリトライ、それでも失敗なら次へ
-    const chatModelList = ["gemini-2.0-flash", "gemini-2.5-flash", "gemini-1.5-flash"];
+    // チャットは1024トークン程度 → 8秒で十分。60秒制限内に収める
+    // 3モデル × 2回 × (8s + 0.3s) = 最大50秒
+    const chatModelList = ["gemini-2.0-flash-lite", "gemini-2.0-flash", "gemini-2.5-flash"];
     const chatErrors: string[] = [];
     const wait = (ms: number) => new Promise(r => setTimeout(r, ms));
     for (const model of chatModelList) {
       for (let attempt = 0; attempt < 2; attempt++) {
         try {
-          if (attempt > 0) await wait(1500);
+          if (attempt > 0) await wait(300);
           const res = await fetch(
             `${GEMINI_BASE}/${model}:generateContent?key=${API_KEY}`,
             {
@@ -1347,7 +1347,7 @@ export async function POST(req: NextRequest) {
                 contents,
                 generationConfig: { maxOutputTokens: 1024 },
               }),
-              signal: AbortSignal.timeout(30000),
+              signal: AbortSignal.timeout(8000),
             }
           );
           if (!res.ok) {
