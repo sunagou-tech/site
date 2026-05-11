@@ -253,7 +253,7 @@ ${DESIGN_CONTROL_RULES}
     "body": "サブコピー2文。ターゲットの悩みと解決を示す。",
     "ctaText": "無料相談はこちら",
     "ctaHref": "#cta",
-    "heroImagePrompt": "Unsplash keywords in English for [業種]: e.g. students studying, classroom, people working",
+    "heroImagePrompt": "realistic photo of [業種 scene in English], bright natural light, people, modern environment",
     "imageUrl": null,
     "stats": [
       {"value": "000件","label": "実績"},
@@ -1406,15 +1406,11 @@ export async function POST(req: NextRequest) {
     const parsed = JSON.parse(jsonStr) as SectionData;
 
     if (!parsed.hero.imageUrl && parsed.hero.heroImagePrompt) {
-      const keywords = parsed.hero.heroImagePrompt
-        .replace(/professional photo for|photorealistic|4k|no watermark|no text/gi, "")
-        .replace(/[,./]/g, " ")
-        .trim()
-        .split(/\s+/)
-        .filter((w: string) => w.length > 2)
-        .slice(0, 6)
-        .join(",");
-      parsed.hero.imageUrl = `https://source.unsplash.com/1080x720/?${encodeURIComponent(keywords)}`;
+      const prompt = encodeURIComponent(
+        parsed.hero.heroImagePrompt + ", realistic photography, natural light, professional photo, no text, no watermark"
+      );
+      parsed.hero.imageUrl =
+        `https://image.pollinations.ai/prompt/${prompt}?width=1080&height=720&model=flux&nologo=true&seed=${Date.now() % 9999}`;
     }
 
     // AIが返す primaryColor/accentColor はテンプレートのデフォルト値を
