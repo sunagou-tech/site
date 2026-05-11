@@ -77,14 +77,30 @@ export async function POST(req: NextRequest) {
     headHtml.match(/<meta[^>]+content=["']([^"']{10,200})["'][^>]+name=["']description["']/i)?.[1] ??
     "";
 
-  // CSS — :root変数 + インラインスタイルの色指定のみ
+  // CSS — :root変数 + 全CSS + インラインから色を抽出
   const cssAll   = [...html.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/gi)].map(m => m[1]).join("\n");
   const rootVars = cssAll.match(/:root\s*\{[^}]+\}/g)?.join("\n") ?? "";
-  const colorInlines = [...html.matchAll(/style="([^"]{10,300})"/gi)]
-    .map(m => m[1])
-    .filter(s => /color|background|bg/i.test(s))
-    .slice(0, 20).join(" ");
-  const cssText  = (rootVars + "\n" + colorInlines).slice(0, 2500);
+
+  // theme-color メタタグ（最重要ブランドカラー）
+  const themeColor = headHtml.match(/<meta[^>]+name=["']theme-color["'][^>]+content=["']([^"']+)["']/i)?.[1] ?? "";
+
+  // CSS全体 + インラインから16進カラーを抽出して頻度分析
+  const rawHex = [...(cssAll + html).matchAll(/#([0-9a-fA-F]{6}|[0-9a-fA-F]{3})\b/g)]
+    .map(m => {
+      const h = m[1].toLowerCase();
+      return h.length === 3 ? `#${h[0]}${h[0]}${h[1]}${h[1]}${h[2]}${h[2]}` : `#${h}`;
+    })
+    // 純白・純黒・グレー系を除外
+    .filter(c => !["#ffffff","#000000","#eeeeee","#333333","#666666","#999999","#cccccc","#f0f0f0","#fafafa","#1a1a1a"].includes(c));
+  const colorFreq: Record<string, number> = {};
+  for (const c of rawHex) colorFreq[c] = (colorFreq[c] || 0) + 1;
+  const topColors = Object.entries(colorFreq)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 12)
+    .map(([color, cnt]) => `${color}(${cnt}回)`)
+    .join(", ");
+
+  const cssText = (rootVars).slice(0, 1500);
 
   // ナビゲーション（<nav> or <header> の <a> テキスト）
   const navBlock  = bodyHtml.match(/<nav[^>]*>([\s\S]*?)<\/nav>/i)?.[1]
@@ -110,8 +126,10 @@ export async function POST(req: NextRequest) {
   const prompt = `ウェブサイトのHTML・CSSを分析し、デザインDNAをJSON形式で返してください。
 
 【メタ説明】${metaDesc || "なし"}
+【theme-color】${themeColor || "なし"}
 【Google Fonts】${detectedGF || "なし"}
-【CSS（:root変数・色指定）】
+【サイト全体で使われている色（出現頻度順）】${topColors || "なし"}
+【CSS :root変数】
 ${cssText || "なし"}
 【ナビゲーション】${navLinks.length > 0 ? navLinks.join(" / ") : "なし"}
 【セクション構造（id/class）】${sectionIds.length > 0 ? sectionIds.join(", ") : "なし"}
@@ -139,6 +157,7 @@ ${headings.length ? headings.join("\n") : "なし"}
 }
 
 ルール:
+- primaryColor/accentColorは必ず【サイト全体で使われている色】の上位色から選ぶ。theme-colorがあれば最優先
 - rgb()はhex変換。不明な値はデフォルト推定値を入れる（nullにしない）
 - detectedNavLinksは必ず上記【ナビゲーション】の実際のテキストを使用
 - sectionOrderは上記【セクション構造】と【見出し】から実際のページ構成を推測
