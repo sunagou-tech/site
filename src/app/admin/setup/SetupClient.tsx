@@ -991,9 +991,9 @@ export default function SetupClient() {
 
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             {error && (
-              <span className="text-xs flex items-center gap-1.5" style={{ color: "#DC2626" }}>
+              <span className="text-xs flex items-center gap-1.5 max-w-sm" style={{ color: "#DC2626" }}>
                 <MsIcon name="error" size={14} color="#DC2626" />
-                AIが混雑しています
+                <span className="truncate" title={error}>{error.slice(0, 80)}</span>
                 {/* チャット完了後の生成失敗 → 再試行ボタン */}
                 {chatMessages.length > 0 && (
                   <button
