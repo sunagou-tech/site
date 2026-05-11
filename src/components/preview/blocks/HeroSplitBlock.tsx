@@ -51,10 +51,6 @@ export default function HeroSplitBlockComponent({ block, config, onChange }: Pro
         <div className="absolute -top-24 -right-24 w-72 h-72 rounded-full opacity-10 border-2 border-white" />
         <div className="absolute -bottom-16 -left-16 w-48 h-48 rounded-full opacity-5 border border-white" />
 
-        <p className="text-white/50 text-xs tracking-[0.3em] uppercase mb-5">
-          Hero — Pattern A
-        </p>
-
         <EditableText
           tag="h1"
           value={block.tagline}

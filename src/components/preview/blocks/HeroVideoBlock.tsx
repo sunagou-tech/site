@@ -59,8 +59,6 @@ export default function HeroVideoBlockComponent({ block, config, onChange }: Pro
 
       {/* コンテンツ */}
       <div className="relative z-10 w-full px-8 md:px-14 py-16 md:py-24">
-        <p className="text-white/30 text-xs tracking-[0.4em] uppercase mb-8">Hero — Pattern B</p>
-
         {/* 超大タイポグラフィ */}
         <EditableText
           tag="h1"

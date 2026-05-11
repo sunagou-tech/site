@@ -40,8 +40,8 @@ export default function HeroDiagonalBlockComponent({ block, config, onChange }: 
       <div
         className="absolute left-0 top-0 bottom-0 z-20 flex w-full md:w-[55%] flex-col justify-center px-6 py-16 sm:px-10 md:pl-10 md:pr-20 md:py-16 lg:pl-16 md:[clip-path:polygon(0_0,100%_0,75%_100%,0_100%)]"
         style={{
-          backgroundColor: config.primaryColor,
-          opacity: 0.92,
+          background: `linear-gradient(160deg, ${config.primaryColor} 0%, ${config.primaryColor}ee 60%, ${config.accentColor}55 100%)`,
+          opacity: 0.95,
         }}
       >
         {/* Eyebrow */}
@@ -61,7 +61,7 @@ export default function HeroDiagonalBlockComponent({ block, config, onChange }: 
           value={block.tagline}
           onChange={(v) => u({ tagline: v })}
           multiline
-          className="max-w-[11em] text-[clamp(1.6rem,8vw,3.1rem)] md:text-[clamp(2.4rem,4.5vw,4.5rem)] font-black text-white leading-[1.12] whitespace-pre-line tracking-normal md:tracking-tight mb-6 block break-keep"
+          className="max-w-[14em] text-[clamp(1.5rem,6vw,2.6rem)] md:text-[clamp(1.8rem,3.0vw,3.2rem)] font-black text-white leading-[1.15] whitespace-pre-line tracking-normal md:tracking-tight mb-6 block break-keep"
         />
 
         {/* Body */}

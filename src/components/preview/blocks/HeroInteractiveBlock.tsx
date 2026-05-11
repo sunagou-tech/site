@@ -101,8 +101,6 @@ export default function HeroInteractiveBlockComponent({ block, config, onChange 
 
       {/* テキスト */}
       <div className="relative z-10 px-8 md:px-14 py-16 md:py-24 max-w-2xl">
-        <p className="text-white/25 text-xs tracking-[0.4em] uppercase mb-6">Hero — Pattern C · Interactive</p>
-
         <EditableText
           tag="h1"
           value={block.tagline}

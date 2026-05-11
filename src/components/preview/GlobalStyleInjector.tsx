@@ -20,6 +20,10 @@ interface Props {
 
 function buildCSS(s: GlobalStyle): string {
   const lines: string[] = [];
+  const cssSize = (value?: string) => {
+    if (!value) return "";
+    return /^\d+(\.\d+)?$/.test(value) ? `${value}px` : value;
+  };
 
   const hf = s.headingFont ? `'${s.headingFont}', sans-serif` : null;
   const bf = s.bodyFont    ? `'${s.bodyFont}', -apple-system, BlinkMacSystemFont, sans-serif` : null;
@@ -43,13 +47,13 @@ function buildCSS(s: GlobalStyle): string {
 
   // ── 見出しサイズ（clamp で responsive）──────────────────
   if (s.h1Size) {
-    lines.push(`.gs-root h1 { font-size: clamp(1.8rem, 5vw, ${s.h1Size}) !important; }`);
+    lines.push(`.gs-root h1 { font-size: clamp(1.8rem, 5vw, ${cssSize(s.h1Size)}) !important; }`);
   }
   if (s.h2Size) {
-    lines.push(`.gs-root h2 { font-size: clamp(1.4rem, 3.5vw, ${s.h2Size}) !important; }`);
+    lines.push(`.gs-root h2 { font-size: clamp(1.4rem, 3.5vw, ${cssSize(s.h2Size)}) !important; }`);
   }
   if (s.h3Size) {
-    lines.push(`.gs-root h3 { font-size: clamp(1.1rem, 2.5vw, ${s.h3Size}) !important; }`);
+    lines.push(`.gs-root h3 { font-size: clamp(1.1rem, 2.5vw, ${cssSize(s.h3Size)}) !important; }`);
   }
 
   // ── 本文 ────────────────────────────────────────────────
@@ -66,7 +70,7 @@ function buildCSS(s: GlobalStyle): string {
   // ── セクションパディング ─────────────────────────────────
   if (s.sectionPaddingY) {
     lines.push(
-      `.gs-root section { padding-top: ${s.sectionPaddingY} !important; padding-bottom: ${s.sectionPaddingY} !important; }`
+      `.gs-root section { padding-top: ${cssSize(s.sectionPaddingY)} !important; padding-bottom: ${cssSize(s.sectionPaddingY)} !important; }`
     );
   }
 
@@ -80,7 +84,7 @@ function buildCSS(s: GlobalStyle): string {
   // ── カード角丸 ───────────────────────────────────────────
   if (s.cardBorderRadius) {
     lines.push(
-      `.gs-root [class*="rounded-2xl"], .gs-root [class*="rounded-xl"] { border-radius: ${s.cardBorderRadius} !important; }`
+      `.gs-root [class*="rounded-2xl"], .gs-root [class*="rounded-xl"] { border-radius: ${cssSize(s.cardBorderRadius)} !important; }`
     );
   }
 
