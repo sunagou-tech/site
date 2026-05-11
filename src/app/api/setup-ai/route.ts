@@ -875,6 +875,18 @@ function buildSectionsFromData(data: SectionData, dna?: GlobalStyle): SectionBlo
     });
   }
 
+  // Column（常に追加）
+  sections.push({
+    id: uid(),
+    type: "column",
+    heading: "コラム",
+    subheading: "最新の記事・ノウハウをお届けします",
+    maxItems: 6,
+    viewAllUrl: "/column",
+    viewAllText: "すべての記事を見る",
+    layout: "grid",
+  });
+
   // CTA
   if (data.cta) {
     sections.push({
