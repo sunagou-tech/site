@@ -332,7 +332,30 @@ ${DESIGN_CONTROL_RULES}
     "tel": "03-0000-0000",
     "email": "info@example.com",
     "copyright": "© 2025 会社名 All Rights Reserved."
-  }
+  },
+  "articles": [
+    {
+      "slug": "article-1",
+      "title": "SEOタイトル（検索されやすい・業種に関連したテーマ・30字以内）",
+      "category": "業種に合ったカテゴリ名",
+      "excerpt": "記事の概要。ターゲットが「読みたい」と思う一文（60〜80字）",
+      "body": "<p>リード文（なぜこのテーマが大事か）。</p><h2>見出し1</h2><p>本文（具体的・実践的な内容）。</p><h2>見出し2</h2><p>本文（続き）。</p>"
+    },
+    {
+      "slug": "article-2",
+      "title": "SEOタイトル2",
+      "category": "カテゴリ名",
+      "excerpt": "概要",
+      "body": "<p>本文</p><h2>見出し</h2><p>内容</p>"
+    },
+    {
+      "slug": "article-3",
+      "title": "SEOタイトル3",
+      "category": "カテゴリ名",
+      "excerpt": "概要",
+      "body": "<p>本文</p><h2>見出し</h2><p>内容</p>"
+    }
+  ]
 }
 \`\`\``;
 }
@@ -382,6 +405,9 @@ type SectionData = {
     bgColor: string; companyName: string; address: string;
     tel?: string; email?: string; copyright: string;
   };
+  articles?: Array<{
+    slug: string; title: string; category: string; excerpt: string; body: string;
+  }>;
 };
 
 // ── Color utility ────────────────────────────────────────────
@@ -1438,6 +1464,21 @@ export async function POST(req: NextRequest) {
     const elements = buildCanvasFromSections(parsed, designForBuild);
     const sections = buildSectionsFromData(parsed, designForBuild);
 
+    const today = new Date();
+    const articles = (parsed.articles ?? []).map((a, i) => ({
+      id: uid(),
+      slug: a.slug || `article-${i + 1}`,
+      title: a.title,
+      date: new Date(today.getTime() - i * 7 * 24 * 60 * 60 * 1000)
+        .toISOString().slice(0, 10),
+      category: a.category || "コラム",
+      excerpt: a.excerpt,
+      body: a.body,
+      imageUrl: "",
+      author: "編集部",
+      published: true,
+    }));
+
     const config = {
       title:        parsed.title,
       primaryColor: designForBuild?.primaryColor || parsed.primaryColor,
@@ -1447,7 +1488,7 @@ export async function POST(req: NextRequest) {
       navLinks:     parsed.navLinks  ?? [],
       canvasWidth:  1200,
       elements,
-      sections, pages: [], articles: [],
+      sections, pages: [], articles,
       globalStyle: designForBuild ?? undefined,
     };
     return NextResponse.json({ config });
