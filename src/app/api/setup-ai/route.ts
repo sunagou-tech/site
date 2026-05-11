@@ -1268,9 +1268,9 @@ function buildCanvasFromSections(data: SectionData, dna?: GlobalStyle): CanvasEl
 }
 
 // ── Gemini fetch with retry + model fallback ─────────────────
-// chat: 8s (1024トークン ≈ 7秒), generate: 25s (3000トークン ≈ 20秒)
-// generate は 2モデル × 1リトライ = 最大52秒 → 60秒制限内
-const MODEL_TIMEOUT_MS = 25000;
+// chat: 8s (1024トークン ≈ 7秒), generate: 30s (3000トークン ≈ 20〜25秒)
+// generate は 2モデル × 1リトライ = 最大62秒（通常1モデルで完結）
+const MODEL_TIMEOUT_MS = 30000;
 
 async function geminiFetch(
   systemPrompt: string,
@@ -1314,7 +1314,9 @@ async function geminiFetch(
         }
 
         const errText = await res.text().catch(() => "");
-        modelErrors.push(`${model}[${attempt}]:${res.status}`);
+        const errSnippet = errText.slice(0, 80).replace(/\s+/g, " ");
+        modelErrors.push(`${model}[${attempt}]:${res.status}(${errSnippet})`);
+        console.error(`[geminiFetch] ${model} attempt${attempt} → ${res.status}`, errSnippet);
         const is429 = res.status === 429 || errText.includes("RESOURCE_EXHAUSTED");
         const is503 = res.status === 503 || errText.includes("UNAVAILABLE");
         if ((is503 || is429) && attempt === 0) {
@@ -1441,7 +1443,6 @@ export async function POST(req: NextRequest) {
       GENERATE_SYSTEM,
       buildGeneratePrompt(conversationText, effectiveDesign),
       3000,
-      true, // forceJson: responseMimeType=application/json
     );
   } catch (e) {
     return NextResponse.json(
