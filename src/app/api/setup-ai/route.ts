@@ -6,7 +6,7 @@ export const runtime = "edge";
 export const maxDuration = 60;
 
 const API_KEY         = process.env.GEMINI_API_KEY ?? "";
-const GEMINI_BASE     = "https://generativelanguage.googleapis.com/v1beta/models";
+const GEMINI_BASE     = "https://generativelanguage.googleapis.com/v1/models";
 const GEMINI_MODELS   = ["gemini-2.0-flash", "gemini-1.5-flash"];
 
 // ── 6種のデザインシステム定義 ────────────────────────────────
