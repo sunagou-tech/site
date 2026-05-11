@@ -175,7 +175,17 @@ export default function EditableImage({
           </>
         )}
 
-        {/* 通常ホバーオーバーレイ（ピック中は非表示） */}
+        {/* 常時表示の編集アイコン（タッチデバイス対応） */}
+        {!pickedUrl && (
+          <div className="absolute top-2 right-2 z-10 pointer-events-none">
+            <span className="flex items-center gap-1 bg-black/50 text-white text-[10px] font-medium px-2 py-1 rounded-full">
+              <ImageIcon size={10} />
+              編集
+            </span>
+          </div>
+        )}
+
+        {/* ホバーオーバーレイ（PC） */}
         {!pickedUrl && (
           <div
             className="
@@ -199,7 +209,7 @@ export default function EditableImage({
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setOpen(false)} />
 
-          <div className="relative bg-white rounded-2xl shadow-2xl w-[460px] overflow-hidden">
+          <div className="relative bg-white rounded-2xl shadow-2xl w-[460px] max-w-[92vw] overflow-hidden">
             {/* タブヘッダー */}
             <div className="flex border-b border-gray-100">
               {([
