@@ -5,7 +5,7 @@ export const maxDuration = 60;
 
 const API_KEY         = process.env.GEMINI_API_KEY ?? "";
 const GEMINI_BASE     = "https://generativelanguage.googleapis.com/v1beta/models";
-const GEMINI_MODELS   = ["gemini-2.5-flash", "gemini-2.5-pro"];
+const GEMINI_MODELS   = ["gemini-2.0-flash", "gemini-2.5-flash", "gemini-1.5-flash"];
 
 // ── 6種のデザインシステム定義 ────────────────────────────────
 const DESIGN_SYSTEMS: Record<string, GlobalStyle & { _desc: string }> = {
@@ -1304,7 +1304,7 @@ export async function POST(req: NextRequest) {
 
     // バージョン付き名称は404になるため、シンプルな名前のみ使用
     // 503(過負荷)の場合は1秒待ってリトライ、それでも失敗なら次へ
-    const chatModelList = ["gemini-2.5-flash", "gemini-2.5-pro"];
+    const chatModelList = ["gemini-2.0-flash", "gemini-2.5-flash", "gemini-1.5-flash"];
     const chatErrors: string[] = [];
     const wait = (ms: number) => new Promise(r => setTimeout(r, ms));
     for (const model of chatModelList) {
