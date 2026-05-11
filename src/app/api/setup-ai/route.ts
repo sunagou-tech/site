@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GlobalStyle, CanvasElement, SectionBlock, FeatureItem, IconValue, uid } from "@/types/site";
 
+// Edge Runtime: Hobby=30秒, Pro=30秒（Node.js serverless Hobbyは10秒制限）
+export const runtime = "edge";
 export const maxDuration = 60;
 
 const API_KEY         = process.env.GEMINI_API_KEY ?? "";
@@ -1275,7 +1277,7 @@ const MODEL_TIMEOUT_MS = 30000;
 async function geminiFetch(
   systemPrompt: string,
   userPrompt: string,
-  maxTokens = 3000,
+  maxTokens = 2500,
   forceJson = false,
 ): Promise<string> {
   const generationConfig: Record<string, unknown> = { maxOutputTokens: maxTokens };
