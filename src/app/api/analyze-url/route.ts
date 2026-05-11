@@ -64,57 +64,85 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // ─── 2. デザイン情報を抽出（軽量化）────────────────────────
-  const headMatch = html.match(/<head[^>]*>([\s\S]*?)<\/head>/i);
-  const headHtml  = headMatch?.[1] ?? "";
+  // ─── 2. デザイン情報を抽出 ─────────────────────────────────
+  const headHtml = html.match(/<head[^>]*>([\s\S]*?)<\/head>/i)?.[1] ?? "";
+  const bodyHtml = html.match(/<body[^>]*>([\s\S]*)/i)?.[1] ?? html;
 
   // Google Fonts
-  const gfMatch    = headHtml.match(/href="(https:\/\/fonts\.googleapis\.com\/css2[^"]+)"/i);
-  const detectedGF = gfMatch?.[1] ?? "";
+  const detectedGF = headHtml.match(/href="(https:\/\/fonts\.googleapis\.com\/css2[^"]+)"/i)?.[1] ?? "";
 
-  // CSS — :root変数を優先（3000字に絞る）
-  const styleBlocks = [...html.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/gi)].map(m => m[1]);
-  const cssAll      = styleBlocks.join("\n");
-  const rootVars    = cssAll.match(/:root\s*\{[^}]+\}/g)?.join("\n") ?? "";
-  const inlineStyles = [...html.matchAll(/style="([^"]{10,200})"/gi)].map(m => m[1]).slice(0, 30).join(" ");
-  const cssText     = (rootVars + "\n" + cssAll + "\n" + inlineStyles).slice(0, 3000);
+  // メタ説明
+  const metaDesc =
+    headHtml.match(/<meta[^>]+name=["']description["'][^>]+content=["']([^"']{10,200})["']/i)?.[1] ??
+    headHtml.match(/<meta[^>]+content=["']([^"']{10,200})["'][^>]+name=["']description["']/i)?.[1] ??
+    "";
 
-  // 見出しのみ（コンテンツ把握、軽量）
+  // CSS — :root変数 + インラインスタイルの色指定のみ
+  const cssAll   = [...html.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/gi)].map(m => m[1]).join("\n");
+  const rootVars = cssAll.match(/:root\s*\{[^}]+\}/g)?.join("\n") ?? "";
+  const colorInlines = [...html.matchAll(/style="([^"]{10,300})"/gi)]
+    .map(m => m[1])
+    .filter(s => /color|background|bg/i.test(s))
+    .slice(0, 20).join(" ");
+  const cssText  = (rootVars + "\n" + colorInlines).slice(0, 2500);
+
+  // ナビゲーション（<nav> or <header> の <a> テキスト）
+  const navBlock  = bodyHtml.match(/<nav[^>]*>([\s\S]*?)<\/nav>/i)?.[1]
+    ?? bodyHtml.match(/<header[^>]*>([\s\S]*?)<\/header>/i)?.[1] ?? "";
+  const navLinks  = [...navBlock.matchAll(/<a[^>]*>([\s\S]*?)<\/a>/gi)]
+    .map(m => m[1].replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim())
+    .filter(t => t.length > 0 && t.length < 25)
+    .slice(0, 8);
+
+  // セクション構造（id/class から推測）
+  const sectionIds = [...bodyHtml.matchAll(/<(?:section|div|article)[^>]+(?:id|class)="([^"]+)"/gi)]
+    .map(m => m[1].split(/\s+/)[0])
+    .filter(id => !id.match(/^(wrapper|container|main|app|root|js-|is-|l-|p-|u-)/i))
+    .slice(0, 12);
+
+  // 見出し（H1〜H3）
   const headings = [...html.matchAll(/<h([1-3])[^>]*>([\s\S]*?)<\/h\1>/gi)]
     .map(m => `H${m[1]}: ${m[2].replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim()}`)
-    .filter(t => t.length < 80)
-    .slice(0, 10);
+    .filter(t => t.length > 4 && t.length < 80)
+    .slice(0, 12);
 
-  // ─── 3. Gemini でデザイン解析（軽量プロンプト）────────────
-  const prompt = `ウェブサイトのCSS・HTMLを分析し、デザインDNAをJSON形式で返してください。
+  // ─── 3. Gemini でデザイン解析 ────────────────────────────
+  const prompt = `ウェブサイトのHTML・CSSを分析し、デザインDNAをJSON形式で返してください。
 
+【メタ説明】${metaDesc || "なし"}
 【Google Fonts】${detectedGF || "なし"}
-【CSS（:root変数含む）】
-${cssText || "取得できませんでした"}
-【見出し】
+【CSS（:root変数・色指定）】
+${cssText || "なし"}
+【ナビゲーション】${navLinks.length > 0 ? navLinks.join(" / ") : "なし"}
+【セクション構造（id/class）】${sectionIds.length > 0 ? sectionIds.join(", ") : "なし"}
+【見出し一覧】
 ${headings.length ? headings.join("\n") : "なし"}
 
 以下のJSON形式のみで返答（\`\`\`json ... \`\`\` に包む）:
 {
-  "headingFont": "フォント名",
-  "bodyFont": "フォント名",
-  "primaryColor": "#hex",
-  "accentColor": "#hex",
-  "heroBgColor": "#hex",
-  "bgColor": "#hex",
-  "cardBgColor": "#hex",
-  "buttonBgColor": "#hex",
-  "buttonTextColor": "#hex",
-  "textColor": "#hex",
+  "headingFont": "フォント名（不明ならNoto Sans JP）",
+  "bodyFont": "フォント名（不明ならNoto Sans JP）",
+  "primaryColor": "#hex（メインカラー）",
+  "accentColor": "#hex（アクセントカラー）",
+  "heroBgColor": "#hex（ヒーロー背景色）",
+  "bgColor": "#hex（ページ背景色）",
+  "cardBgColor": "#hex（カード背景色）",
+  "buttonBgColor": "#hex（ボタン背景色）",
+  "buttonTextColor": "#hex（ボタン文字色）",
+  "textColor": "#hex（本文テキスト色）",
   "designStyle": "minimal/bold/corporate/elegant/playful/modern のいずれか",
-  "designNotes": "このサイトの特徴を20字以内で",
+  "designNotes": "サイトの特徴を20字以内で",
   "heroLayout": "split/centered/typographic/light のいずれか",
   "featureColumns": 3,
-  "sectionOrder": ["hero","features","cta"],
+  "sectionOrder": ["hero","problem","features","steps","testimonials","faq","cta"],
   "detectedNavLinks": ["サービス","料金","お問い合わせ"]
 }
 
-ルール: rgb()はhex変換。不明な値はデフォルト推定値を入れる（nullにしない）。`;
+ルール:
+- rgb()はhex変換。不明な値はデフォルト推定値を入れる（nullにしない）
+- detectedNavLinksは必ず上記【ナビゲーション】の実際のテキストを使用
+- sectionOrderは上記【セクション構造】と【見出し】から実際のページ構成を推測
+- heroLayoutはファーストビューの構成から判断（画像左+テキスト右→split、中央配置→centered、大きなタイポ→typographic、明るい白背景→light）`;
 
   // Gemini 呼び出し（モデルフォールバック・遅延なし・8秒タイムアウト）
   let raw = "";
@@ -129,7 +157,7 @@ ${headings.length ? headings.join("\n") : "なし"}
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             contents: [{ role: "user", parts: [{ text: prompt }] }],
-            generationConfig: { maxOutputTokens: 800 },
+            generationConfig: { maxOutputTokens: 1200 },
           }),
           signal: AbortSignal.timeout(8000),
         }
