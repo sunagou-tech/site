@@ -314,8 +314,7 @@ ${DESIGN_CONTROL_RULES}
       {"q": "質問1","a": "回答1"},
       {"q": "質問2","a": "回答2"},
       {"q": "質問3","a": "回答3"},
-      {"q": "質問4","a": "回答4"},
-      {"q": "質問5","a": "回答5"}
+      {"q": "質問4","a": "回答4"}
     ]
   },
   "cta": {
@@ -336,24 +335,24 @@ ${DESIGN_CONTROL_RULES}
   "articles": [
     {
       "slug": "article-1",
-      "title": "SEOタイトル（検索されやすい・業種に関連したテーマ・30字以内）",
-      "category": "業種に合ったカテゴリ名",
-      "excerpt": "記事の概要。ターゲットが「読みたい」と思う一文（60〜80字）",
-      "body": "<p>リード文（なぜこのテーマが大事か）。</p><h2>見出し1</h2><p>本文（具体的・実践的な内容）。</p><h2>見出し2</h2><p>本文（続き）。</p>"
+      "title": "SEOタイトル（30字以内）",
+      "category": "カテゴリ名",
+      "excerpt": "概要1文（60字以内）",
+      "body": "<p>リード文。</p><h2>見出し</h2><p>本文2〜3文。</p>"
     },
     {
       "slug": "article-2",
       "title": "SEOタイトル2",
       "category": "カテゴリ名",
-      "excerpt": "概要",
-      "body": "<p>本文</p><h2>見出し</h2><p>内容</p>"
+      "excerpt": "概要1文",
+      "body": "<p>本文2〜3文。</p>"
     },
     {
       "slug": "article-3",
       "title": "SEOタイトル3",
       "category": "カテゴリ名",
-      "excerpt": "概要",
-      "body": "<p>本文</p><h2>見出し</h2><p>内容</p>"
+      "excerpt": "概要1文",
+      "body": "<p>本文2〜3文。</p>"
     }
   ]
 }
@@ -1269,13 +1268,14 @@ function buildCanvasFromSections(data: SectionData, dna?: GlobalStyle): CanvasEl
 }
 
 // ── Gemini fetch with retry + model fallback ─────────────────
-// タイムアウト: 12秒 × 最大3モデル = 36秒以内 → 60秒制限に余裕を持たせる
-const MODEL_TIMEOUT_MS = 12000;
+// chat: 8s (1024トークン ≈ 7秒), generate: 25s (3000トークン ≈ 20秒)
+// generate は 2モデル × 1リトライ = 最大52秒 → 60秒制限内
+const MODEL_TIMEOUT_MS = 25000;
 
 async function geminiFetch(
   systemPrompt: string,
   userPrompt: string,
-  maxTokens = 4096,
+  maxTokens = 3000,
   forceJson = false,
 ): Promise<string> {
   const generationConfig: Record<string, unknown> = { maxOutputTokens: maxTokens };
@@ -1440,7 +1440,7 @@ export async function POST(req: NextRequest) {
     raw = await geminiFetch(
       GENERATE_SYSTEM,
       buildGeneratePrompt(conversationText, effectiveDesign),
-      4096,
+      3000,
       true, // forceJson: responseMimeType=application/json
     );
   } catch (e) {
