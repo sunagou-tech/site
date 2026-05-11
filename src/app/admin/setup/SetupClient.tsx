@@ -993,7 +993,7 @@ export default function SetupClient() {
             {error && (
               <span className="text-xs flex items-center gap-1.5 max-w-sm" style={{ color: "#DC2626" }}>
                 <MsIcon name="error" size={14} color="#DC2626" />
-                <span className="truncate" title={error}>{error.slice(0, 80)}</span>
+                <span className="truncate" title={error}>{error.slice(0, 160)}</span>
                 {/* チャット完了後の生成失敗 → 再試行ボタン */}
                 {chatMessages.length > 0 && (
                   <button

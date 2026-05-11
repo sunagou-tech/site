@@ -5,7 +5,7 @@ export const runtime = "edge";
 export const maxDuration = 30;
 
 const API_KEY       = process.env.GEMINI_API_KEY ?? "";
-const GEMINI_BASE   = "https://generativelanguage.googleapis.com/v1/models";
+const GEMINI_BASE   = "https://generativelanguage.googleapis.com/v1beta/models";
 // 軽量モデルを先にして速度優先
 const GEMINI_MODELS = ["gemini-2.0-flash", "gemini-1.5-flash"];
 
