@@ -730,58 +730,81 @@ function pickHeroBlock(data: SectionData, dna?: GlobalStyle): SectionBlock {
   const style    = dna?.designStyle?.toLowerCase() ?? "";
   const notes    = (dna?.designNotes ?? "").toLowerCase();
   const stats    = h.stats ?? [];
+  // URL解析で得たレイアウトヒント（split/centered/typographic/light）
+  const layoutHint = dna?.heroLayout ?? "";
 
-  // デザインスタイル別のヒーロープール
   const pool: string[] = (() => {
-    // 医療・ミニマル: シンプルな中央or写真フロートのみ
+    // ── URL解析のheroLayoutを最優先 ──────────────────────────────
+    if (layoutHint === "split")
+      return hasImage
+        ? ["hero-split", "hero-asym", "hero-diagonal", "hero-photo"]
+        : ["hero-gradient", "hero-dark", "hero-centered"];
+    if (layoutHint === "centered")
+      return hasImage
+        ? ["hero-centered", "hero-photo", "hero-glass", "hero-minimal"]
+        : ["hero-centered", "hero-gradient", "hero-minimal"];
+    if (layoutHint === "typographic")
+      return ["hero-typo", "hero-minimal", "hero-gradient"];
+    if (layoutHint === "light")
+      return hasImage
+        ? ["hero-minimal", "hero-photo", "hero-centered"]
+        : ["hero-minimal", "hero-centered"];
+
+    // ── デザインスタイル別 ──────────────────────────────────────
     if (style === "minimal" || notes.includes("クリニック") || notes.includes("医療"))
-      return hasImage ? ["hero-centered", "hero-photo", "hero-glass"] : ["hero-centered"];
-    // 受験・juku-red / exam-prep: 重厚な暗系hero
-    if (style.includes("exam-prep") || style.includes("juku-red") || style === "exam-prep-bold")
+      return hasImage
+        ? ["hero-minimal", "hero-centered", "hero-photo", "hero-glass"]
+        : ["hero-minimal", "hero-centered"];
+    if (style.includes("exam-prep") || style === "exam-prep-bold")
       return hasImage
         ? ["hero-photo", "hero-dark", "hero-diagonal", "hero-asym"]
         : ["hero-gradient", "hero-dark", "hero-centered"];
-    // corporate・navy系
     if (style === "corporate" || style.includes("trustworthy") || style.includes("navy"))
       return hasImage
-        ? ["hero-dark", "hero-asym", "hero-diagonal", "hero-photo"]
-        : ["hero-gradient", "hero-centered"];
-    // creative・bold
+        ? ["hero-split", "hero-dark", "hero-asym", "hero-diagonal", "hero-photo"]
+        : ["hero-gradient", "hero-centered", "hero-dark"];
     if (style === "bold" || style.includes("creative"))
       return hasImage
-        ? ["hero-glass", "hero-diagonal", "hero-asym", "hero-photo"]
-        : ["hero-interactive", "hero-gradient", "hero-centered"];
-    // lifestyle・elegant
+        ? ["hero-typo", "hero-glass", "hero-diagonal", "hero-asym", "hero-photo"]
+        : ["hero-typo", "hero-interactive", "hero-gradient"];
     if (style === "elegant" || notes.includes("ビューティ") || notes.includes("女性"))
       return hasImage
-        ? ["hero-glass", "hero-photo", "hero-asym", "hero-centered"]
-        : ["hero-gradient", "hero-centered"];
-    // warm・orange系
+        ? ["hero-glass", "hero-minimal", "hero-photo", "hero-asym", "hero-split"]
+        : ["hero-gradient", "hero-minimal", "hero-centered"];
     if (style === "warm" || style.includes("orange") || style.includes("friendly"))
       return hasImage
-        ? ["hero-photo", "hero-centered", "hero-asym"]
-        : ["hero-centered", "hero-gradient", "hero-interactive"];
-    // tech / SaaS
+        ? ["hero-photo", "hero-centered", "hero-split", "hero-minimal", "hero-asym"]
+        : ["hero-centered", "hero-gradient", "hero-interactive", "hero-minimal"];
     if (style.includes("tech") || notes.includes("saas") || notes.includes("ai"))
       return hasImage
         ? ["hero-dark", "hero-gradient", "hero-glass", "hero-diagonal"]
         : ["hero-gradient", "hero-interactive", "hero-centered"];
-    // default: 幅広く選択
+    // default: 全パターンを幅広く
     return hasImage
-      ? ["hero-centered", "hero-photo", "hero-dark", "hero-glass", "hero-diagonal", "hero-asym", "hero-gradient"]
-      : ["hero-centered", "hero-gradient", "hero-interactive"];
+      ? ["hero-centered", "hero-photo", "hero-dark", "hero-glass", "hero-diagonal",
+         "hero-asym", "hero-gradient", "hero-split", "hero-minimal", "hero-typo"]
+      : ["hero-centered", "hero-gradient", "hero-interactive", "hero-minimal", "hero-typo"];
   })();
 
   const heroType = pool[Math.floor(Math.random() * pool.length)];
   const s0 = stats[0], s1 = stats[1], s2 = stats[2];
   const heading = (h.heading ?? "").replace(/\\n/g, "\n");
-  const cta  = h.ctaText ?? "お問い合わせ";
-  const href = h.ctaHref ?? "#cta";
-  const imgUrl = h.imageUrl ?? "";
+  const cta     = h.ctaText ?? "お問い合わせ";
+  const href    = h.ctaHref ?? "#cta";
+  const imgUrl  = h.imageUrl ?? "";
   const eyebrow = h.eyebrow ?? "";
   const body    = h.body ?? "";
 
   switch (heroType) {
+    case "hero-split":
+      return { id: uid(), type: "hero-split", tagline: heading, taglineSub: eyebrow, body, buttonText: cta, buttonUrl: href, imageUrl: imgUrl };
+    case "hero-minimal":
+      return { id: uid(), type: "hero-minimal", eyebrow, tagline: heading, body, buttonText: cta, buttonUrl: href };
+    case "hero-typo":
+      return { id: uid(), type: "hero-typo",
+        kanjiDecor: heading.replace(/[^一-龯]/g, "").slice(0, 2) || "革新",
+        eyebrow, tagline: heading, taglineSub: body.slice(0, 30), body,
+        buttonText: cta, buttonUrl: href };
     case "hero-photo":
       return { id: uid(), type: "hero-photo", imageUrl: imgUrl, eyebrow, tagline: heading, body, buttonText: cta, buttonUrl: href, caption: "" };
     case "hero-dark":
@@ -1448,13 +1471,17 @@ export async function POST(req: NextRequest) {
         `https://image.pollinations.ai/prompt/${prompt}?width=1080&height=720&model=flux&nologo=true&seed=${Date.now() % 9999}`;
     }
 
-    // AIが返す primaryColor/accentColor はテンプレートのデフォルト値を
-    // そのまま返すことが多く、デザインシステムの色を壊す。
-    // テンプレートデフォルト以外の値だけユーザー指定色として採用する。
+    // AIが返すデフォルト色はテンプレート値か明るすぎる場合は無視する。
+    // デザインシステムが dark primary を持つ場合、AI が light color を返しても使わない。
     const TMPL_PC = "#1E40AF";
     const TMPL_AC = "#EA580C";
-    const userPc = parsed.primaryColor && parsed.primaryColor !== TMPL_PC ? parsed.primaryColor : null;
-    const userAc = parsed.accentColor  && parsed.accentColor  !== TMPL_AC ? parsed.accentColor  : null;
+    const rawPc = parsed.primaryColor && parsed.primaryColor !== TMPL_PC ? parsed.primaryColor : null;
+    const rawAc = parsed.accentColor  && parsed.accentColor  !== TMPL_AC ? parsed.accentColor  : null;
+    // デザインシステムの primaryColor がダークなら AI の light color は却下
+    const dsPrimaryDark = effectiveDesign ? !isLight(effectiveDesign.primaryColor ?? "#000") : false;
+    const userPc = rawPc && (dsPrimaryDark ? !isLight(rawPc) : true) ? rawPc : null;
+    // accentColor は明るい方が望ましいケースも多いのでフィルタなし
+    const userAc = rawAc;
 
     const designForBuild: GlobalStyle | undefined = analysisResult
       ? effectiveDesign
@@ -1463,7 +1490,12 @@ export async function POST(req: NextRequest) {
             ...effectiveDesign,
             primaryColor:  userPc || effectiveDesign.primaryColor,
             accentColor:   userAc || effectiveDesign.accentColor,
-            heroBgColor:   parsed.hero?.bgColor    || effectiveDesign.heroBgColor,
+            // heroBgColor はデザインシステムを優先。AIの hero.bgColor は light ならば無視
+            heroBgColor:   (() => {
+              const aiHb = parsed.hero?.bgColor;
+              if (!aiHb) return effectiveDesign.heroBgColor;
+              return (!dsPrimaryDark || !isLight(aiHb)) ? aiHb : effectiveDesign.heroBgColor;
+            })(),
             bgColor:       parsed.problem?.bgColor || effectiveDesign.bgColor,
             cardBgColor:   parsed.solution?.bgColor || effectiveDesign.cardBgColor,
             buttonBgColor: parsed.cta?.bgColor     || effectiveDesign.buttonBgColor,
