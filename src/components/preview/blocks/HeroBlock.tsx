@@ -16,7 +16,7 @@ export default function HeroBlockComponent({ block, config, onChange }: Props) {
     config.fontFamily === "serif" ? "font-serif" : config.fontFamily === "mono" ? "font-mono" : "font-sans";
 
   return (
-    <section className="relative bg-[#f8f5f0] overflow-hidden px-12 pt-20 pb-28">
+    <section className="relative bg-[#f8f5f0] overflow-hidden px-8 md:px-12 pt-16 md:pt-20 pb-20 md:pb-28">
       {/* Geometric shapes */}
       <div className="absolute top-8 right-24 flex flex-wrap gap-4 w-52 pointer-events-none select-none">
         <div className="w-14 h-14 rounded-full bg-yellow-300 shadow-lg" />
@@ -41,7 +41,7 @@ export default function HeroBlockComponent({ block, config, onChange }: Props) {
           value={block.tagline}
           onChange={(v) => u({ tagline: v })}
           multiline
-          className={`display-heading font-black text-gray-900 whitespace-pre-line block ${fontClass}`}
+          className={`display-heading font-black text-gray-900 whitespace-pre-line block break-keep max-w-[12em] ${fontClass}`}
         />
         <EditableText
           tag="p"

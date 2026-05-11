@@ -49,7 +49,7 @@ export default function HeroReelBlockComponent({ block, config, onChange }: Prop
             value={block.tagline}
             onChange={(v) => u({ tagline: v })}
             multiline
-            className="text-3xl md:text-5xl font-black text-white leading-tight whitespace-pre-line"
+            className="text-3xl md:text-5xl font-black text-white leading-tight whitespace-pre-line break-keep max-w-[12em]"
           />
 
           {/* Body */}
@@ -62,13 +62,13 @@ export default function HeroReelBlockComponent({ block, config, onChange }: Prop
           />
 
           {/* CTA Buttons */}
-          <div className="flex flex-wrap gap-3 mt-2">
+          <div className="flex flex-col sm:flex-row gap-3 mt-2">
             <LinkableButton
               label={block.buttonText}
               url={block.buttonUrl ?? ""}
               onLabelChange={(v) => u({ buttonText: v })}
               onUrlChange={(v) => u({ buttonUrl: v })}
-              className="px-7 py-3.5 rounded-full text-sm font-bold shadow-lg hover:opacity-90 transition-opacity"
+              className="px-7 py-3.5 rounded-full text-sm font-bold shadow-lg hover:opacity-90 transition-opacity text-center w-full sm:w-auto"
               style={{ backgroundColor: accent, color: primary }}
             />
             <LinkableButton
@@ -76,7 +76,7 @@ export default function HeroReelBlockComponent({ block, config, onChange }: Prop
               url={block.buttonUrl2 ?? ""}
               onLabelChange={(v) => u({ buttonText2: v })}
               onUrlChange={(v) => u({ buttonUrl2: v })}
-              className="px-7 py-3.5 rounded-full text-sm font-medium border border-white/40 text-white hover:bg-white/10 transition-colors"
+              className="px-7 py-3.5 rounded-full text-sm font-medium border border-white/40 text-white hover:bg-white/10 transition-colors text-center w-full sm:w-auto"
             />
           </div>
         </div>

@@ -47,18 +47,18 @@ export default function HeroCenteredBlockComponent({ block, config, onChange }: 
           className="text-[11px] tracking-[0.25em] uppercase font-medium mb-4 block"
           style={{ color: config.accentColor }} />
         <EditableText tag="h1" value={block.tagline} onChange={(v) => u({ tagline: v })}
-          multiline className={`text-3xl md:text-5xl font-black text-white leading-tight whitespace-pre-line mb-5 block ${fontClass}`} />
+          multiline className={`text-3xl md:text-5xl font-black text-white leading-tight whitespace-pre-line mb-5 block break-keep max-w-[12em] mx-auto ${fontClass}`} />
         <EditableText tag="p" value={block.body} onChange={(v) => u({ body: v })}
           multiline className="text-sm md:text-base text-white/75 leading-relaxed mb-8 mx-auto block" />
         <div className="flex flex-col items-center gap-3">
           {/* ボタン行：1つの時は中央、2つの時は横並び */}
-          <div className="flex items-center justify-center gap-3 flex-wrap">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 w-full">
             <LinkableButton
               label={block.buttonText}
               url={block.buttonUrl ?? ""}
               onLabelChange={(v) => u({ buttonText: v })}
               onUrlChange={(v) => u({ buttonUrl: v })}
-              className="px-7 py-3.5 rounded-full text-sm font-bold shadow-lg hover:opacity-90 transition-opacity"
+              className="px-7 py-3.5 rounded-full text-sm font-bold shadow-lg hover:opacity-90 transition-opacity text-center w-full sm:w-auto"
               style={{ backgroundColor: config.accentColor, color: config.primaryColor }}
               onDelete={isEditing ? () => u({ buttonText: "" }) : undefined}
             />
@@ -68,7 +68,7 @@ export default function HeroCenteredBlockComponent({ block, config, onChange }: 
                 url={block.buttonUrl2 ?? ""}
                 onLabelChange={(v) => u({ buttonText2: v })}
                 onUrlChange={(v) => u({ buttonUrl2: v })}
-                className="px-7 py-3.5 rounded-full text-sm font-medium border border-white/40 text-white hover:bg-white/10 transition-colors"
+                className="px-7 py-3.5 rounded-full text-sm font-medium border border-white/40 text-white hover:bg-white/10 transition-colors text-center w-full sm:w-auto"
                 onDelete={isEditing ? () => u({ buttonText2: "", buttonUrl2: "" }) : undefined}
               />
             )}

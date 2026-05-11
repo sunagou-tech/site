@@ -42,7 +42,7 @@ export default function HeroTypoBlockComponent({ block, config, onChange }: Prop
       </div>
 
       {/* ── メインコンテンツ ─────────────────────────────── */}
-      <div className="relative z-10 px-16 lg:px-24 py-24 max-w-3xl">
+      <div className="relative z-10 px-8 md:px-16 lg:px-24 py-16 md:py-24 max-w-3xl">
 
         {/* Eyebrow */}
         <div className="flex items-center gap-3 mb-10">
@@ -57,7 +57,7 @@ export default function HeroTypoBlockComponent({ block, config, onChange }: Prop
           value={block.tagline}
           onChange={(v) => u({ tagline: v })}
           multiline
-          className={`text-[clamp(2.8rem,5.5vw,5rem)] font-black text-gray-900 leading-[1.1] whitespace-pre-line mb-2 block tracking-tight ${fontClass}`}
+          className={`text-[clamp(1.6rem,5.5vw,5rem)] font-black text-gray-900 leading-[1.1] whitespace-pre-line mb-2 block tracking-tight break-keep max-w-[12em] ${fontClass}`}
         />
 
         {/* アクセントライン under headline */}
@@ -78,14 +78,14 @@ export default function HeroTypoBlockComponent({ block, config, onChange }: Prop
         />
 
         {/* CTA */}
-        <div className="flex items-center gap-6">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
           <LinkableButton
             label={block.buttonText} url={block.buttonUrl ?? ""}
             onLabelChange={(v) => u({ buttonText: v })} onUrlChange={(v) => u({ buttonUrl: v })}
-            className="inline-flex items-center gap-3 text-sm font-bold px-10 py-4 transition-all hover:opacity-80"
+            className="inline-flex items-center justify-center gap-3 text-sm font-bold px-10 py-4 transition-all hover:opacity-80 w-full sm:w-auto"
             style={{ backgroundColor: config.primaryColor, color: "#fff" }}
           />
-          <span className="text-xs text-gray-300 tracking-widest uppercase">
+          <span className="text-xs text-gray-300 tracking-widest uppercase hidden sm:block">
             ↓ Scroll
           </span>
         </div>

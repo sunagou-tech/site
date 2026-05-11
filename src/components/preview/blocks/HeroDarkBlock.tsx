@@ -64,7 +64,7 @@ export default function HeroDarkBlockComponent({ block, config, onChange }: Prop
             value={block.tagline}
             onChange={(v) => u({ tagline: v })}
             multiline
-            className="text-[clamp(2.8rem,5vw,4.8rem)] font-black text-white leading-tight whitespace-pre-line tracking-tight block"
+            className="text-[clamp(1.6rem,5vw,4.8rem)] font-black text-white leading-tight whitespace-pre-line tracking-tight block break-keep max-w-[12em]"
           />
 
           {/* Accent line */}

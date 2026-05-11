@@ -17,9 +17,9 @@ export default function HeroSplitBlockComponent({ block, config, onChange }: Pro
     config.fontFamily === "serif" ? "font-serif" : config.fontFamily === "mono" ? "font-mono" : "font-sans";
 
   return (
-    <section className="grid grid-cols-2 min-h-[560px]">
+    <section className="grid grid-cols-1 md:grid-cols-2 min-h-[560px]">
       {/* 左：画像 */}
-      <div className="relative overflow-hidden">
+      <div className="relative overflow-hidden min-h-[280px] md:min-h-0">
         <EditableImage
           url={block.imageUrl}
           onChange={(url) => u({ imageUrl: url })}
@@ -43,7 +43,7 @@ export default function HeroSplitBlockComponent({ block, config, onChange }: Pro
 
       {/* 右：グラデーション + 白文字 */}
       <div
-        className="flex flex-col justify-center px-14 py-20 relative overflow-hidden"
+        className="flex flex-col justify-center px-8 md:px-14 py-14 md:py-20 relative overflow-hidden"
         style={{
           background: `linear-gradient(145deg, ${config.primaryColor} 0%, ${config.primaryColor}e0 60%, ${config.accentColor}60 100%)`,
         }}
@@ -60,7 +60,7 @@ export default function HeroSplitBlockComponent({ block, config, onChange }: Pro
           value={block.tagline}
           onChange={(v) => u({ tagline: v })}
           multiline
-          className={`text-[clamp(2.4rem,4.5vw,4rem)] font-black leading-[1.05] tracking-[-0.04em] text-white whitespace-pre-line block ${fontClass}`}
+          className={`text-[clamp(1.6rem,4.5vw,4rem)] font-black leading-[1.05] tracking-[-0.04em] text-white whitespace-pre-line block break-keep max-w-[12em] ${fontClass}`}
         />
 
         <EditableText

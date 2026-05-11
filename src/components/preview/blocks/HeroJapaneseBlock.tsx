@@ -17,12 +17,11 @@ export default function HeroJapaneseBlockComponent({ block, config, onChange }: 
     config.fontFamily === "serif" ? "font-serif" : config.fontFamily === "mono" ? "font-mono" : "font-sans";
 
   return (
-    <section className={`min-h-[600px] flex overflow-hidden ${fontClass}`} style={{ backgroundColor: "#faf9f7" }}>
+    <section className={`min-h-[600px] flex flex-col md:flex-row overflow-hidden ${fontClass}`} style={{ backgroundColor: "#faf9f7" }}>
 
       {/* Left: content (45%) */}
       <div
-        className="relative flex flex-col justify-center px-12 lg:px-16 py-16 overflow-hidden"
-        style={{ width: "45%" }}
+        className="relative flex flex-col justify-center px-8 md:px-12 lg:px-16 py-16 overflow-hidden w-full md:w-[45%]"
       >
         {/* Giant semi-transparent kanji background */}
         <div
@@ -55,7 +54,7 @@ export default function HeroJapaneseBlockComponent({ block, config, onChange }: 
           value={block.taglineJp}
           onChange={(v) => u({ taglineJp: v })}
           multiline
-          className="text-[clamp(2rem,4vw,3.8rem)] font-black text-gray-900 leading-snug whitespace-pre-line tracking-tight mb-4 block relative z-10"
+          className="text-[clamp(1.6rem,4vw,3.8rem)] font-black text-gray-900 leading-snug whitespace-pre-line tracking-tight mb-4 block relative z-10 break-keep max-w-[12em]"
         />
 
         {/* English tagline */}
@@ -92,7 +91,7 @@ export default function HeroJapaneseBlockComponent({ block, config, onChange }: 
       </div>
 
       {/* Right: image (55%) */}
-      <div className="flex-1 relative">
+      <div className="flex-1 relative min-h-[300px] md:min-h-0">
         <EditableImage
           url={block.imageUrl}
           onChange={(url) => u({ imageUrl: url })}

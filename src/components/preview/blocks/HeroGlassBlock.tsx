@@ -69,7 +69,7 @@ export default function HeroGlassBlockComponent({ block, config, onChange }: Pro
         style={{ backgroundColor: config.accentColor }} />
 
       {/* ── Glass card ────────────────────────────────────── */}
-      <div className="relative z-10 min-h-[640px] flex items-center px-12 lg:px-20">
+      <div className="relative z-10 min-h-[640px] flex items-center px-6 md:px-12 lg:px-20">
         <div className="max-w-lg backdrop-blur-xl rounded-3xl p-10 border shadow-2xl"
           style={{
             backgroundColor: "rgba(0, 0, 0, 0.35)",
@@ -87,7 +87,7 @@ export default function HeroGlassBlockComponent({ block, config, onChange }: Pro
           {/* Headline */}
           <EditableText tag="h1" value={block.tagline} onChange={(v) => u({ tagline: v })}
             multiline
-            className={`text-[clamp(2.8rem,5vw,4.5rem)] font-black text-white leading-[1.05] whitespace-pre-line mb-6 block tracking-tight ${fontClass}`} />
+            className={`text-[clamp(1.6rem,5vw,4.5rem)] font-black text-white leading-[1.05] whitespace-pre-line mb-6 block tracking-tight break-keep max-w-[12em] ${fontClass}`} />
 
           {/* Separator */}
           <div className="w-12 h-0.5 mb-6 opacity-60" style={{ backgroundColor: config.accentColor }} />

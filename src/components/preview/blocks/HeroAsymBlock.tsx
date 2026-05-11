@@ -22,12 +22,12 @@ export default function HeroAsymBlockComponent({ block, config, onChange }: Prop
       return (
         <EditableText tag="h1" value={block.tagline} onChange={(v) => u({ tagline: v })}
           multiline
-          className={`text-[clamp(2.4rem,4.5vw,4.2rem)] font-black text-white leading-[1.1] whitespace-pre-line block tracking-tight ${fontClass}`} />
+          className={`text-[clamp(1.6rem,4.5vw,4.2rem)] font-black text-white leading-[1.1] whitespace-pre-line block tracking-tight break-keep max-w-[12em] ${fontClass}`} />
       );
     }
     const parts = block.tagline.split(block.accentWord);
     return (
-      <h1 className={`text-[clamp(2.4rem,4.5vw,4.2rem)] font-black text-white leading-[1.1] whitespace-pre-line tracking-tight ${fontClass}`}>
+      <h1 className={`text-[clamp(1.6rem,4.5vw,4.2rem)] font-black text-white leading-[1.1] whitespace-pre-line tracking-tight break-keep max-w-[12em] ${fontClass}`}>
         {parts[0]}
         <span style={{ color: config.accentColor }}>{block.accentWord}</span>
         {parts[1]}
@@ -36,11 +36,11 @@ export default function HeroAsymBlockComponent({ block, config, onChange }: Prop
   }
 
   return (
-    <section className="min-h-[600px] flex overflow-hidden">
+    <section className="min-h-[600px] flex flex-col md:flex-row overflow-hidden">
 
       {/* ── 左カラム：プライマリカラー帯（35%） ───────────── */}
-      <div className="relative flex-shrink-0 flex flex-col justify-between py-12 px-8 lg:px-12 overflow-hidden"
-        style={{ width: "35%", backgroundColor: config.primaryColor }}>
+      <div className="relative flex-shrink-0 flex flex-col justify-between py-12 px-8 lg:px-12 overflow-hidden w-full md:w-[35%]"
+        style={{ backgroundColor: config.primaryColor }}>
 
         {/* 背景装飾：大きなサークル */}
         <div className="absolute -bottom-20 -left-20 w-72 h-72 rounded-full opacity-10 border-2"
@@ -86,7 +86,7 @@ export default function HeroAsymBlockComponent({ block, config, onChange }: Prop
       </div>
 
       {/* ── 右カラム：画像（65%） ────────────────────────── */}
-      <div className="flex-1 relative overflow-hidden">
+      <div className="flex-1 relative overflow-hidden min-h-[300px] md:min-h-0">
         <EditableImage
           url={block.imageUrl}
           onChange={(url) => u({ imageUrl: url })}

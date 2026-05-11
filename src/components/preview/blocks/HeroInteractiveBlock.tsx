@@ -100,7 +100,7 @@ export default function HeroInteractiveBlockComponent({ block, config, onChange 
       ))}
 
       {/* テキスト */}
-      <div className="relative z-10 px-14 py-24 max-w-2xl">
+      <div className="relative z-10 px-8 md:px-14 py-16 md:py-24 max-w-2xl">
         <p className="text-white/25 text-xs tracking-[0.4em] uppercase mb-6">Hero — Pattern C · Interactive</p>
 
         <EditableText
@@ -108,7 +108,7 @@ export default function HeroInteractiveBlockComponent({ block, config, onChange 
           value={block.tagline}
           onChange={(v) => u({ tagline: v })}
           multiline
-          className={`display-heading font-black text-white whitespace-pre-line block ${fontClass}`}
+          className={`display-heading font-black text-white whitespace-pre-line block break-keep max-w-[12em] ${fontClass}`}
         />
 
         <div className="mt-8 flex flex-col gap-2">

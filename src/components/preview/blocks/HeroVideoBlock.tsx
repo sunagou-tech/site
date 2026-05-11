@@ -58,7 +58,7 @@ export default function HeroVideoBlockComponent({ block, config, onChange }: Pro
       <div className="absolute inset-0 bg-black/30" />
 
       {/* コンテンツ */}
-      <div className="relative z-10 w-full px-14 py-24">
+      <div className="relative z-10 w-full px-8 md:px-14 py-16 md:py-24">
         <p className="text-white/30 text-xs tracking-[0.4em] uppercase mb-8">Hero — Pattern B</p>
 
         {/* 超大タイポグラフィ */}
@@ -68,14 +68,14 @@ export default function HeroVideoBlockComponent({ block, config, onChange }: Pro
           onChange={(v) => u({ tagline: v })}
           multiline
           className={`
-            text-[clamp(3.5rem,8vw,7rem)] font-black leading-[1.0] tracking-[-0.04em]
-            text-white whitespace-pre-line block
+            text-[clamp(1.8rem,8vw,7rem)] font-black leading-[1.0] tracking-[-0.04em]
+            text-white whitespace-pre-line block break-keep max-w-[12em]
             [text-shadow:0_2px_40px_rgba(0,0,0,0.4)]
             ${fontClass}
           `}
         />
 
-        <div className="flex items-end gap-10 mt-10">
+        <div className="flex flex-col sm:flex-row sm:items-end gap-6 sm:gap-10 mt-10">
           <EditableText
             tag="p"
             value={block.taglineSub}
@@ -84,7 +84,7 @@ export default function HeroVideoBlockComponent({ block, config, onChange }: Pro
           />
 
           <button
-            className="flex-shrink-0 inline-flex items-center gap-2 border-2 border-white/40 text-white/80 text-sm font-medium px-6 py-3 rounded-full hover:border-white hover:text-white transition-colors backdrop-blur-sm"
+            className="inline-flex items-center justify-center gap-2 border-2 border-white/40 text-white/80 text-sm font-medium px-6 py-3 rounded-full hover:border-white hover:text-white transition-colors backdrop-blur-sm w-full sm:w-auto"
           >
             <EditableText tag="span" value={block.buttonText} onChange={(v) => u({ buttonText: v })} />
           </button>

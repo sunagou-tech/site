@@ -73,7 +73,7 @@ export default function HeroSlideBlockComponent({ block, config, onChange }: Pro
             value={current.tagline}
             onChange={(v) => patchSlide(activeSlide, { tagline: v })}
             multiline
-            className="text-3xl md:text-5xl font-black text-white leading-tight whitespace-pre-line max-w-2xl"
+            className="text-3xl md:text-5xl font-black text-white leading-tight whitespace-pre-line max-w-2xl break-keep"
           />
           <div className="mt-4">
             <LinkableButton
@@ -81,7 +81,7 @@ export default function HeroSlideBlockComponent({ block, config, onChange }: Pro
               url={current.buttonUrl ?? ""}
               onLabelChange={(v) => patchSlide(activeSlide, { buttonText: v })}
               onUrlChange={(v) => patchSlide(activeSlide, { buttonUrl: v })}
-              className="px-8 py-3.5 rounded-full text-sm font-bold shadow-lg hover:opacity-90 transition-opacity"
+              className="px-8 py-3.5 rounded-full text-sm font-bold shadow-lg hover:opacity-90 transition-opacity w-full sm:w-auto"
               style={{ backgroundColor: accent, color: config.primaryColor }}
             />
           </div>

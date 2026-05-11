@@ -19,7 +19,7 @@ export default function HeroMinimalBlockComponent({ block, config, onChange }: P
         </div>
         <EditableText tag="h1" value={block.tagline} onChange={(v) => u({ tagline: v })}
           multiline
-          className={`text-6xl font-black text-gray-900 leading-[1.05] whitespace-pre-line mb-8 block ${fontClass}`}
+          className={`text-[clamp(1.8rem,7vw,3.75rem)] font-black text-gray-900 leading-[1.05] whitespace-pre-line mb-8 block break-keep max-w-[12em] ${fontClass}`}
           style={{ letterSpacing: "-0.04em" }} />
         <EditableText tag="p" value={block.body} onChange={(v) => u({ body: v })}
           multiline className="text-base text-gray-500 leading-relaxed max-w-lg mb-10 block" />

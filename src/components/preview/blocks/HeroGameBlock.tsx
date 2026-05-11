@@ -68,7 +68,7 @@ export default function HeroGameBlockComponent({ block, config, onChange }: Prop
             value={block.tagline}
             onChange={(v) => u({ tagline: v })}
             multiline
-            className="text-3xl md:text-5xl font-black text-white leading-tight whitespace-pre-line"
+            className="text-3xl md:text-5xl font-black text-white leading-tight whitespace-pre-line break-keep max-w-[12em]"
             style={{ textShadow: `0 0 40px ${accent}33` }}
           />
 

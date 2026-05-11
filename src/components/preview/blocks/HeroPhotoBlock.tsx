@@ -43,7 +43,7 @@ export default function HeroPhotoBlockComponent({ block, config, onChange }: Pro
       />
 
       {/* Left content */}
-      <div className="relative z-20 flex items-center max-w-xl px-12 lg:px-20 py-20">
+      <div className="relative z-20 flex items-center max-w-xl px-8 md:px-12 lg:px-20 py-16 md:py-20">
         <div className="space-y-6">
 
           {/* Eyebrow */}
@@ -63,7 +63,7 @@ export default function HeroPhotoBlockComponent({ block, config, onChange }: Pro
             value={block.tagline}
             onChange={(v) => u({ tagline: v })}
             multiline
-            className="text-[clamp(3rem,6vw,5.5rem)] font-black text-white leading-[1.1] whitespace-pre-line tracking-tight block"
+            className="text-[clamp(1.6rem,6vw,5.5rem)] font-black text-white leading-[1.1] whitespace-pre-line tracking-tight block break-keep max-w-[12em]"
           />
 
           {/* Body */}

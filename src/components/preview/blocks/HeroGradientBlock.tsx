@@ -61,7 +61,7 @@ export default function HeroGradientBlockComponent({ block, config, onChange }: 
             {/* Headline */}
             <EditableText tag="h1" value={block.tagline} onChange={(v) => u({ tagline: v })}
               multiline
-              className={`text-[clamp(3rem,6vw,5rem)] font-black text-white leading-[1.05] whitespace-pre-line mb-6 block tracking-tight ${fontClass}`} />
+              className={`text-[clamp(1.6rem,6vw,5rem)] font-black text-white leading-[1.05] whitespace-pre-line mb-6 block tracking-tight break-keep max-w-[12em] ${fontClass}`} />
 
             {/* Body */}
             <EditableText tag="p" value={block.body} onChange={(v) => u({ body: v })}
@@ -70,11 +70,11 @@ export default function HeroGradientBlockComponent({ block, config, onChange }: 
 
             {/* Buttons */}
             <div className="flex flex-col gap-2">
-              <div className="flex flex-wrap gap-3">
+              <div className="flex flex-col sm:flex-row gap-3">
                 <LinkableButton
                   label={block.buttonText} url={block.buttonUrl ?? ""}
                   onLabelChange={(v) => u({ buttonText: v })} onUrlChange={(v) => u({ buttonUrl: v })}
-                  className="inline-flex items-center gap-2 text-sm font-bold px-8 py-4 rounded-full shadow-2xl transition-all hover:scale-105"
+                  className="inline-flex items-center justify-center gap-2 text-sm font-bold px-8 py-4 rounded-full shadow-2xl transition-all hover:scale-105 w-full sm:w-auto"
                   style={{ backgroundColor: config.accentColor, color: config.primaryColor }}
                   onDelete={isEditing ? () => u({ buttonText: "" }) : undefined}
                 />
@@ -82,7 +82,7 @@ export default function HeroGradientBlockComponent({ block, config, onChange }: 
                   <LinkableButton
                     label={block.buttonText2} url={block.buttonUrl2 ?? ""}
                     onLabelChange={(v) => u({ buttonText2: v })} onUrlChange={(v) => u({ buttonUrl2: v })}
-                    className="inline-flex items-center gap-2 text-sm font-medium px-8 py-4 rounded-full border border-white/30 text-white transition-all hover:bg-white/10"
+                    className="inline-flex items-center justify-center gap-2 text-sm font-medium px-8 py-4 rounded-full border border-white/30 text-white transition-all hover:bg-white/10 w-full sm:w-auto"
                     onDelete={isEditing ? () => u({ buttonText2: "", buttonUrl2: "" }) : undefined}
                   />
                 )}

@@ -17,10 +17,10 @@ export default function HeroMosaicBlockComponent({ block, config, onChange }: Pr
     config.fontFamily === "serif" ? "font-serif" : config.fontFamily === "mono" ? "font-mono" : "font-sans";
 
   return (
-    <section className={`bg-white min-h-[580px] flex overflow-hidden ${fontClass}`}>
+    <section className={`bg-white min-h-[580px] flex flex-col md:flex-row overflow-hidden ${fontClass}`}>
 
       {/* Left: text (40%) */}
-      <div className="flex flex-col justify-center px-12 lg:px-16 py-16" style={{ width: "40%" }}>
+      <div className="flex flex-col justify-center px-8 md:px-12 lg:px-16 py-16 w-full md:w-[40%]">
 
         {/* Eyebrow */}
         <div className="flex items-center gap-3 mb-6">
@@ -39,7 +39,7 @@ export default function HeroMosaicBlockComponent({ block, config, onChange }: Pr
           value={block.tagline}
           onChange={(v) => u({ tagline: v })}
           multiline
-          className="text-[clamp(2.4rem,4vw,4rem)] font-black text-gray-900 leading-[1.1] whitespace-pre-line tracking-tight mb-6 block"
+          className="text-[clamp(1.6rem,4vw,4rem)] font-black text-gray-900 leading-[1.1] whitespace-pre-line tracking-tight mb-6 block break-keep max-w-[12em]"
         />
 
         {/* Body */}
@@ -66,7 +66,7 @@ export default function HeroMosaicBlockComponent({ block, config, onChange }: Pr
       </div>
 
       {/* Right: mosaic grid (60%) */}
-      <div className="flex-1 grid grid-cols-2 gap-2 p-4 relative">
+      <div className="flex-1 grid grid-cols-2 gap-2 p-4 relative min-h-[300px] md:min-h-0">
         <div className="h-48 rounded-xl overflow-hidden">
           <EditableImage
             url={block.image1}
