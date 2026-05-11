@@ -253,7 +253,7 @@ ${DESIGN_CONTROL_RULES}
     "body": "サブコピー2文。ターゲットの悩みと解決を示す。",
     "ctaText": "無料相談はこちら",
     "ctaHref": "#cta",
-    "heroImagePrompt": "professional photo for [業種 in English], modern office, no text",
+    "heroImagePrompt": "Unsplash keywords in English for [業種]: e.g. students studying, classroom, people working",
     "imageUrl": null,
     "stats": [
       {"value": "000件","label": "実績"},
@@ -1394,24 +1394,36 @@ export async function POST(req: NextRequest) {
     const parsed = JSON.parse(jsonStr) as SectionData;
 
     if (!parsed.hero.imageUrl && parsed.hero.heroImagePrompt) {
-      const prompt = encodeURIComponent(
-        parsed.hero.heroImagePrompt + ", photorealistic, 4k, no watermark"
-      );
-      parsed.hero.imageUrl =
-        `https://image.pollinations.ai/prompt/${prompt}?width=1080&height=1350&nologo=true&seed=${Date.now() % 9999}`;
+      const keywords = parsed.hero.heroImagePrompt
+        .replace(/professional photo for|photorealistic|4k|no watermark|no text/gi, "")
+        .replace(/[,./]/g, " ")
+        .trim()
+        .split(/\s+/)
+        .filter((w: string) => w.length > 2)
+        .slice(0, 6)
+        .join(",");
+      parsed.hero.imageUrl = `https://source.unsplash.com/1080x720/?${encodeURIComponent(keywords)}`;
     }
+
+    // AIが返す primaryColor/accentColor はテンプレートのデフォルト値を
+    // そのまま返すことが多く、デザインシステムの色を壊す。
+    // テンプレートデフォルト以外の値だけユーザー指定色として採用する。
+    const TMPL_PC = "#1E40AF";
+    const TMPL_AC = "#EA580C";
+    const userPc = parsed.primaryColor && parsed.primaryColor !== TMPL_PC ? parsed.primaryColor : null;
+    const userAc = parsed.accentColor  && parsed.accentColor  !== TMPL_AC ? parsed.accentColor  : null;
 
     const designForBuild: GlobalStyle | undefined = analysisResult
       ? effectiveDesign
       : effectiveDesign
         ? {
             ...effectiveDesign,
-            primaryColor: parsed.primaryColor || effectiveDesign.primaryColor,
-            accentColor: parsed.accentColor || effectiveDesign.accentColor,
-            heroBgColor: parsed.hero?.bgColor || effectiveDesign.heroBgColor,
-            bgColor: parsed.problem?.bgColor || effectiveDesign.bgColor,
-            cardBgColor: parsed.solution?.bgColor || effectiveDesign.cardBgColor,
-            buttonBgColor: parsed.cta?.bgColor || effectiveDesign.buttonBgColor,
+            primaryColor:  userPc || effectiveDesign.primaryColor,
+            accentColor:   userAc || effectiveDesign.accentColor,
+            heroBgColor:   parsed.hero?.bgColor    || effectiveDesign.heroBgColor,
+            bgColor:       parsed.problem?.bgColor || effectiveDesign.bgColor,
+            cardBgColor:   parsed.solution?.bgColor || effectiveDesign.cardBgColor,
+            buttonBgColor: parsed.cta?.bgColor     || effectiveDesign.buttonBgColor,
           }
         : undefined;
 

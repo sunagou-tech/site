@@ -45,7 +45,7 @@ export default function HeroSplitBlockComponent({ block, config, onChange }: Pro
       <div
         className="flex flex-col justify-center px-8 md:px-14 py-14 md:py-20 relative overflow-hidden"
         style={{
-          background: `linear-gradient(145deg, ${config.primaryColor} 0%, ${config.primaryColor}e0 60%, ${config.accentColor}60 100%)`,
+          backgroundColor: config.primaryColor,
         }}
       >
         <div className="absolute -top-24 -right-24 w-72 h-72 rounded-full opacity-10 border-2 border-white" />
