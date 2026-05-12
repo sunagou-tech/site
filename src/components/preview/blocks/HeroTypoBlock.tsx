@@ -3,6 +3,7 @@
 import { HeroTypoBlock, SiteConfig } from "@/types/site";
 import EditableText from "../EditableText";
 import LinkableButton from "../LinkableButton";
+import { useEditing } from "@/contexts/EditingContext";
 
 interface Props {
   block: HeroTypoBlock;
@@ -12,21 +13,21 @@ interface Props {
 
 export default function HeroTypoBlockComponent({ block, config, onChange }: Props) {
   const u = (patch: Partial<HeroTypoBlock>) => onChange({ ...block, ...patch });
+  const isEditing = useEditing();
   const fontClass =
     config.fontFamily === "serif" ? "font-serif" : config.fontFamily === "mono" ? "font-mono" : "font-sans";
 
   return (
     <section className="relative bg-white min-h-[600px] overflow-hidden flex items-center">
 
-      {/* ── 背景：装飾大文字 ─────────────────────────────── */}
-      <div className="absolute inset-0 flex items-center justify-center overflow-hidden select-none">
-        <EditableText
-          tag="span"
-          value={block.kanjiDecor}
-          onChange={(v) => u({ kanjiDecor: v })}
+      {/* ── 背景：装飾大文字（pointer-events-none、z-0） ── */}
+      <div className="absolute inset-0 flex items-center justify-center overflow-hidden select-none pointer-events-none">
+        <span
           className={`text-[22vw] font-black leading-none tracking-tighter block ${fontClass}`}
           style={{ color: `${config.primaryColor}08` }}
-        />
+        >
+          {block.kanjiDecor || "革新"}
+        </span>
       </div>
 
       {/* ── アクセントライン（左端） ─────────────────────── */}
@@ -58,7 +59,7 @@ export default function HeroTypoBlockComponent({ block, config, onChange }: Prop
           value={block.tagline}
           onChange={(v) => u({ tagline: v })}
           multiline
-          className={`text-[clamp(1.6rem,5.5vw,5rem)] font-black text-gray-900 leading-[1.1] whitespace-pre-line mb-2 block tracking-tight break-keep max-w-[14em] ${fontClass}`}
+          className={`text-[clamp(1.6rem,5.5vw,5rem)] font-black text-gray-900 leading-[1.1] whitespace-pre-line mb-2 block tracking-tight break-keep max-w-[14em] text-center ${fontClass}`}
         />
 
         {/* アクセントライン under headline */}
@@ -76,7 +77,7 @@ export default function HeroTypoBlockComponent({ block, config, onChange }: Prop
           value={block.body}
           onChange={(v) => u({ body: v })}
           multiline
-          className="text-base text-gray-500 leading-[2] whitespace-pre-line mb-12 block max-w-lg"
+          className="text-base text-gray-500 leading-[2] whitespace-pre-line mb-12 block max-w-lg text-center"
         />
 
         {/* CTA */}
@@ -87,6 +88,19 @@ export default function HeroTypoBlockComponent({ block, config, onChange }: Prop
           style={{ backgroundColor: config.primaryColor, color: "#fff" }}
         />
       </div>
+
+      {/* ── 背景テキスト編集ラベル（編集モードのみ表示） ── */}
+      {isEditing && (
+        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 bg-black/40 backdrop-blur-sm px-3 py-1.5 rounded-full">
+          <span className="text-[9px] text-white/50 font-medium whitespace-nowrap">背景文字:</span>
+          <EditableText
+            tag="span"
+            value={block.kanjiDecor}
+            onChange={(v) => u({ kanjiDecor: v })}
+            className="text-[11px] text-white font-bold"
+          />
+        </div>
+      )}
 
       {/* ── 底部アクセントライン ──────────────────────────── */}
       <div className="absolute bottom-0 left-0 right-0 h-0.5"
