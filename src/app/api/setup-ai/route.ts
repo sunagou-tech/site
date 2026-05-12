@@ -7,8 +7,8 @@ export const maxDuration = 60;
 
 const API_KEY         = process.env.GEMINI_API_KEY ?? "";
 const GEMINI_BASE     = "https://generativelanguage.googleapis.com/v1beta/models";
-// 無料枠 RPM: flash-lite=30, flash=15, 2.5-flash=10 → lite優先
-const GEMINI_MODELS   = ["gemini-2.0-flash-lite", "gemini-2.0-flash", "gemini-2.5-flash"];
+// 2.0系は v1beta generateContent 非対応のため 2.5系に統一
+const GEMINI_MODELS   = ["gemini-2.5-flash", "gemini-2.5-flash-lite"];
 
 // ── 6種のデザインシステム定義 ────────────────────────────────
 const DESIGN_SYSTEMS: Record<string, GlobalStyle & { _desc: string }> = {
@@ -1348,7 +1348,7 @@ export async function POST(req: NextRequest) {
 
     // チャットは1024トークン程度 → 8秒で十分。60秒制限内に収める
     // 3モデル × 2回 × (8s + 0.3s) = 最大50秒
-    const chatModelList = ["gemini-2.0-flash-lite", "gemini-2.0-flash", "gemini-2.5-flash"];
+    const chatModelList = ["gemini-2.5-flash", "gemini-2.5-flash-lite"];
     const chatErrors: string[] = [];
     const wait = (ms: number) => new Promise(r => setTimeout(r, ms));
     for (const model of chatModelList) {
