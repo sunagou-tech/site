@@ -25,7 +25,7 @@ export default function HeroTypoBlockComponent({ block, config, onChange }: Prop
       <div className="absolute inset-0 flex items-center justify-center overflow-hidden select-none pointer-events-none">
         <span
           className={`text-[22vw] font-black leading-none tracking-tighter ${fontClass}`}
-          style={{ color: `${config.primaryColor}10` }}
+          style={{ color: `${block.kanjiDecorColor ?? config.primaryColor}18` }}
         >
           {block.kanjiDecor || "革新"}
         </span>
@@ -112,6 +112,18 @@ export default function HeroTypoBlockComponent({ block, config, onChange }: Prop
               type="color"
               value={textColor}
               onChange={(e) => u({ textColor: e.target.value })}
+              className="w-5 h-5 rounded cursor-pointer border-0 bg-transparent"
+              style={{ padding: 0 }}
+            />
+          </label>
+          {/* 背景文字色 */}
+          <span className="w-px h-3 bg-white/20" />
+          <label className="flex items-center gap-1.5 cursor-pointer">
+            <span className="text-[9px] text-white/50 font-medium whitespace-nowrap">背景色:</span>
+            <input
+              type="color"
+              value={block.kanjiDecorColor ?? config.primaryColor}
+              onChange={(e) => u({ kanjiDecorColor: e.target.value })}
               className="w-5 h-5 rounded cursor-pointer border-0 bg-transparent"
               style={{ padding: 0 }}
             />

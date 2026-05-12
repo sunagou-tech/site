@@ -413,6 +413,7 @@ export interface FreeBlock {
 export interface HeroTypoBlock {
   id: string; type: "hero-typo";
   kanjiDecor: string;          // 背景の装飾文字（例: "革新"）
+  kanjiDecorColor?: string;    // 背景装飾文字の色（例: "#2563EB"）
   eyebrow: string;
   tagline: string;
   taglineSub: string;
