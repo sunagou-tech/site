@@ -35,7 +35,7 @@ export default function HeroSplitBlockComponent({ block, config, onChange }: Pro
           style={{ backgroundColor: config.accentColor }}
         >
           <p className="text-[10px] font-bold text-white/80 whitespace-nowrap tracking-widest"
-             style={{ writingMode: "vertical-rl", transform: "rotate(180deg)" }}>
+             style={{ writingMode: "vertical-rl" }}>
             {config.catchCopy}
           </p>
         </div>
