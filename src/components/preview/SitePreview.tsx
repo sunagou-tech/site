@@ -49,21 +49,23 @@ function blockLabel(block: SectionBlock) {
 // ─── ＋挿入ボタン ─────────────────────────────────────────────
 function InsertButton({ onClick }: { onClick: () => void }) {
   return (
-    <div className="relative flex items-center justify-center h-8 group/ins">
-      <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-px bg-indigo-300 opacity-0 group-hover/ins:opacity-100 transition-opacity" />
-      <button
-        onClick={onClick}
-        className="
-          relative z-10 flex items-center gap-1.5 text-[11px] font-medium
-          bg-white border border-dashed border-gray-300 text-gray-400
-          px-3 py-1 rounded-full shadow-sm
-          hover:border-indigo-400 hover:text-indigo-500 hover:shadow
-          opacity-0 group-hover/ins:opacity-100
-          transition-all duration-150
-        "
-      >
-        <Plus size={10} /> ブロックを追加
-      </button>
+    <div className="relative h-0 overflow-visible" style={{ zIndex: 25 }}>
+      <div className="absolute inset-x-0 top-0 -translate-y-1/2 h-6 flex items-center justify-center group/ins">
+        <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-px bg-indigo-300 opacity-0 group-hover/ins:opacity-100 transition-opacity" />
+        <button
+          onClick={onClick}
+          className="
+            relative z-10 flex items-center gap-1.5 text-[11px] font-medium
+            bg-white border border-dashed border-gray-300 text-gray-400
+            px-3 py-1 rounded-full shadow-sm
+            hover:border-indigo-400 hover:text-indigo-500 hover:shadow
+            opacity-0 group-hover/ins:opacity-100
+            transition-all duration-150
+          "
+        >
+          <Plus size={10} /> ブロックを追加
+        </button>
+      </div>
     </div>
   );
 }
