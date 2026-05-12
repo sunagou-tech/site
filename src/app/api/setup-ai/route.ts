@@ -88,7 +88,7 @@ const DESIGN_SYSTEMS: Record<string, GlobalStyle & { _desc: string }> = {
     buttonTextColor: "#FFFFFF", buttonRadius: "8", cardBorderRadius: "12",
     heroLayout: "split", designStyle: "exam-prep-bold",
     designNotes: "受験専門塾,難関大学,自学自習,逆転合格,授業なし,黒×赤,パワフル,結果重視,高校生,大学受験",
-    h1Size: "56", headingWeight: 900, sectionPaddingY: "88",
+    h1Size: "56", headingWeight: 900, sectionPaddingY: "64",
     textColor: "#1a1a1a",
   },
   "juku-navy": {
@@ -99,7 +99,7 @@ const DESIGN_SYSTEMS: Record<string, GlobalStyle & { _desc: string }> = {
     buttonTextColor: "#FFFFFF", buttonRadius: "10", cardBorderRadius: "20",
     heroLayout: "split", designStyle: "trustworthy-navy",
     designNotes: "個別指導,一対一,安心感,保護者向け,ネイビー,イエロー,信頼,丁寧,中学受験,高校受験",
-    h1Size: "50", headingWeight: 700, sectionPaddingY: "80",
+    h1Size: "50", headingWeight: 700, sectionPaddingY: "64",
     textColor: "#000000",
   },
   "juku-orange": {
@@ -110,7 +110,7 @@ const DESIGN_SYSTEMS: Record<string, GlobalStyle & { _desc: string }> = {
     buttonTextColor: "#FFFFFF", buttonRadius: "6", cardBorderRadius: "12",
     heroLayout: "centered", designStyle: "energetic-orange",
     designNotes: "家庭教師,合格実績,明るい,オレンジ,活力,地域密着,中学生,高校生,親しみやすい",
-    h1Size: "54", headingWeight: 900, sectionPaddingY: "80",
+    h1Size: "54", headingWeight: 900, sectionPaddingY: "64",
     textColor: "#000000",
   },
   "juku-blue": {
@@ -121,7 +121,7 @@ const DESIGN_SYSTEMS: Record<string, GlobalStyle & { _desc: string }> = {
     buttonTextColor: "#FFFFFF", buttonRadius: "8", cardBorderRadius: "20",
     heroLayout: "centered", designStyle: "fresh-blue",
     designNotes: "通い放題,毎日,個別カリキュラム,ブルー,清潔感,成長,小学生,中学生,オレンジアクセント",
-    h1Size: "50", headingWeight: 700, sectionPaddingY: "80",
+    h1Size: "50", headingWeight: 700, sectionPaddingY: "64",
     textColor: "#000000",
   },
   "juku-gold": {
@@ -132,7 +132,7 @@ const DESIGN_SYSTEMS: Record<string, GlobalStyle & { _desc: string }> = {
     buttonTextColor: "#1a1000", buttonRadius: "8", cardBorderRadius: "12",
     heroLayout: "centered", designStyle: "premium-gold",
     designNotes: "進学実績,難関大,データ重視,ゴールド,ブルー,権威感,実績強調,東大,国公立,進学校",
-    h1Size: "54", headingWeight: 900, sectionPaddingY: "88",
+    h1Size: "54", headingWeight: 900, sectionPaddingY: "64",
     textColor: "#1a1000",
   },
   "juku-friendly": {
@@ -208,7 +208,8 @@ const DESIGN_CONTROL_RULES = `【色・デザイン反映ルール】
 - 学習塾でも毎回ネイビー・青に寄せない。小学生向けは暖色・グリーン、受験向けは黒赤、安心感はネイビー黄など、会話の好みで変える
 - catchCopy は20字以内。hero.heading は改行なしで12〜15字が理想。どうしても2行にする場合のみ「短い1行目\\n短い2行目」で各行10字以内にする
 - 「〜を、〜に。」「〜が、変わる。」形式の短くリズムある一文が最もかっこよく見える。長いと折れて安っぽくなる
-- 青（ネイビー・ブルー系）をデフォルトにしない。業種・ターゲット・雰囲気から色を選ぶ`;
+- 青（ネイビー・ブルー系）をデフォルトにしない。業種・ターゲット・雰囲気から色を選ぶ
+- 【画像プロンプト】学習塾・教育系では heroImagePrompt に必ず「自習室・参考書・ノート・机・赤本」などの物撮りシーンを英語で指定すること。人物（顔）は含めない。例: "Japanese study room interior, red university entrance exam books stacked on wooden desk, notebooks and pencils, warm focused lighting, authentic documentary style, no people"`;
 
 // ── Generate prompt builder（軽量版）────────────────────────────
 function buildGeneratePrompt(conversation: string, analysis?: GlobalStyle): string {
@@ -256,7 +257,7 @@ ${DESIGN_CONTROL_RULES}
     "body": "サブコピー2文。ターゲットの悩みと解決を示す。",
     "ctaText": "無料相談はこちら",
     "ctaHref": "#cta",
-    "heroImagePrompt": "realistic photo of [業種 scene in English], bright natural light, people, modern environment",
+    "heroImagePrompt": "学習塾・教育系なら→「Japanese self-study room interior, red exam prep books on desk, notebooks, pencils, warm indoor light, no people」。それ以外の業種は→「realistic interior or product scene of [業種 in English], authentic documentary style, no people, natural light」",
     "imageUrl": null,
     "stats": [
       {"value": "000件","label": "実績"},
@@ -1480,7 +1481,7 @@ export async function POST(req: NextRequest) {
 
     if (!parsed.hero.imageUrl && parsed.hero.heroImagePrompt) {
       const prompt = encodeURIComponent(
-        parsed.hero.heroImagePrompt + ", realistic photography, natural light, professional photo, no text, no watermark"
+        parsed.hero.heroImagePrompt + ", photorealistic, shot on camera, authentic, natural lighting, no watermark, no text, no AI artifacts, no people faces"
       );
       parsed.hero.imageUrl =
         `https://image.pollinations.ai/prompt/${prompt}?width=1080&height=720&model=flux&nologo=true&seed=${Date.now() % 9999}`;
