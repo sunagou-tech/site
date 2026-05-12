@@ -31,13 +31,12 @@ export default function GlobalFormatBar() {
     const update = () => {
       const sel = window.getSelection();
       if (!sel || sel.isCollapsed || sel.rangeCount === 0) {
-        // Delay hiding to allow toolbar button clicks
         hideTimer.current = setTimeout(() => setBar(b => ({ ...b, visible: false })), 200);
         return;
       }
       const node = sel.anchorNode;
       const editable = (node instanceof Element ? node : node?.parentElement)
-        ?.closest('[contenteditable="true"]');
+        ?.closest('[contenteditable]:not([contenteditable="false"])');
       if (!editable) {
         hideTimer.current = setTimeout(() => setBar(b => ({ ...b, visible: false })), 200);
         return;
@@ -48,12 +47,20 @@ export default function GlobalFormatBar() {
       if (rect.width === 0 && rect.height === 0) return;
 
       const BAR_WIDTH = 400;
+      const BAR_HEIGHT = 48;
       const left = Math.max(8, Math.min(window.innerWidth - BAR_WIDTH - 8, rect.left + rect.width / 2 - BAR_WIDTH / 2));
-      setBar({ visible: true, top: rect.top - 52, left });
+      // adminヘッダーで隠れる場合は選択テキストの下に表示
+      const topAbove = rect.top - BAR_HEIGHT - 6;
+      const top = topAbove < 60 ? rect.bottom + 6 : topAbove;
+      setBar({ visible: true, top, left });
     };
 
     document.addEventListener("selectionchange", update);
-    return () => document.removeEventListener("selectionchange", update);
+    document.addEventListener("mouseup", update);
+    return () => {
+      document.removeEventListener("selectionchange", update);
+      document.removeEventListener("mouseup", update);
+    };
   }, []);
 
   const exec = useCallback((cmd: string, val?: string) => {
