@@ -15,9 +15,10 @@ import FooterNavRenderer from "@/components/preview/FooterNavRenderer";
 import { RefreshCw, ExternalLink, Plus, Layout, Globe, Check, AlertCircle, Undo2, Image, Copy, Trash2 } from "lucide-react";
 import { EditingContext } from "@/contexts/EditingContext";
 import { ImagePickContext } from "@/contexts/ImagePickContext";
+import { ImageEditContext, ImageEditTarget } from "@/contexts/ImageEditContext";
 import { publishSite, isSupabaseConfigured } from "@/lib/supabase";
 
-type SidePanel = "settings" | "blocks" | "upload" | "ai-image" | "seo" | "column" | "footer";
+type SidePanel = "settings" | "blocks" | "upload" | "ai-image" | "seo" | "column" | "footer" | "image-edit";
 type DeviceMode = "pc" | "tablet" | "sp";
 interface PageTab { id: string; slug: string; title: string; isHome: boolean; }
 interface UploadedImage { id: string; name: string; url: string; uploadedAt: number; }
@@ -58,6 +59,13 @@ export default function AdminClient() {
 
   // 画像ピック（ライブラリ → ブロック配置）
   const [pickedUrl, setPickedUrl] = useState<string | null>(null);
+
+  // 画像編集パネル
+  const [imageEditTarget, setImageEditTarget] = useState<ImageEditTarget>(null);
+  const [imgEditUrl, setImgEditUrl] = useState("");
+  const [imgEditPrompt, setImgEditPrompt] = useState("");
+  const [imgEditStatus, setImgEditStatus] = useState<"idle" | "loading" | "done" | "error">("idle");
+  const [imgEditGenUrl, setImgEditGenUrl] = useState<string | null>(null);
 
   // Slug / publish
   const [siteSlug, setSiteSlug] = useState("");
@@ -679,6 +687,16 @@ export default function AdminClient() {
     return () => window.removeEventListener("message", handler);
   }, []);
 
+  // 画像編集ターゲットが変わったらパネルを切替
+  useEffect(() => {
+    if (imageEditTarget) {
+      setImgEditUrl(imageEditTarget.url);
+      setImgEditStatus("idle");
+      setImgEditGenUrl(null);
+      setSidePanel("image-edit");
+    }
+  }, [imageEditTarget]);
+
   // pickedUrl をiframeに同期（HTMLモードでクリック配置を可能にする）
   useEffect(() => {
     if (!htmlMode) return;
@@ -1091,6 +1109,7 @@ export default function AdminClient() {
 
   return (
     <EditingContext.Provider value={true}>
+    <ImageEditContext.Provider value={{ target: imageEditTarget, open: setImageEditTarget, close: () => { setImageEditTarget(null); setSidePanel("blocks"); } }}>
     <ImagePickContext.Provider value={{ pickedUrl, pick: setPickedUrl, clear: () => setPickedUrl(null) }}>
       <style>{`
         @media (max-width: 900px) {
@@ -1269,6 +1288,7 @@ export default function AdminClient() {
                     : sidePanel === "ai-image" ? "AI画像生成"
                     : sidePanel === "column" ? "コラム管理"
                     : sidePanel === "footer" ? "フッター設定"
+                    : sidePanel === "image-edit" ? "画像を編集"
                     : "SEO / 集客設定"}
                 </p>
               </div>
@@ -1799,6 +1819,117 @@ export default function AdminClient() {
                   />
                 )}
 
+                {/* ── 画像編集パネル ── */}
+                {sidePanel === "image-edit" && imageEditTarget && (() => {
+                  const applyImage = (u: string) => {
+                    imageEditTarget.onChange(u);
+                    setImageEditTarget(null);
+                    setSidePanel("blocks");
+                  };
+                  const generateImage = async () => {
+                    if (!imgEditPrompt.trim()) return;
+                    setImgEditStatus("loading");
+                    setImgEditGenUrl(null);
+                    try {
+                      const res = await fetch("/api/generate-image", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ prompt: imgEditPrompt, aspectRatio: "16:9" }),
+                      });
+                      const data = await res.json() as { images?: { dataUrl: string }[]; error?: string };
+                      if (res.ok && data.images?.[0]) {
+                        setImgEditGenUrl(data.images[0].dataUrl);
+                        setImgEditStatus("done");
+                      } else {
+                        setImgEditStatus("error");
+                      }
+                    } catch { setImgEditStatus("error"); }
+                  };
+
+                  return (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                      {/* 戻るボタン */}
+                      <button onClick={() => { setImageEditTarget(null); setSidePanel("blocks"); }}
+                        style={{ fontSize: 10, color: "#6366F1", background: "none", border: "none", cursor: "pointer", textAlign: "left", padding: 0, fontWeight: 600 }}>
+                        ← ブロック編集に戻る
+                      </button>
+
+                      {/* 現在の画像プレビュー */}
+                      {imageEditTarget.url && (
+                        <div style={{ borderRadius: 8, overflow: "hidden", aspectRatio: "16/9", background: "#F1F5F9" }}>
+                          <img src={imageEditTarget.url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                        </div>
+                      )}
+
+                      {/* URL入力 */}
+                      <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                        <span style={{ fontSize: 10, fontWeight: 600, color: "#64748B" }}>画像URL</span>
+                        <input value={imgEditUrl} onChange={e => setImgEditUrl(e.target.value)}
+                          placeholder="https://example.com/image.jpg"
+                          onKeyDown={e => { if (e.key === "Enter") applyImage(imgEditUrl); }}
+                          style={{ fontSize: 11, padding: "8px 10px", border: "1px solid #E2E8F0", borderRadius: 7, outline: "none", color: "#111" }} />
+                        <div style={{ display: "flex", gap: 6 }}>
+                          <button onClick={() => applyImage(imgEditUrl)}
+                            style={{ flex: 1, padding: "8px 0", borderRadius: 7, border: "none", background: config.primaryColor, color: "#fff", fontWeight: 700, fontSize: 11, cursor: "pointer" }}>
+                            適用
+                          </button>
+                          {imageEditTarget.url && (
+                            <button onClick={() => applyImage("")}
+                              style={{ padding: "8px 12px", borderRadius: 7, border: "1px solid #FCA5A5", background: "#FEF2F2", color: "#EF4444", fontSize: 11, cursor: "pointer" }}>
+                              削除
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      <div style={{ height: 1, background: "#F1F5F9" }} />
+
+                      {/* AI生成 */}
+                      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                        <span style={{ fontSize: 10, fontWeight: 700, color: "#64748B" }}>AI画像生成 (ChatGPT / Gemini)</span>
+                        <textarea value={imgEditPrompt} onChange={e => setImgEditPrompt(e.target.value)}
+                          rows={2} placeholder={"例：自習室で勉強する高校生\nモダンなオフィス夜景"}
+                          onKeyDown={e => { if (e.key === "Enter" && e.metaKey) generateImage(); }}
+                          style={{ fontSize: 11, padding: "8px 10px", border: "1px solid #E2E8F0", borderRadius: 7, outline: "none", resize: "none", color: "#111", lineHeight: 1.6 }} />
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+                          {["自習室・勉強風景", "モダンオフィス夜景", "都市の夕景", "自然の中の道"].map(ex => (
+                            <button key={ex} onClick={() => setImgEditPrompt(ex)}
+                              style={{ fontSize: 9, padding: "3px 7px", borderRadius: 10, border: "1px solid #E2E8F0", background: "#F8FAFC", color: "#64748B", cursor: "pointer" }}>
+                              {ex}
+                            </button>
+                          ))}
+                        </div>
+                        <button onClick={generateImage} disabled={!imgEditPrompt.trim() || imgEditStatus === "loading"}
+                          style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "9px 0", borderRadius: 7, border: "none", background: !imgEditPrompt.trim() || imgEditStatus === "loading" ? "#E2E8F0" : config.accentColor, color: !imgEditPrompt.trim() || imgEditStatus === "loading" ? "#94A3B8" : "#111", fontWeight: 700, fontSize: 11, cursor: !imgEditPrompt.trim() || imgEditStatus === "loading" ? "not-allowed" : "pointer" }}>
+                          {imgEditStatus === "loading" ? "生成中… (20〜60秒)" : "✦ 画像を生成"}
+                        </button>
+                      </div>
+
+                      {/* 生成結果 */}
+                      {imgEditStatus === "done" && imgEditGenUrl && (
+                        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                          <div style={{ borderRadius: 8, overflow: "hidden", aspectRatio: "16/9" }}>
+                            <img src={imgEditGenUrl} alt="generated" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                          </div>
+                          <div style={{ display: "flex", gap: 6 }}>
+                            <button onClick={() => applyImage(imgEditGenUrl)}
+                              style={{ flex: 1, padding: "9px 0", borderRadius: 7, border: "none", background: "#22c55e", color: "#fff", fontWeight: 700, fontSize: 11, cursor: "pointer" }}>
+                              この画像を使う
+                            </button>
+                            <button onClick={generateImage}
+                              style={{ padding: "9px 10px", borderRadius: 7, border: "1px solid #E2E8F0", background: "#fff", color: "#64748B", fontSize: 11, cursor: "pointer" }}>
+                              再生成
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                      {imgEditStatus === "error" && (
+                        <p style={{ fontSize: 10, color: "#EF4444", margin: 0 }}>生成に失敗しました。再試行してください。</p>
+                      )}
+                    </div>
+                  );
+                })()}
+
                 {/* ── フッターパネル ── */}
                 {sidePanel === "footer" && (() => {
                   const fnc = config.footerNavConfig;
@@ -2118,6 +2249,7 @@ export default function AdminClient() {
         />
       )}
     </ImagePickContext.Provider>
+    </ImageEditContext.Provider>
     </EditingContext.Provider>
   );
 }

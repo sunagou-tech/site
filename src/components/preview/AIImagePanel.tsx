@@ -1,28 +1,19 @@
 "use client";
 
-/**
- * AIImagePanel
- * ─────────────────────────────────────────────────────────
- * Pollinations AI (https://pollinations.ai) を使って
- * テキストプロンプトから画像を無料で生成する。
- * API キー不要。URL ベースで画像を直接取得。
- * ─────────────────────────────────────────────────────────
- */
-
 import { useState } from "react";
 import { Sparkles, Loader2, RefreshCw, Check, Wand2 } from "lucide-react";
 
 const STYLES = [
-  { label: "リアル写真",  en: "realistic photography, professional, high quality, 4k" },
-  { label: "イラスト",    en: "flat illustration, digital art, clean vector style" },
-  { label: "シネマティック", en: "cinematic, dramatic lighting, film photography" },
-  { label: "ミニマル",    en: "minimal, clean, white background, simple" },
+  { label: "リアル写真",     en: "professional photography, realistic, high quality, 4k" },
+  { label: "イラスト",       en: "flat illustration, digital art, clean vector style" },
+  { label: "シネマティック",  en: "cinematic, dramatic lighting, film photography" },
+  { label: "ミニマル",       en: "minimal, clean, simple, white background" },
 ];
 
 const EXAMPLE_PROMPTS = [
-  "会議室で笑顔で話し合うビジネスチーム",
+  "会議室で話し合うビジネスチーム",
   "モダンなオフィスと都市の夜景",
-  "スタートアップで働く若い人たち",
+  "自習室で勉強する高校生の雰囲気",
   "テクノロジーと自然が共存する未来都市",
 ];
 
@@ -37,40 +28,49 @@ export default function AIImagePanel({ onUse, onClose, primaryColor, accentColor
   const [prompt, setPrompt] = useState("");
   const [styleIdx, setStyleIdx] = useState(0);
   const [status, setStatus] = useState<"idle" | "loading" | "done" | "error">("idle");
+  const [errorMsg, setErrorMsg] = useState("");
   const [generatedUrl, setGeneratedUrl] = useState<string | null>(null);
-  const [seed, setSeed] = useState(() => Math.floor(Math.random() * 99999));
 
-  const buildUrl = (p: string, s: number) => {
-    const full = `${p}, ${STYLES[styleIdx].en}`;
-    return `https://image.pollinations.ai/prompt/${encodeURIComponent(full + ", wide 16:9 composition, subject center-right, left area clear for text overlay, no watermark, no text")}?width=1920&height=1080&nologo=true&seed=${s}&model=turbo`;
-  };
-
-  const generate = (overrideSeed?: number) => {
+  const generate = async () => {
     if (!prompt.trim()) return;
-    const useSeed = overrideSeed ?? Math.floor(Math.random() * 99999);
-    setSeed(useSeed);
     setStatus("loading");
     setGeneratedUrl(null);
+    setErrorMsg("");
 
-    const url = buildUrl(prompt, useSeed);
-    const img = new window.Image();
-    img.onload = () => { setGeneratedUrl(url); setStatus("done"); };
-    img.onerror = () => setStatus("error");
-    img.src = url;
+    try {
+      const res = await fetch("/api/generate-image", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          prompt: `${prompt}, ${STYLES[styleIdx].en}`,
+          aspectRatio: "16:9",
+        }),
+      });
+      const data = await res.json() as { images?: { dataUrl: string }[]; error?: string };
+      if (!res.ok || !data.images?.[0]) {
+        setErrorMsg(data.error ?? "生成に失敗しました");
+        setStatus("error");
+        return;
+      }
+      setGeneratedUrl(data.images[0].dataUrl);
+      setStatus("done");
+    } catch {
+      setErrorMsg("通信エラーが発生しました");
+      setStatus("error");
+    }
   };
-
-  const retry = () => generate();
 
   return (
     <div className="bg-white rounded-2xl shadow-2xl w-[400px] overflow-hidden">
       {/* ヘッダー */}
       <div
         className="px-5 py-4 flex items-center justify-between"
-        style={{ background: `linear-gradient(135deg, ${primaryColor}, ${primaryColor}cc)` }}
+        style={{ backgroundColor: primaryColor }}
       >
         <div className="flex items-center gap-2 text-white">
           <Wand2 size={16} />
           <span className="text-sm font-semibold">AI画像生成</span>
+          <span className="text-[10px] text-white/50 ml-1">ChatGPT / Gemini</span>
         </div>
         <button onClick={onClose} className="text-white/60 hover:text-white text-lg leading-none">✕</button>
       </div>
@@ -83,7 +83,7 @@ export default function AIImagePanel({ onUse, onClose, primaryColor, accentColor
         <textarea
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
-          placeholder="例：会議室で笑顔で話し合うビジネスチーム"
+          placeholder="例：会議室で話し合うビジネスチーム"
           rows={2}
           className="w-full text-sm px-3 py-2 border border-gray-200 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-400"
           onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); generate(); } }}
@@ -123,13 +123,13 @@ export default function AIImagePanel({ onUse, onClose, primaryColor, accentColor
 
         {/* 生成ボタン */}
         <button
-          onClick={() => generate()}
+          onClick={generate}
           disabled={!prompt.trim() || status === "loading"}
           className="w-full flex items-center justify-center gap-2 text-sm font-semibold py-3 rounded-xl text-white disabled:opacity-50 transition-all hover:opacity-90 active:scale-95"
           style={{ backgroundColor: primaryColor }}
         >
           {status === "loading" ? (
-            <><Loader2 size={15} className="animate-spin" /> AI生成中… (10〜30秒)</>
+            <><Loader2 size={15} className="animate-spin" /> AI生成中… (20〜60秒)</>
           ) : (
             <><Sparkles size={15} /> 画像を生成</>
           )}
@@ -161,7 +161,6 @@ export default function AIImagePanel({ onUse, onClose, primaryColor, accentColor
           <div className="mt-4">
             <div className="relative rounded-xl overflow-hidden shadow-md">
               <img src={generatedUrl} alt="generated" className="w-full" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
             </div>
 
             <div className="flex gap-2 mt-3">
@@ -173,7 +172,7 @@ export default function AIImagePanel({ onUse, onClose, primaryColor, accentColor
                 <Check size={15} /> この画像を使う
               </button>
               <button
-                onClick={retry}
+                onClick={generate}
                 className="flex items-center gap-1.5 text-xs text-gray-500 border border-gray-200 px-3 py-2 rounded-xl hover:bg-gray-50 transition-colors"
               >
                 <RefreshCw size={12} /> 再生成
@@ -185,15 +184,15 @@ export default function AIImagePanel({ onUse, onClose, primaryColor, accentColor
         {/* エラー */}
         {status === "error" && (
           <div className="mt-3 p-3 bg-red-50 rounded-lg">
-            <p className="text-xs text-red-600 mb-2">生成に失敗しました。もう一度お試しください。</p>
-            <button onClick={retry} className="text-xs text-red-500 border border-red-200 px-3 py-1 rounded-lg hover:bg-red-50">
+            <p className="text-xs text-red-600 mb-2">{errorMsg || "生成に失敗しました。もう一度お試しください。"}</p>
+            <button onClick={generate} className="text-xs text-red-500 border border-red-200 px-3 py-1 rounded-lg hover:bg-red-50">
               再試行
             </button>
           </div>
         )}
 
         <p className="text-[10px] text-gray-300 text-center mt-4">
-          Powered by Pollinations AI · 完全無料・APIキー不要
+          Powered by ChatGPT (gpt-image-1) / Gemini
         </p>
       </div>
     </div>

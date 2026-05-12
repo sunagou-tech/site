@@ -19,12 +19,12 @@ export default function HeroTypoBlockComponent({ block, config, onChange }: Prop
     <section className="relative bg-white min-h-[600px] overflow-hidden flex items-center">
 
       {/* ── 背景：装飾大文字 ─────────────────────────────── */}
-      <div className="absolute inset-0 flex items-center justify-end pointer-events-none overflow-hidden select-none">
+      <div className="absolute inset-0 flex items-center justify-center overflow-hidden select-none">
         <EditableText
           tag="span"
           value={block.kanjiDecor}
           onChange={(v) => u({ kanjiDecor: v })}
-          className={`text-[22vw] font-black leading-none tracking-tighter block pr-4 ${fontClass}`}
+          className={`text-[22vw] font-black leading-none tracking-tighter block ${fontClass}`}
           style={{ color: `${config.primaryColor}08` }}
         />
       </div>
