@@ -41,14 +41,15 @@ export default function HeroTypoBlockComponent({ block, config, onChange }: Prop
         </p>
       </div>
 
-      {/* ── メインコンテンツ ─────────────────────────────── */}
-      <div className="relative z-10 px-8 md:px-16 lg:px-24 py-16 md:py-24 max-w-3xl">
+      {/* ── メインコンテンツ（中央揃え） ─────────────────── */}
+      <div className="relative z-10 w-full px-8 md:px-16 py-16 md:py-24 flex flex-col items-center text-center">
 
         {/* Eyebrow */}
-        <div className="flex items-center gap-3 mb-10">
+        <div className="flex items-center justify-center gap-3 mb-10">
           <span className="w-10 h-px block" style={{ backgroundColor: config.accentColor }} />
           <EditableText tag="span" value={block.eyebrow} onChange={(v) => u({ eyebrow: v })}
             className="text-[10px] tracking-[0.3em] uppercase text-gray-400 font-medium" />
+          <span className="w-10 h-px block" style={{ backgroundColor: config.accentColor }} />
         </div>
 
         {/* Headline */}
@@ -57,15 +58,16 @@ export default function HeroTypoBlockComponent({ block, config, onChange }: Prop
           value={block.tagline}
           onChange={(v) => u({ tagline: v })}
           multiline
-          className={`text-[clamp(1.6rem,5.5vw,5rem)] font-black text-gray-900 leading-[1.1] whitespace-pre-line mb-2 block tracking-tight break-keep max-w-[12em] ${fontClass}`}
+          className={`text-[clamp(1.6rem,5.5vw,5rem)] font-black text-gray-900 leading-[1.1] whitespace-pre-line mb-2 block tracking-tight break-keep max-w-[14em] ${fontClass}`}
         />
 
         {/* アクセントライン under headline */}
-        <div className="flex items-center gap-3 mt-6 mb-8">
-          <div className="h-0.5 w-16" style={{ backgroundColor: config.accentColor }} />
+        <div className="flex items-center justify-center gap-3 mt-6 mb-8">
+          <div className="h-0.5 w-12" style={{ backgroundColor: config.accentColor }} />
           <EditableText tag="span" value={block.taglineSub} onChange={(v) => u({ taglineSub: v })}
             className="text-xs tracking-[0.25em] uppercase font-medium"
             style={{ color: config.accentColor }} />
+          <div className="h-0.5 w-12" style={{ backgroundColor: config.accentColor }} />
         </div>
 
         {/* Body */}
@@ -78,22 +80,17 @@ export default function HeroTypoBlockComponent({ block, config, onChange }: Prop
         />
 
         {/* CTA */}
-        <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
-          <LinkableButton
-            label={block.buttonText} url={block.buttonUrl ?? ""}
-            onLabelChange={(v) => u({ buttonText: v })} onUrlChange={(v) => u({ buttonUrl: v })}
-            className="inline-flex items-center justify-center gap-3 text-sm font-bold px-10 py-4 transition-all hover:opacity-80 w-full sm:w-auto"
-            style={{ backgroundColor: config.primaryColor, color: "#fff" }}
-          />
-          <span className="text-xs text-gray-300 tracking-widest uppercase hidden sm:block">
-            ↓ Scroll
-          </span>
-        </div>
+        <LinkableButton
+          label={block.buttonText} url={block.buttonUrl ?? ""}
+          onLabelChange={(v) => u({ buttonText: v })} onUrlChange={(v) => u({ buttonUrl: v })}
+          className="inline-flex items-center justify-center gap-3 text-sm font-bold px-10 py-4 transition-all hover:opacity-80"
+          style={{ backgroundColor: config.primaryColor, color: "#fff" }}
+        />
       </div>
 
-      {/* ── 底部装飾バー ─────────────────────────────────── */}
-      <div className="absolute bottom-0 left-0 right-0 h-px"
-        style={{ background: `linear-gradient(90deg, ${config.accentColor}, ${config.primaryColor}40, transparent)` }} />
+      {/* ── 底部アクセントライン ──────────────────────────── */}
+      <div className="absolute bottom-0 left-0 right-0 h-0.5"
+        style={{ backgroundColor: config.accentColor, opacity: 0.3 }} />
     </section>
   );
 }

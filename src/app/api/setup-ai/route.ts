@@ -722,53 +722,52 @@ function pickHeroBlock(data: SectionData, dna?: GlobalStyle): SectionBlock {
     // ── URL解析のheroLayoutを最優先 ──────────────────────────────
     if (layoutHint === "split")
       return hasImage
-        ? ["hero-split", "hero-asym", "hero-diagonal", "hero-photo"]
-        : ["hero-gradient", "hero-dark", "hero-centered"];
+        ? ["hero-split", "hero-diagonal", "hero-dark", "hero-japanese"]
+        : ["hero-dark", "hero-centered"];
     if (layoutHint === "centered")
       return hasImage
-        ? ["hero-centered", "hero-photo", "hero-glass", "hero-minimal"]
-        : ["hero-centered", "hero-gradient", "hero-minimal"];
+        ? ["hero-centered", "hero-glass", "hero-dark", "hero-typo"]
+        : ["hero-centered", "hero-typo", "hero-dark"];
     if (layoutHint === "typographic")
-      return ["hero-typo", "hero-minimal", "hero-gradient"];
+      return ["hero-typo", "hero-dark", "hero-centered"];
     if (layoutHint === "light")
       return hasImage
-        ? ["hero-minimal", "hero-photo", "hero-centered"]
-        : ["hero-minimal", "hero-centered"];
+        ? ["hero-centered", "hero-glass", "hero-japanese"]
+        : ["hero-centered", "hero-japanese"];
 
     // ── デザインスタイル別 ──────────────────────────────────────
     if (style === "minimal" || notes.includes("クリニック") || notes.includes("医療"))
       return hasImage
-        ? ["hero-minimal", "hero-centered", "hero-photo", "hero-glass"]
-        : ["hero-minimal", "hero-centered"];
+        ? ["hero-centered", "hero-glass", "hero-japanese"]
+        : ["hero-centered", "hero-japanese"];
     if (style.includes("exam-prep") || style === "exam-prep-bold")
       return hasImage
-        ? ["hero-photo", "hero-dark", "hero-diagonal", "hero-asym", "hero-split", "hero-japanese"]
-        : ["hero-dark", "hero-centered", "hero-gradient"];
+        ? ["hero-dark", "hero-diagonal", "hero-split", "hero-japanese"]
+        : ["hero-dark", "hero-centered"];
     if (style === "corporate" || style.includes("trustworthy") || style.includes("navy"))
       return hasImage
-        ? ["hero-split", "hero-dark", "hero-asym", "hero-diagonal", "hero-photo", "hero-japanese"]
-        : ["hero-gradient", "hero-centered", "hero-dark"];
+        ? ["hero-split", "hero-dark", "hero-diagonal", "hero-japanese"]
+        : ["hero-centered", "hero-dark"];
     if (style === "bold" || style.includes("creative"))
       return hasImage
-        ? ["hero-typo", "hero-glass", "hero-diagonal", "hero-asym", "hero-photo"]
-        : ["hero-typo", "hero-interactive", "hero-gradient"];
+        ? ["hero-typo", "hero-glass", "hero-diagonal"]
+        : ["hero-typo", "hero-interactive"];
     if (style === "elegant" || notes.includes("ビューティ") || notes.includes("女性"))
       return hasImage
-        ? ["hero-glass", "hero-minimal", "hero-photo", "hero-asym", "hero-split"]
-        : ["hero-gradient", "hero-minimal", "hero-centered"];
+        ? ["hero-glass", "hero-split", "hero-typo"]
+        : ["hero-centered", "hero-typo"];
     if (style === "warm" || style.includes("orange") || style.includes("friendly"))
       return hasImage
-        ? ["hero-photo", "hero-centered", "hero-split", "hero-minimal", "hero-asym"]
-        : ["hero-centered", "hero-gradient", "hero-interactive", "hero-minimal"];
+        ? ["hero-centered", "hero-split", "hero-glass"]
+        : ["hero-centered", "hero-interactive"];
     if (style.includes("tech") || notes.includes("saas") || notes.includes("ai"))
       return hasImage
-        ? ["hero-dark", "hero-gradient", "hero-glass", "hero-diagonal"]
-        : ["hero-gradient", "hero-interactive", "hero-centered"];
-    // default: 全パターンを幅広く
+        ? ["hero-dark", "hero-glass", "hero-diagonal"]
+        : ["hero-interactive", "hero-centered", "hero-dark"];
+    // default
     return hasImage
-      ? ["hero-centered", "hero-photo", "hero-dark", "hero-glass", "hero-diagonal",
-         "hero-asym", "hero-gradient", "hero-split", "hero-minimal", "hero-typo"]
-      : ["hero-centered", "hero-gradient", "hero-interactive", "hero-minimal", "hero-typo"];
+      ? ["hero-centered", "hero-dark", "hero-glass", "hero-diagonal", "hero-split", "hero-typo", "hero-japanese"]
+      : ["hero-centered", "hero-interactive", "hero-typo", "hero-dark"];
   })();
 
   const heroType = pool[Math.floor(Math.random() * pool.length)];
