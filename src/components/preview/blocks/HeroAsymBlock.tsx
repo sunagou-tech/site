@@ -98,8 +98,8 @@ export default function HeroAsymBlockComponent({ block, config, onChange }: Prop
         />
 
         {/* 左端にオーバーラップするアクセント帯 */}
-        <div className="absolute left-0 top-0 bottom-0 w-4 z-10"
-          style={{ background: `linear-gradient(90deg, ${config.primaryColor}, transparent)` }} />
+        <div className="absolute left-0 top-0 bottom-0 w-2 z-10"
+          style={{ backgroundColor: config.primaryColor }} />
 
         {/* 右下コーナー装飾 */}
         <div className="absolute bottom-6 right-6 z-10 flex items-center gap-2">
@@ -110,10 +110,8 @@ export default function HeroAsymBlockComponent({ block, config, onChange }: Prop
         </div>
 
         {/* アクセントカラーのコーナー */}
-        <div className="absolute top-0 right-0 w-16 h-16 z-10"
-          style={{
-            background: `linear-gradient(225deg, ${config.accentColor}60, transparent)`,
-          }} />
+        <div className="absolute top-0 right-0 w-1 h-full z-10"
+          style={{ backgroundColor: config.accentColor, opacity: 0.5 }} />
       </div>
     </section>
   );

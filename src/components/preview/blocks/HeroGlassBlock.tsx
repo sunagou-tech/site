@@ -28,18 +28,17 @@ export default function HeroGlassBlockComponent({ block, config, onChange }: Pro
             className="absolute inset-0" primaryColor={config.primaryColor} accentColor={config.accentColor}
             alt="hero background" />
         ) : (
-          /* Placeholder gradient when no image */
+          /* Placeholder when no image */
           <div className="absolute inset-0"
-            style={{ background: `linear-gradient(135deg, ${config.primaryColor} 0%, ${config.primaryColor}80 50%, ${config.accentColor}40 100%)` }}>
-            {/* Abstract shapes as placeholder */}
-            <div className="absolute top-1/4 right-1/4 w-64 h-64 rounded-full opacity-20"
+            style={{ backgroundColor: config.primaryColor }}>
+            <div className="absolute top-1/4 right-1/4 w-64 h-64 rounded-full opacity-10"
               style={{ backgroundColor: config.accentColor }} />
-            <div className="absolute bottom-1/4 left-1/3 w-96 h-40 rounded-full opacity-10 rotate-12"
+            <div className="absolute bottom-1/4 left-1/3 w-96 h-40 rounded-full opacity-[0.06] rotate-12"
               style={{ backgroundColor: config.accentColor }} />
           </div>
         )}
         {/* Dark overlay for text legibility */}
-        <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-black/20" />
+        <div className="absolute inset-0 bg-black/55" />
       </div>
 
       {/* ── Add/remove image buttons (editing only) ──────── */}
@@ -107,9 +106,9 @@ export default function HeroGlassBlockComponent({ block, config, onChange }: Pro
         </div>
       </div>
 
-      {/* ── Corner accent ─────────────────────────────────── */}
-      <div className="absolute bottom-0 left-0 right-0 h-24 pointer-events-none"
-        style={{ background: `linear-gradient(to top, ${config.primaryColor}40, transparent)` }} />
+      {/* ── Bottom accent line ────────────────────────────── */}
+      <div className="absolute bottom-0 left-0 right-0 h-0.5 pointer-events-none"
+        style={{ backgroundColor: config.accentColor, opacity: 0.4 }} />
     </section>
   );
 }
