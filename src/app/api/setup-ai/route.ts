@@ -1255,18 +1255,22 @@ function buildCanvasFromSections(data: SectionData, dna?: GlobalStyle): CanvasEl
 // ── Gemini fetch with retry + model fallback ─────────────────
 // Edge Runtime 30秒制限: timeoutMs × models.length < 30000 を守ること
 // generate: 13s × 2モデル = 26s ≤ 30s
-// chat: 8s × 3モデル = 24s ≤ 30s
-const MODEL_TIMEOUT_MS = 13000;
+// 2モデル × 14s = 28s ≤ 30s Edge制限
+const MODEL_TIMEOUT_MS = 14000;
 
 async function geminiFetch(
   systemPrompt: string,
   userPrompt: string,
-  maxTokens = 1400,
+  maxTokens = 2000,
   forceJson = false,
   timeoutMs = MODEL_TIMEOUT_MS,
   models = GEMINI_MODELS,
 ): Promise<string> {
-  const generationConfig: Record<string, unknown> = { maxOutputTokens: maxTokens };
+  // thinkingBudget:0 で gemini-2.5系の推論トークンを無効化し出力に全振り
+  const generationConfig: Record<string, unknown> = {
+    maxOutputTokens: maxTokens,
+    thinkingConfig: { thinkingBudget: 0 },
+  };
   if (forceJson) generationConfig.responseMimeType = "application/json";
 
   const waitMs = (ms: number) => new Promise(r => setTimeout(r, ms));
@@ -1423,13 +1427,13 @@ export async function POST(req: NextRequest) {
   // ── Gemini でサイトコンテンツ生成 ───────────────────────────
   let raw: string;
   try {
-    // 2モデル × 13s = 26s ≤ 30s Edge制限（3モデル×20sは60sで確実にKillされる）
+    // 2モデル × 14s = 28s ≤ 30s Edge制限 / thinkingBudget:0 で推論無効化
     raw = await geminiFetch(
       GENERATE_SYSTEM,
       buildGeneratePrompt(conversationText, effectiveDesign),
-      1400,
+      2000,
       false,
-      13000,
+      14000,
       GEMINI_MODELS.slice(0, 2),
     );
   } catch (e) {
