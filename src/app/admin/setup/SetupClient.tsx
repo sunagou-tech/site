@@ -497,10 +497,16 @@ export default function SetupClient() {
       let config;
       try {
         config = await tryGenerate();
-      } catch {
-        // 503混雑時は3秒後に1回自動リトライ
-        setGenText("AIが混雑中です。少し待ってから再試行します...");
-        await new Promise(r => setTimeout(r, 3000));
+      } catch (e1) {
+        const msg1 = e1 instanceof Error ? e1.message : "";
+        const isQuota = msg1.includes("429") || msg1.includes("quota") || msg1.includes("混雑");
+        const waitSec = isQuota ? 30 : 5;
+        for (let s = waitSec; s > 0; s--) {
+          setGenText(isQuota
+            ? `APIクォータ超過のため ${s} 秒後に自動リトライします...`
+            : `少し待ってから再試行します... (${s}s)`);
+          await new Promise(r => setTimeout(r, 1000));
+        }
         config = await tryGenerate();
       }
       setGenPct(100);
