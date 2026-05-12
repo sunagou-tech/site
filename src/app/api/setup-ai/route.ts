@@ -86,7 +86,7 @@ const DESIGN_SYSTEMS: Record<string, GlobalStyle & { _desc: string }> = {
     heroBgColor: "#1a1a1a", bgColor: "#ffffff",
     cardBgColor: "#f5f5f5", buttonBgColor: "#c0272d",
     buttonTextColor: "#FFFFFF", buttonRadius: "8", cardBorderRadius: "12",
-    heroLayout: "split", designStyle: "exam-prep-bold",
+    heroLayout: "", designStyle: "exam-prep-bold",
     designNotes: "受験専門塾,難関大学,自学自習,逆転合格,授業なし,黒×赤,パワフル,結果重視,高校生,大学受験",
     h1Size: "56", headingWeight: 900, sectionPaddingY: "64",
     textColor: "#1a1a1a",
@@ -130,7 +130,7 @@ const DESIGN_SYSTEMS: Record<string, GlobalStyle & { _desc: string }> = {
     heroBgColor: "#1a1000", bgColor: "#ffffff",
     cardBgColor: "#fff8e0", buttonBgColor: "#f5ab00",
     buttonTextColor: "#1a1000", buttonRadius: "8", cardBorderRadius: "12",
-    heroLayout: "centered", designStyle: "premium-gold",
+    heroLayout: "", designStyle: "premium-gold",
     designNotes: "進学実績,難関大,データ重視,ゴールド,ブルー,権威感,実績強調,東大,国公立,進学校",
     h1Size: "54", headingWeight: 900, sectionPaddingY: "64",
     textColor: "#1a1000",
@@ -742,11 +742,11 @@ function pickHeroBlock(data: SectionData, dna?: GlobalStyle): SectionBlock {
         : ["hero-minimal", "hero-centered"];
     if (style.includes("exam-prep") || style === "exam-prep-bold")
       return hasImage
-        ? ["hero-photo", "hero-dark", "hero-diagonal", "hero-asym"]
-        : ["hero-gradient", "hero-dark", "hero-centered"];
+        ? ["hero-photo", "hero-dark", "hero-diagonal", "hero-asym", "hero-split", "hero-japanese"]
+        : ["hero-dark", "hero-centered", "hero-gradient"];
     if (style === "corporate" || style.includes("trustworthy") || style.includes("navy"))
       return hasImage
-        ? ["hero-split", "hero-dark", "hero-asym", "hero-diagonal", "hero-photo"]
+        ? ["hero-split", "hero-dark", "hero-asym", "hero-diagonal", "hero-photo", "hero-japanese"]
         : ["hero-gradient", "hero-centered", "hero-dark"];
     if (style === "bold" || style.includes("creative"))
       return hasImage

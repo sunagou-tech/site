@@ -36,9 +36,9 @@ export default function HeroAsymBlockComponent({ block, config, onChange }: Prop
   }
 
   return (
-    <section className="grid grid-cols-1 md:grid-cols-[40%_60%] overflow-hidden" style={{ minHeight: "clamp(650px, 90vh, 720px)" }}>
+    <section className="grid grid-cols-1 md:grid-cols-[35%_65%] overflow-hidden" style={{ minHeight: "clamp(650px, 90vh, 720px)" }}>
 
-      {/* ── 左カラム：プライマリカラー帯（40%） ───────────── */}
+      {/* ── 左カラム：プライマリカラー帯（35%） ───────────── */}
       <div className="relative flex flex-col justify-between py-12 px-8 lg:px-12 overflow-hidden"
         style={{ backgroundColor: config.primaryColor }}>
 
