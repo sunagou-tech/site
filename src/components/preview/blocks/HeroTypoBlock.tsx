@@ -16,15 +16,16 @@ export default function HeroTypoBlockComponent({ block, config, onChange }: Prop
   const isEditing = useEditing();
   const fontClass =
     config.fontFamily === "serif" ? "font-serif" : config.fontFamily === "mono" ? "font-mono" : "font-sans";
+  const textColor = block.textColor ?? "#111827";
 
   return (
     <section className="relative bg-white min-h-[600px] overflow-hidden flex items-center">
 
-      {/* ── 背景：装飾大文字（pointer-events-none、z-0） ── */}
+      {/* ── 背景：装飾大文字 ─────────────────────────────── */}
       <div className="absolute inset-0 flex items-center justify-center overflow-hidden select-none pointer-events-none">
         <span
-          className={`text-[22vw] font-black leading-none tracking-tighter block ${fontClass}`}
-          style={{ color: `${config.primaryColor}08` }}
+          className={`text-[22vw] font-black leading-none tracking-tighter ${fontClass}`}
+          style={{ color: `${config.primaryColor}10` }}
         >
           {block.kanjiDecor || "革新"}
         </span>
@@ -36,8 +37,8 @@ export default function HeroTypoBlockComponent({ block, config, onChange }: Prop
 
       {/* ── 右上の英字装飾 ───────────────────────────────── */}
       <div className="absolute top-8 right-8 hidden lg:block pointer-events-none select-none">
-        <p className="text-[10px] tracking-[0.4em] uppercase text-gray-200 font-medium"
-          style={{ writingMode: "vertical-rl" }}>
+        <p className="text-[10px] tracking-[0.4em] uppercase font-medium"
+          style={{ color: `${textColor}40`, writingMode: "vertical-rl" }}>
           {block.taglineSub || "NEW PERSPECTIVE"}
         </p>
       </div>
@@ -49,7 +50,8 @@ export default function HeroTypoBlockComponent({ block, config, onChange }: Prop
         <div className="flex items-center justify-center gap-3 mb-10">
           <span className="w-10 h-px block" style={{ backgroundColor: config.accentColor }} />
           <EditableText tag="span" value={block.eyebrow} onChange={(v) => u({ eyebrow: v })}
-            className="text-[10px] tracking-[0.3em] uppercase text-gray-400 font-medium" />
+            className="text-[10px] tracking-[0.3em] uppercase font-medium"
+            style={{ color: `${textColor}80` }} />
           <span className="w-10 h-px block" style={{ backgroundColor: config.accentColor }} />
         </div>
 
@@ -59,7 +61,8 @@ export default function HeroTypoBlockComponent({ block, config, onChange }: Prop
           value={block.tagline}
           onChange={(v) => u({ tagline: v })}
           multiline
-          className={`text-[clamp(1.6rem,5.5vw,5rem)] font-black text-gray-900 leading-[1.1] whitespace-pre-line mb-2 block tracking-tight break-keep max-w-[14em] text-center ${fontClass}`}
+          className={`text-[clamp(1.6rem,5.5vw,5rem)] font-black leading-[1.1] whitespace-pre-line mb-2 tracking-tight break-keep max-w-[14em] mx-auto text-center ${fontClass}`}
+          style={{ color: textColor }}
         />
 
         {/* アクセントライン under headline */}
@@ -77,7 +80,8 @@ export default function HeroTypoBlockComponent({ block, config, onChange }: Prop
           value={block.body}
           onChange={(v) => u({ body: v })}
           multiline
-          className="text-base text-gray-500 leading-[2] whitespace-pre-line mb-12 block max-w-lg text-center"
+          className="text-base leading-[2] whitespace-pre-line mb-12 max-w-lg mx-auto text-center"
+          style={{ color: `${textColor}99` }}
         />
 
         {/* CTA */}
@@ -89,16 +93,29 @@ export default function HeroTypoBlockComponent({ block, config, onChange }: Prop
         />
       </div>
 
-      {/* ── 背景テキスト編集ラベル（編集モードのみ表示） ── */}
+      {/* ── 編集モード：底部コントロール ─────────────────── */}
       {isEditing && (
-        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 bg-black/40 backdrop-blur-sm px-3 py-1.5 rounded-full">
-          <span className="text-[9px] text-white/50 font-medium whitespace-nowrap">背景文字:</span>
+        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-3 bg-black/50 backdrop-blur-sm px-4 py-1.5 rounded-full">
+          {/* 背景文字編集 */}
+          <span className="text-[9px] text-white/50 font-medium whitespace-nowrap">背景:</span>
           <EditableText
             tag="span"
             value={block.kanjiDecor}
             onChange={(v) => u({ kanjiDecor: v })}
-            className="text-[11px] text-white font-bold"
+            className="text-[11px] text-white font-bold min-w-[2em]"
           />
+          {/* 文字色 */}
+          <span className="w-px h-3 bg-white/20" />
+          <label className="flex items-center gap-1.5 cursor-pointer">
+            <span className="text-[9px] text-white/50 font-medium whitespace-nowrap">文字色:</span>
+            <input
+              type="color"
+              value={textColor}
+              onChange={(e) => u({ textColor: e.target.value })}
+              className="w-5 h-5 rounded cursor-pointer border-0 bg-transparent"
+              style={{ padding: 0 }}
+            />
+          </label>
         </div>
       )}
 

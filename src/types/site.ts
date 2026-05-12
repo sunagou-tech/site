@@ -418,6 +418,7 @@ export interface HeroTypoBlock {
   taglineSub: string;
   body: string;
   buttonText: string; buttonUrl: string;
+  textColor?: string;          // 見出し・本文のテキスト色
 }
 
 /** パターンI: 左カラー帯 + 右写真の非対称スプリット */
