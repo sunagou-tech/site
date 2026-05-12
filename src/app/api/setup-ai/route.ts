@@ -1428,10 +1428,11 @@ export async function POST(req: NextRequest) {
   let raw: string;
   try {
     // 2モデル × 14s = 28s ≤ 30s Edge制限 / thinkingBudget:0 で推論無効化
+    // Tier1: 500tok/s → 4000tok = 8s < 14s timeout
     raw = await geminiFetch(
       GENERATE_SYSTEM,
       buildGeneratePrompt(conversationText, effectiveDesign),
-      2000,
+      4000,
       false,
       14000,
       GEMINI_MODELS.slice(0, 2),
@@ -1443,18 +1444,39 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // JSON抽出（forceJson時はrawが直接JSON、念のためコードフェンスも試す）
+  // JSON抽出（コードフェンス→生JSON→{ }検索の順に試みる）
   let jsonStr = raw.trim();
   const fenceMatch = raw.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
   if (fenceMatch) jsonStr = fenceMatch[1].trim();
-  // それでもJSONオブジェクトが見つからない場合は { } を探す
   if (!jsonStr.startsWith("{")) {
-    const objMatch = raw.match(/\{[\s\S]*\}/);
+    const objMatch = raw.match(/\{[\s\S]*/);
     if (objMatch) jsonStr = objMatch[0];
   }
 
+  // 切れたJSONを閉じる（トークン上限で途中終了した場合の保険）
+  function repairTruncatedJson(s: string): string {
+    // 末尾の不完全なキー・値を除去
+    let t = s.replace(/,?\s*"[^"]*$/, "").replace(/,?\s*"[^"]*":\s*$/, "").replace(/,\s*$/, "");
+    // 開いたまま閉じていないブラケット・ブレースを閉じる
+    const stack: string[] = [];
+    let inStr = false;
+    let escape = false;
+    for (const ch of t) {
+      if (escape) { escape = false; continue; }
+      if (ch === "\\") { escape = true; continue; }
+      if (ch === '"') { inStr = !inStr; continue; }
+      if (inStr) continue;
+      if (ch === "{") stack.push("}");
+      else if (ch === "[") stack.push("]");
+      else if (ch === "}" || ch === "]") stack.pop();
+    }
+    return t + stack.reverse().join("");
+  }
+
   try {
-    const parsed = JSON.parse(jsonStr) as SectionData;
+    let parseTarget = jsonStr;
+    try { JSON.parse(parseTarget); } catch { parseTarget = repairTruncatedJson(parseTarget); }
+    const parsed = JSON.parse(parseTarget) as SectionData;
 
     if (!parsed.hero.imageUrl && parsed.hero.heroImagePrompt) {
       const prompt = encodeURIComponent(
