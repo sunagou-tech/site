@@ -36,10 +36,10 @@ export default function HeroAsymBlockComponent({ block, config, onChange }: Prop
   }
 
   return (
-    <section className="min-h-[600px] flex flex-col md:flex-row overflow-hidden">
+    <section className="grid grid-cols-1 md:grid-cols-[40%_60%] overflow-hidden" style={{ minHeight: "clamp(650px, 90vh, 720px)" }}>
 
-      {/* ── 左カラム：プライマリカラー帯（35%） ───────────── */}
-      <div className="relative flex-shrink-0 flex flex-col justify-between py-12 px-8 lg:px-12 overflow-hidden w-full md:w-[35%]"
+      {/* ── 左カラム：プライマリカラー帯（40%） ───────────── */}
+      <div className="relative flex flex-col justify-between py-12 px-8 lg:px-12 overflow-hidden"
         style={{ backgroundColor: config.primaryColor }}>
 
         {/* 背景装飾：大きなサークル */}
@@ -85,8 +85,8 @@ export default function HeroAsymBlockComponent({ block, config, onChange }: Prop
         </div>
       </div>
 
-      {/* ── 右カラム：画像（65%） ────────────────────────── */}
-      <div className="flex-1 relative overflow-hidden min-h-[300px] md:min-h-0">
+      {/* ── 右カラム：画像（60%） ────────────────────────── */}
+      <div className="relative overflow-hidden min-h-[400px] md:min-h-0">
         <EditableImage
           url={block.imageUrl}
           onChange={(url) => u({ imageUrl: url })}

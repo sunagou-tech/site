@@ -17,22 +17,9 @@ export default function HeroPhotoBlockComponent({ block, config, onChange }: Pro
     config.fontFamily === "serif" ? "font-serif" : config.fontFamily === "mono" ? "font-mono" : "font-sans";
 
   return (
-    <section className={`relative min-h-[640px] grid grid-cols-1 md:grid-cols-[58%_42%] overflow-hidden ${fontClass}`}>
+    <section className={`grid grid-cols-1 md:grid-cols-[40%_60%] overflow-hidden ${fontClass}`} style={{ minHeight: "clamp(650px, 90vh, 720px)" }}>
 
-      {/* Left: photo */}
-      <div className="relative overflow-hidden min-h-[320px] md:min-h-0">
-        <EditableImage
-          url={block.imageUrl}
-          onChange={(url) => u({ imageUrl: url })}
-          className="absolute inset-0"
-          placeholderGradient={`linear-gradient(160deg, ${config.primaryColor}30 0%, ${config.accentColor}20 100%)`}
-          primaryColor={config.primaryColor}
-          accentColor={config.accentColor}
-          alt="hero background"
-        />
-      </div>
-
-      {/* Right: solid primary color content area */}
+      {/* Left: solid primary color content area (40%) */}
       <div
         className="relative flex flex-col justify-center px-8 md:px-12 py-16"
         style={{ backgroundColor: config.primaryColor }}
@@ -95,11 +82,17 @@ export default function HeroPhotoBlockComponent({ block, config, onChange }: Pro
         </div>
       </div>
 
-      {/* Scroll indicator */}
-      <div className="absolute bottom-6 left-[29%] -translate-x-1/2 z-20 flex flex-col items-center gap-1.5 pointer-events-none select-none">
-        <div className="w-1 h-1 rounded-full bg-white/50" />
-        <div className="w-px h-8 bg-white/20" />
-        <span className="text-[8px] tracking-[0.35em] uppercase text-white/30">SCROLL</span>
+      {/* Right: photo (60%) — edge-to-edge cover */}
+      <div className="relative overflow-hidden min-h-[400px] md:min-h-0">
+        <EditableImage
+          url={block.imageUrl}
+          onChange={(url) => u({ imageUrl: url })}
+          className="absolute inset-0 w-full h-full"
+          placeholderGradient={`linear-gradient(160deg, ${config.primaryColor}30 0%, ${config.accentColor}20 100%)`}
+          primaryColor={config.primaryColor}
+          accentColor={config.accentColor}
+          alt="hero background"
+        />
       </div>
     </section>
   );
